@@ -23,6 +23,9 @@ test_pre_go_1_10: &test_pre_go_1_10
     - checkout
     - run: go get -v -t -d ./...
     - run: go test ./...
+      # We need to specify -unsafeptr to bypass the tricky unsafe.Pointer in
+      # internal/util/string_builder_compat.go.
+    - run: go tool vet -unsafeptr=false .
 
 # Build steps for Go pre-1.11 which doesn't have Go modules.
 test_pre_go_1_11: &test_pre_go_1_11
@@ -31,11 +34,13 @@ test_pre_go_1_11: &test_pre_go_1_11
     - checkout
     - run: go get -v -t -d ./...
     - run: go test ./...
+    - run: go vet ./...
 
 test_go_latest: &test_go_latest
   steps:
     - checkout
     - run: go test ./...
+    - run: go vet ./...
 
 defaults: &defaults
   <<: *test_go_latest
