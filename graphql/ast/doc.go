@@ -14,21 +14,5 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package token_test
-
-import (
-	"github.com/botobag/artemis/graphql/token"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-)
-
-var _ = Describe("Token", func() {
-	Describe("SourceLocation", func() {
-		Describe("NoSourceLocation", func() {
-			Specify("an invalid location", func() {
-				Expect(token.NoSourceLocation.IsValid()).Should(BeFalse())
-			})
-		})
-	})
-})
+// Package ast defines the types used to represent syntax trees for a GraphQL source.
+package ast

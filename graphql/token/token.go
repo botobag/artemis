@@ -125,21 +125,6 @@ func (kind Kind) String() string {
 	panic("unsupported token kind")
 }
 
-// SourceLocation encodes a position in source file. It lives in the context of Source. Its value is
-// an 1-indexed offset relative to the beginning of source measured in bytes. Given a SourceLocation
-// value loc and the Source s, you can convert it into larger representation SourceLocationInfo by
-// calling s.LocationInfoOf(loc).
-type SourceLocation uint
-
-// NoSourceLocation is a special SourceLocation that doesn't exists in any source. Method that deals
-// with SourceLocation must take special care to handle this value.
-const NoSourceLocation SourceLocation = 0
-
-// IsValid return true if the SourceLocation is valid.
-func (location SourceLocation) IsValid() bool {
-	return location != NoSourceLocation
-}
-
 // Token represents a range of characters represented by a lexical token within a Source.
 type Token struct {
 	// The kind of Token.
@@ -161,10 +146,37 @@ type Token struct {
 	Next *Token
 }
 
+// EndLocation returns the pass-the-end location of the token in the source.
+func (token *Token) EndLocation() SourceLocation {
+	return token.Location.WithOffset(int(token.Length))
+}
+
+// Range returns the range of this token in the source.
+func (token *Token) Range() SourceRange {
+	return SourceRange{
+		Begin: token.Location,
+		End:   token.EndLocation(),
+	}
+}
+
 // Description describe a token as a string for debugging.
 func (token *Token) Description() string {
 	if len(token.Value) > 0 {
 		return fmt.Sprintf(`%s "%s"`, token.Kind.String(), token.Value)
 	}
 	return token.Kind.String()
+}
+
+// Range represent a range of tokens covered by [First, Last].
+type Range struct {
+	First *Token
+	Last  *Token
+}
+
+// SourceRange indicates the source covered by this range with a pair of SourceLocation.
+func (r Range) SourceRange() SourceRange {
+	return SourceRange{
+		Begin: r.First.Location,
+		End:   r.Last.EndLocation(),
+	}
 }
