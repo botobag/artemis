@@ -1,0 +1,92 @@
+#
+# Copyright (c) 2018, The Artemis Authors.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+
+# Build steps for Go pre-1.10 which misses feature such as strings.Builder.
+test_pre_go_1_10: &test_pre_go_1_10
+  working_directory: /go/src/github.com/botobag/artemis
+  steps:
+    - checkout
+    - run: go get -v -t -d ./...
+    - run: go test ./...
+
+# Build steps for Go pre-1.11 which doesn't have Go modules.
+test_pre_go_1_11: &test_pre_go_1_11
+  working_directory: /go/src/github.com/botobag/artemis
+  steps:
+    - checkout
+    - run: go get -v -t -d ./...
+    - run: go test ./...
+
+test_go_latest: &test_go_latest
+  steps:
+    - checkout
+    - run: go test ./...
+
+defaults: &defaults
+  <<: *test_go_latest
+
+version: 2
+jobs:
+  golang:1.8:
+    <<: *test_pre_go_1_10
+    docker:
+      - image: circleci/golang:1.8
+  golang:1.9:
+    <<: *test_pre_go_1_10
+    docker:
+      - image: circleci/golang:1.9
+  golang:1.10:
+    <<: *test_pre_go_1_11
+    docker:
+      - image: circleci/golang:1.10
+  golang:1.11:
+    <<: *defaults
+    docker:
+      - image: circleci/golang:1.11
+  golang:latest:
+    <<: *defaults
+    docker:
+      - image: circleci/golang:latest
+  codecov:
+    docker:
+      - image: circleci/golang:latest
+    steps:
+      - checkout
+      # See:
+      #   - https://www.ory.sh/golang-go-code-coverage-accurate/
+      #   - https://github.com/botobag/artemis/issues/43
+      #
+      # Commands from https://github.com/ory/go-acc
+      - run: "touch ./coverage.tmp"
+      - run: >-
+          echo 'mode: atomic' > coverage.txt
+      - run: >-
+          go list ./... | grep -v /cmd | grep -v /vendor | xargs
+          -n1 -I{}
+          sh -c 'go test -race -covermode=atomic -coverprofile=coverage.tmp -coverpkg $(go list ./... | grep -v /vendor | tr "\n" ",") {} && tail -n +2 coverage.tmp >> coverage.txt || exit 255'
+      - run: "rm coverage.tmp"
+      - run: "bash <(curl -s https://codecov.io/bash)"
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - golang:1.8
+      - golang:1.9
+      - golang:1.10
+      - golang:1.11
+      - golang:latest
+      - codecov
