@@ -14,6 +14,8 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
+version: 2
+
 # Build steps for Go pre-1.10 which misses feature such as strings.Builder.
 test_pre_go_1_10: &test_pre_go_1_10
   working_directory: /go/src/github.com/botobag/artemis
@@ -38,31 +40,29 @@ test_go_latest: &test_go_latest
 defaults: &defaults
   <<: *test_go_latest
 
-version: 2
 jobs:
-  golang:1.8:
+  Go 1.8:
+    docker: [{ image: 'circleci/golang:1.8' }]
     <<: *test_pre_go_1_10
-    docker:
-      - image: circleci/golang:1.8
-  golang:1.9:
+
+  Go 1.9:
+    docker: [{ image: 'circleci/golang:1.9' }]
     <<: *test_pre_go_1_10
-    docker:
-      - image: circleci/golang:1.9
-  golang:1.10:
+
+  Go 1.10:
+    docker: [{ image: 'circleci/golang:1.10' }]
     <<: *test_pre_go_1_11
-    docker:
-      - image: circleci/golang:1.10
-  golang:1.11:
+
+  Go 1.11:
+    docker: [{ image: 'circleci/golang:1.11' }]
     <<: *defaults
-    docker:
-      - image: circleci/golang:1.11
-  golang:latest:
+
+  Go latest:
+    docker: [{ image: 'circleci/golang:latest' }]
     <<: *defaults
-    docker:
-      - image: circleci/golang:latest
+
   codecov:
-    docker:
-      - image: circleci/golang:latest
+    docker: [{ image: 'circleci/golang:1.11' }]
     steps:
       - checkout
       # See:
@@ -84,9 +84,9 @@ workflows:
   version: 2
   build:
     jobs:
-      - golang:1.8
-      - golang:1.9
-      - golang:1.10
-      - golang:1.11
-      - golang:latest
+      - Go 1.8
+      - Go 1.9
+      - Go 1.10
+      - Go 1.11
+      - Go latest
       - codecov
