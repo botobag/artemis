@@ -20,6 +20,7 @@ import (
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/lexer"
 	"github.com/botobag/artemis/graphql/token"
+	"github.com/botobag/artemis/internal/testutil"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -36,11 +37,11 @@ func lexOne(str string) (*token.Token, error) {
 
 func expectSyntaxError(text string, message string, location graphql.ErrorLocation) {
 	_, err := lexOne(text)
-	Expect(err).Should(PointTo(MatchFields(IgnoreExtras, Fields{
-		"Message":   ContainSubstring(message),
-		"Locations": Equal([]graphql.ErrorLocation{location}),
-		"Kind":      Equal(graphql.ErrKindSyntax),
-	})))
+	Expect(err).Should(testutil.MatchGraphQLError(
+		testutil.MessagaContainSubstring(message),
+		testutil.LocationEqual(location),
+		testutil.KindIs(graphql.ErrKindSyntax),
+	))
 }
 
 // A custom Gomega matcher to skip matching Prev and Next fields in the Token.
