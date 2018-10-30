@@ -364,7 +364,7 @@ func (e *Error) printError(b *util.StringBuilder, nextErr *Error) {
 	if len(e.Extensions) > 0 {
 		// Don't print extensions if the next error already did.
 		if nextErr == nil || !reflect.DeepEqual(nextErr.Extensions, e.Extensions) {
-			pad(" (additonal info: ")
+			pad(" (additional info: ")
 			b.WriteString(fmt.Sprintf("%v)", e.Extensions))
 		}
 	}

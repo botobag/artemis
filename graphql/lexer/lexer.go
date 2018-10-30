@@ -502,7 +502,7 @@ func (lexer *Lexer) lexString() (*token.Token, error) {
 		}
 
 		if char == '"' {
-			// Consume the closeing quote (").
+			// Consume the closing quote (").
 			lexer.consume()
 			// Return a string token.
 			return lexer.makeTokenWithValue(token.KindString, lexer.bytePos-startPos, value.String()), nil
