@@ -629,4 +629,17 @@ var _ = Describe("Lexer", func() {
 			},
 		)
 	})
+
+	It("accept whitespace characters at the end", func() {
+		Expect(lexOne(`simple
+
+
+
+`)).Should(MatchToken(&token.Token{
+			Kind:     token.KindName,
+			Location: token.SourceLocation(1),
+			Length:   6,
+			Value:    "simple",
+		}))
+	})
 })

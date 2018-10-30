@@ -161,6 +161,9 @@ func (lexer *Lexer) consumeWhitespace() {
 		}
 	}
 
+	// If here, there're whitespace characters before EOF. Remember to update local bytePos to lexer
+	// before return.
+	lexer.bytePos = bytePos
 }
 
 // consumeDigits consumes bytes that represent a digit (i.e., from "0" to "9"). This is used by
