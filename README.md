@@ -1,6 +1,6 @@
 # Artemis
 
-[![CircleCI](https://circleci.com/gh/botobag/artemis/tree/master.svg?style=svg)](https://circleci.com/gh/botobag/artemis/tree/master) [![GoDoc](https://godoc.org/github.com/botobag/artemis?status.svg)](https://godoc.org/github.com/botobag/artemis) [![Coverage Status](https://codecov.io/gh/botobag/artemis/branch/master/graph/badge.svg)](https://codecov.io/gh/botobag/artemis)
+[![CircleCI](https://circleci.com/gh/botobag/artemis/tree/master.svg?style=svg)](https://circleci.com/gh/botobag/artemis/tree/master) [![GoDoc](https://godoc.org/github.com/botobag/artemis?status.svg)](https://godoc.org/github.com/botobag/artemis) [![Coverage Status](https://codecov.io/gh/botobag/artemis/branch/master/graph/badge.svg)](https://codecov.io/gh/botobag/artemis) [![Go Report Card](https://goreportcard.com/badge/botobag/artemis)](https://goreportcard.com/report/botobag/artemis)
 
 Artemis is an implementation of GraphQL for Go. If you're working on GraphQL, you probably heard [Apollo GraphQL](https://www.apollographql.com/) which provides great infrasture and tooling to develop a GraphQL service. While Apollo Platform stack is built on top of Node.js, we aim to build one in Go. If you happen to know a bit about [Greek mythology](https://en.wikipedia.org/wiki/Artemis), you should have guessed how the project got its name.
 
