@@ -59,6 +59,11 @@ func New(source *graphql.Source) *Lexer {
 	}
 }
 
+// Source returns the source being lexed.
+func (lexer *Lexer) Source() *graphql.Source {
+	return lexer.source
+}
+
 // Token returns current token being lexed.
 func (lexer *Lexer) Token() *token.Token {
 	return lexer.token
