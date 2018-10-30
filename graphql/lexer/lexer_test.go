@@ -36,17 +36,11 @@ func lexOne(str string) (*token.Token, error) {
 
 func expectSyntaxError(text string, message string, location graphql.ErrorLocation) {
 	_, err := lexOne(text)
-	Expect(err).Should(HaveOccurred())
-
-	// Should be a graphql.Error.
-	e, ok := err.(*graphql.Error)
-	Expect(ok).Should(BeTrue(), "text: %s", text)
-
-	// Check message.
-	Expect(e.Message).Should(ContainSubstring(message), "text: %s", text)
-
-	// Check location.
-	Expect(e.Locations).Should(Equal([]graphql.ErrorLocation{location}), "text: %s", text)
+	Expect(err).Should(PointTo(MatchFields(IgnoreExtras, Fields{
+		"Message":   ContainSubstring(message),
+		"Locations": Equal([]graphql.ErrorLocation{location}),
+		"Kind":      Equal(graphql.ErrKindSyntax),
+	})))
 }
 
 // A custom Gomega matcher to skip matching Prev and Next fields in the Token.

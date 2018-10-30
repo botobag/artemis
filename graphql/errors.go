@@ -61,5 +61,5 @@ func NewSyntaxError(source *Source, location token.SourceLocation, description s
 		location:    location,
 		description: description,
 	}
-	return NewError(e.Error(), e)
+	return NewError(e.Error(), e, ErrKindSyntax)
 }
