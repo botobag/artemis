@@ -164,7 +164,7 @@ type Token struct {
 // Description describe a token as a string for debugging.
 func (token *Token) Description() string {
 	if len(token.Value) > 0 {
-		return fmt.Sprintf("%s %s", token.Kind.String(), token.Value)
+		return fmt.Sprintf(`%s "%s"`, token.Kind.String(), token.Value)
 	}
 	return token.Kind.String()
 }

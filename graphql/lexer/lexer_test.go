@@ -545,7 +545,7 @@ var _ = Describe("Lexer", func() {
 			"<SOF>",
 			"{",
 			"Comment",
-			"Name field",
+			`Name "field"`,
 			"}",
 			"<EOF>",
 		}
