@@ -63,3 +63,39 @@ func NewSyntaxError(source *Source, location token.SourceLocation, description s
 	}
 	return NewError(e.Error(), e, ErrKindSyntax)
 }
+
+//===----------------------------------------------------------------------------------------====//
+// Coercion Error
+//===----------------------------------------------------------------------------------------====//
+
+// NewCoercionError raises an error to indicate an error due to coercion failure (for either input
+// coercion or result coercion defined in [0]). The error is tagged with ErrKindCoercion and several
+// functions will take special care of it which described as follows:
+//
+//	1. For coercion errors returning from Enum and Scalar's CoerceResultValue:
+//
+//		- When execution engine sees these error (in `CompleteValue` [1], more specifically), it will
+//		bypass the errors directly to the caller, resulting a field/query error containing the message
+//		as the one carried by the errors. Otherwise, execution engine will wrap the error with
+//		NewDefaultCoercionError.
+//
+//	2. For coercion errors returning from Enum and Scalar's CoerceVariableValue:
+//
+//		- When CoerceType sees these errors, it will present a query error with the message specified
+//			in the error to the user.
+//
+//	3. For coercion errors returning from Enum and Scalar's CoerceArgumentValue:
+//
+//		- Currently it makes no difference than other errors.
+//
+// [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars
+// [1]: https://facebook.github.io/graphql/June2018/#CompleteValue()
+func NewCoercionError(format string, a ...interface{}) error {
+	return NewError(fmt.Sprintf(format, a...), ErrKindCoercion)
+}
+
+// NewDefaultResultCoercionError creates a CoercionError for result coercion with a default message.
+func NewDefaultResultCoercionError(typeName string, value interface{}, err error) error {
+	message := fmt.Sprintf(`Expected a value of type "%s" but received: %v`, typeName, value)
+	return NewError(message, err, ErrKindCoercion)
+}

@@ -64,7 +64,7 @@ func (k ErrKind) String() string {
 // ErrorExtensions provides an additional entry to a GraphQL error with key "extensions". It is
 // useful for attaching vendor-specific error data (such as error code).
 //
-// Ref: https://github.com/facebook/graphql/pull/407
+// Reference: https://github.com/facebook/graphql/pull/407
 type ErrorExtensions map[string]interface{}
 
 // ErrorLocation contains a line number and a column number to point out the beginning of an

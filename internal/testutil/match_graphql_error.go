@@ -27,6 +27,13 @@ import (
 // ErrorFieldsMatcher sets up fields to match.
 type ErrorFieldsMatcher func(gstruct.Fields)
 
+// MessagaEqual matches message in a graphql.Error to be the same as the specified string.
+func MessagaEqual(s string) ErrorFieldsMatcher {
+	return func(fields gstruct.Fields) {
+		fields["Message"] = gomega.Equal(s)
+	}
+}
+
 // MessagaContainSubstring matches message in a graphql.Error to contain the specified string.
 func MessagaContainSubstring(s string) ErrorFieldsMatcher {
 	return func(fields gstruct.Fields) {
