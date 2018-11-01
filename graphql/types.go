@@ -40,6 +40,8 @@ type Type interface {
 // [1]: https://facebook.github.io/graphql/June2018/#sec-Enums
 type LeafType interface {
 	Type
+	TypeWithName
+	TypeWithDescription
 
 	// CoerceResultValue coerces the given value to be returned as result of field with the type.
 	CoerceResultValue(value interface{}) (interface{}, error)
@@ -53,6 +55,12 @@ type LeafType interface {
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Types
 type AbstractType interface {
 	Type
+
+	// TypeResolver returns resolver that could determine the concrete Object type for the abstract
+	// type from resolved value.
+	//
+	// Reference: https://facebook.github.io/graphql/June2018/#ResolveAbstractType()
+	TypeResolver() TypeResolver
 
 	// graphqlAbstractType puts a special mark for an abstract type.
 	graphqlAbstractType()

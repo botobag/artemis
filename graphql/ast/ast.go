@@ -53,6 +53,18 @@ func (node Name) TokenRange() token.Range {
 	}
 }
 
+// NodeWithArguments describes an AST node that can accept arguments.
+type NodeWithArguments interface {
+	Node
+	GetArguments() Arguments
+}
+
+// Both Field and Directive are qualified for NodeWithArguments.
+var (
+	_ NodeWithArguments = (*Field)(nil)
+	_                   = (*Directive)(nil)
+)
+
 //===----------------------------------------------------------------------------------------====//
 // 2.2 Document
 //===----------------------------------------------------------------------------------------====//
@@ -262,9 +274,12 @@ func (set SelectionSet) TokenRange() token.Range {
 type Selection interface {
 	Node
 
-	// sleectionNode is a special mark to indicate a Selection node. It makes sure that only selection
+	// GetDirectives returns directives specified on this node.
+	GetDirectives() Directives
+
+	// selectionNode is a special mark to indicate a Selection node. It makes sure that only selection
 	// node can be assigned to Selection.
-	sleectionNode()
+	selectionNode()
 }
 
 var (
@@ -327,8 +342,26 @@ func (node *Field) TokenRange() token.Range {
 	return r
 }
 
-// sleectionNode implements Selection.
-func (*Field) sleectionNode() {}
+// selectionNode implements Selection.
+func (*Field) selectionNode() {}
+
+// GetDirectives implements Selection.
+func (node *Field) GetDirectives() Directives {
+	return node.Directives
+}
+
+// GetArguments implements NodeWithArguments.
+func (node *Field) GetArguments() Arguments {
+	return node.Arguments
+}
+
+// ResponseKey is the field alias name if defined, otherwise the field name.
+func (node *Field) ResponseKey() string {
+	if node.Alias.Token != nil {
+		return node.Alias.Value()
+	}
+	return node.Name.Value()
+}
 
 //===----------------------------------------------------------------------------------------====//
 // 2.6 Argument
@@ -448,8 +481,13 @@ func (node *FragmentSpread) TokenRange() token.Range {
 	}
 }
 
-// sleectionNode implements Selection.
-func (*FragmentSpread) sleectionNode() {}
+// selectionNode implements Selection.
+func (*FragmentSpread) selectionNode() {}
+
+// GetDirectives implements Selection.
+func (node *FragmentSpread) GetDirectives() Directives {
+	return node.Directives
+}
 
 // InlineFragment defines a fragment inline within a selection set.
 //
@@ -487,8 +525,13 @@ func (node *InlineFragment) HasTypeCondition() bool {
 	return node.TypeCondition.Name.Token == nil
 }
 
-// sleectionNode implements Selection.
-func (*InlineFragment) sleectionNode() {}
+// selectionNode implements Selection.
+func (*InlineFragment) selectionNode() {}
+
+// GetDirectives implements Selection.
+func (node *InlineFragment) GetDirectives() Directives {
+	return node.Directives
+}
 
 //===----------------------------------------------------------------------------------------====//
 // 2.9 Input Values
@@ -1150,4 +1193,9 @@ func (node *Directive) TokenRange() token.Range {
 		First: node.FirstToken(),
 		Last:  node.LastToken(),
 	}
+}
+
+// GetArguments implements NodeWithArguments.
+func (node *Directive) GetArguments() Arguments {
+	return node.Arguments
 }

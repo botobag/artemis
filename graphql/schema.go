@@ -19,6 +19,8 @@ package graphql
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/botobag/artemis/graphql/ast"
 )
 
 // Contains interfaces and definitions for a GraphQL schema.
@@ -227,6 +229,23 @@ func NewSchema(config *SchemaConfig) (*Schema, error) {
 
 	// TODO: Add __Schema type in introspection.
 
+	// Add built-in types.
+	if err := typeMap.add(Int()); err != nil {
+		return nil, err
+	}
+	if err := typeMap.add(Float()); err != nil {
+		return nil, err
+	}
+	if err := typeMap.add(String()); err != nil {
+		return nil, err
+	}
+	if err := typeMap.add(Boolean()); err != nil {
+		return nil, err
+	}
+	if err := typeMap.add(ID()); err != nil {
+		return nil, err
+	}
+
 	// Visit all enumerated types in config.
 	for _, t := range config.Types {
 		if err := typeMap.add(t); err != nil {
@@ -304,4 +323,55 @@ func (schema *Schema) PossibleTypes(t AbstractType) []*Object {
 	default:
 		return nil
 	}
+}
+
+// TypeFromAST returns a graphql.Type that applies to the ast.Type in the given schema For example,
+// if provided the parsed AST node for `[User]`, a graphql.List instance will be returned,
+// containing the type called "User" found in the schema. If a type called "User" is not found in
+// the schema, then nil will be returned.
+func (schema *Schema) TypeFromAST(t ast.Type) Type {
+	// Find the innermost ast.NamedType. Memoize what type we've went through.
+	var (
+		typeName string
+		typePath []ast.Type
+	)
+
+	for len(typeName) == 0 {
+		switch ttype := t.(type) {
+		case ast.NamedType:
+			typeName = ttype.Name.Value()
+
+		case ast.ListType:
+			// Append current type to typePath.
+			typePath = append(typePath, t)
+			// Continue on inner type.
+			t = ttype.ItemType
+
+		case ast.NonNullType:
+			typePath = append(typePath, t)
+			t = ttype.Type
+
+		default:
+			panic("unexpected AST type kind")
+		}
+	}
+
+	// Find the graphql.Type for the name.
+	result := schema.TypeMap().Lookup(typeName)
+	if result == nil {
+		return nil
+	}
+
+	// Go through typePath backward to build wrapping type.
+	for len(typePath) > 0 {
+		t, typePath = typePath[len(typePath)-1], typePath[:len(typePath)-1]
+		if _, ok := t.(ast.ListType); ok {
+			result = MustNewListOfType(result)
+		} else {
+			// Must be a NonNullType.
+			result = MustNewNonNullOfType(result)
+		}
+	}
+
+	return result
 }

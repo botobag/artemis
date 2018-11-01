@@ -29,12 +29,9 @@ var errAssignNullToNonNull = errors.New("null cannot be assigned to non-null typ
 
 // isMissingVariable returns true if the provided valueNode is a variable which is not defined
 // in the set of variables.
-func isMissingVariable(value ast.Value, variables map[string]interface{}) bool {
+func isMissingVariable(value ast.Value, variables graphql.VariableValues) bool {
 	if variableValue, isVariableValue := value.(ast.Variable); isVariableValue {
-		if variables == nil {
-			return true
-		}
-		_, exists := variables[variableValue.Name.Value()]
+		_, exists := variables.Lookup(variableValue.Name.Value())
 		if !exists {
 			return true
 		}
@@ -45,7 +42,7 @@ func isMissingVariable(value ast.Value, variables map[string]interface{}) bool {
 // CoerceFromAST produces a Go value given a GraphQL Value AST.
 //
 // A GraphQL type must be provided, which will be used to interpret different
-func CoerceFromAST(value ast.Value, t graphql.Type, variables map[string]interface{}) (interface{}, error) {
+func CoerceFromAST(value ast.Value, t graphql.Type, variables graphql.VariableValues) (interface{}, error) {
 	if value == nil {
 		// When there is no node, then there is also no value. Return an error to indicate an undefined
 		// value.
@@ -68,11 +65,7 @@ func CoerceFromAST(value ast.Value, t graphql.Type, variables map[string]interfa
 	// Apply variable value.
 	if variableValue, isVariableValue := value.(ast.Variable); isVariableValue {
 		varName := variableValue.Name.Value()
-		if variables == nil {
-			return nil, fmt.Errorf(`value of variable "$%s" is undefined`, varName)
-		}
-
-		varValue, exists := variables[varName]
+		varValue, exists := variables.Lookup(varName)
 		if !exists {
 			return nil, fmt.Errorf(`value of variable "$%s" is undefined`, varName)
 		}

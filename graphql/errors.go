@@ -73,10 +73,10 @@ func NewSyntaxError(source *token.Source, location token.SourceLocation, descrip
 // functions will take special care of it which described as follows:
 //
 // 1. For coercion errors returning from Enum and Scalar's CoerceResultValue:
-//  - When execution engine sees these error (in `CompleteValue` [1], more specifically), it will
-//    bypass the errors directly to the caller, resulting a field/query error containing the message
-//    as the one carried by the errors. Otherwise, execution engine will wrap the error with
-//    NewDefaultCoercionError.
+//  - When execution engine sees these error (in `CompleteValue` [1], and look our implementation of
+//    `executor.Common.completeLeafValue`, more specifically), it will bypass the errors directly to
+//    the caller, resulting a field/query error containing the message as the one carried by the
+//    errors. Otherwise, execution engine will wrap the error with NewDefaultResultCoercionError.
 //
 // 2. For coercion errors returning from Enum and Scalar's CoerceVariableValue:
 //  - When CoerceValue sees these errors, it will present a query error with the message specified

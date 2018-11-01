@@ -41,7 +41,7 @@ func valueFromASTWithVars(variables vars, t graphql.Type, valueText string) (int
 	}))
 	Expect(err).ShouldNot(HaveOccurred())
 
-	return value.CoerceFromAST(astValue, t, variables)
+	return value.CoerceFromAST(astValue, t, graphql.NewVariableValues(variables))
 }
 
 type testCase struct {
@@ -67,7 +67,7 @@ func runTestCasesForType(t graphql.Type, tests []testCase) {
 var _ = Describe("CoerceFromAST", func() {
 	// graphql-js/src/utilities/__tests__/valueFromAST-test.js
 	It("rejects empty input", func() {
-		_, err := value.CoerceFromAST(nil, graphql.Boolean(), nil)
+		_, err := value.CoerceFromAST(nil, graphql.Boolean(), graphql.NoVariableValues())
 		Expect(err).Should(HaveOccurred())
 	})
 

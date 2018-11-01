@@ -21,54 +21,31 @@ import (
 )
 
 // FieldResolver resolves field value during execution.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#ResolveFieldValue()
 type FieldResolver interface {
-	Resolve(params *ResolveFieldParams) ResolveFieldResult
+	// Context carries deadlines and cancelation signals.
+	//
+	// Source is the "source" value. It contains the value that has been resolved by field's enclosing
+	// object.
+	//
+	// Info contains a collection of information about the current execution state.
+	Resolve(ctx context.Context, source interface{}, info ResolveInfo) (interface{}, error)
 }
 
 // FieldResolverFunc is an adapter to allow the use of ordinary functions as FieldResolver.
-type FieldResolverFunc func(params *ResolveFieldParams) ResolveFieldResult
+type FieldResolverFunc func(ctx context.Context, source interface{}, info ResolveInfo) (interface{}, error)
 
-// Resolve calls f(params).
-func (f FieldResolverFunc) Resolve(params *ResolveFieldParams) ResolveFieldResult {
-	return f(params)
+// Resolve calls f(ctx, source, info).
+func (f FieldResolverFunc) Resolve(
+	ctx context.Context,
+	source interface{},
+	info ResolveInfo) (interface{}, error) {
+	return f(ctx, source, info)
 }
 
 // FieldResolverFunc implements FieldResolver.
 var _ FieldResolver = FieldResolverFunc(nil)
-
-// ResolveFieldResult contains results returned by field resolver.
-type ResolveFieldResult struct {
-	// Value being resolved as the result
-	Value interface{}
-
-	// Error occurred during resolution
-	Err error
-}
-
-// ArgumentValues contains argument values given to a field.
-type ArgumentValues map[string]interface{}
-
-// ResolveFieldParams specifies parameters passed to Field resolver for fetch the result value.
-type ResolveFieldParams struct {
-	// Source is the "source" value. It contains the value that has been resolved by field's enclosing
-	// object.
-	Source interface{}
-
-	// ArgumentValues maps name of argument to its value that was given to current GraphQL request.
-	ArgValues ArgumentValues
-
-	// Info is a collection of information about the current execution state.
-	Info *ResolveInfo
-
-	// Context argument is a context value that is provided to every resolve function within an
-	// execution.  It is commonly used to represent an authenticated user, or request-specific caches.
-	Context context.Context
-}
-
-// ResolveInfo contains collection of information about execution state for resolvers.
-type ResolveInfo struct {
-	// TODO
-}
 
 // Fields maps field name to its definition. In general, this should be named as "FieldConfigMap".
 // However, this type is used frequently so we try to make it shorter to save some typing efforts.
@@ -268,7 +245,9 @@ func (f *Field) Args() []Argument {
 	return f.args
 }
 
-// Resolver used for resolving the field result from Object source value.
+// Resolver determines the result value for the field from the value resolved by parent Object.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#ResolveFieldValue()
 func (f *Field) Resolver() FieldResolver {
 	return f.config.Resolver
 }

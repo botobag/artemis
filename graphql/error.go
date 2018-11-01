@@ -618,7 +618,41 @@ func (errs Errors) HaveOccurred() bool {
 	return len(errs.Errors) > 0
 }
 
+// MarshalJSON implements json.Marshaler.
+func (errs Errors) MarshalJSON() ([]byte, error) {
+	return jsoniter.Marshal(&errs)
+}
+
+// errorsMarshaller implements jsoniter.ValEncoder to encode Errors to JSON.
+type errorsMarshaller struct{}
+
+var _ jsoniter.ValEncoder = errorsMarshaller{}
+
+// IsEmpty implements jsoniter.ValEncoder.
+func (errorsMarshaller) IsEmpty(ptr unsafe.Pointer) bool {
+	return (*Errors)(ptr).HaveOccurred()
+}
+
+// Encode implements jsoniter.ValEncoder.
+func (errorsMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	errs := (*Errors)(ptr)
+
+	numErrs := len(errs.Errors)
+	if numErrs == 0 {
+		stream.WriteEmptyArray()
+	} else {
+		stream.WriteArrayStart()
+		stream.WriteVal(errs.Errors[0])
+		for _, err := range errs.Errors[1:] {
+			stream.WriteMore()
+			stream.WriteVal(err)
+		}
+		stream.WriteArrayEnd()
+	}
+}
+
 func init() {
 	jsoniter.RegisterTypeEncoder("graphql.ResponsePath", responsePathMarshaller{})
 	jsoniter.RegisterTypeEncoder("graphql.Error", errorMarshaller{})
+	jsoniter.RegisterTypeEncoder("graphql.Errors", errorsMarshaller{})
 }

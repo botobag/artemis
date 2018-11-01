@@ -157,6 +157,11 @@ func (*Union) graphqlType() {}
 // graphqlAbstractType implements AbstractType.
 func (*Union) graphqlAbstractType() {}
 
+// TypeResolver implements AbstractType.
+func (u *Union) TypeResolver() TypeResolver {
+	return u.typeResolver
+}
+
 // Name implemennts TypeWithName.
 func (u *Union) Name() string {
 	return u.data.Name
@@ -175,10 +180,4 @@ func (u *Union) String() string {
 // PossibleTypes returns member of the union type.
 func (u *Union) PossibleTypes() []*Object {
 	return u.possibleTypes
-}
-
-// TypeResolver returns an TypeResolver for determining the concrete Object type to be used from a
-// given value.
-func (u *Union) TypeResolver() TypeResolver {
-	return u.typeResolver
 }

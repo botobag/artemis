@@ -355,15 +355,23 @@ type InterfaceTypeData struct {
 
 // TypeResolver resolves concrete type of an Interface from given value.
 type TypeResolver interface {
-	Resolve(params ResolveTypeParams) ResolveTypeResult
+	// Context carries deadlines and cancelation signals.
+	//
+	// Value is the value returning from the field resolver of the field with abstract type that is
+	// being resolved. Usually you determine the concrete Object type based on the value.
+	//
+	// Info contains a collection of information about the current execution state.
+	//
+	// Reference: https://facebook.github.io/graphql/June2018/#ResolveAbstractType()
+	Resolve(ctx context.Context, value interface{}, info ResolveInfo) (*Object, error)
 }
 
 // TypeResolverFunc is an adapter to allow the use of ordinary functions as TypeResolver.
-type TypeResolverFunc func(params ResolveTypeParams) ResolveTypeResult
+type TypeResolverFunc func(ctx context.Context, value interface{}, info ResolveInfo) (*Object, error)
 
-// Resolve calls f(params).
-func (f TypeResolverFunc) Resolve(params ResolveTypeParams) ResolveTypeResult {
-	return f(params)
+// Resolve calls f(ctx, value, info).
+func (f TypeResolverFunc) Resolve(ctx context.Context, value interface{}, info ResolveInfo) (*Object, error) {
+	return f(ctx, value, info)
 }
 
 // TypeResolverFunc implements TypeResolver.
@@ -376,20 +384,11 @@ type ResolveTypeParams struct {
 	Value interface{}
 
 	// Info is a collection of information about the current execution state.
-	Info ResolveInfo
+	Info *ResolveInfo
 
 	// Context argument is a context value that is provided to every resolve function within an
 	// execution.  It is commonly used to represent an authenticated user, or request-specific caches.
 	Context context.Context
-}
-
-// ResolveTypeResult contains result returning from the type resolver.
-type ResolveTypeResult struct {
-	// The resolved Object type
-	Type Object
-
-	// Error occurred during resolution
-	Err error
 }
 
 // ThisIsInterfaceTypeDefinition is a marker struct intended to be embedded in every

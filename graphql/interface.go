@@ -152,6 +152,11 @@ func (*Interface) graphqlType() {}
 // graphqlAbstractType implements AbstractType.
 func (*Interface) graphqlAbstractType() {}
 
+// TypeResolver implements AbstractType.
+func (iface *Interface) TypeResolver() TypeResolver {
+	return iface.typeResolver
+}
+
 // Name implements TypeWithName.
 func (iface *Interface) Name() string {
 	return iface.data.Name
@@ -170,9 +175,4 @@ func (iface *Interface) String() string {
 // Fields returns set of fields that needs to be provided when implementing this interface.
 func (iface *Interface) Fields() FieldMap {
 	return iface.fields
-}
-
-// ResolveType determines the concrete Object type from a given value.
-func (iface *Interface) ResolveType(params ResolveTypeParams) ResolveTypeResult {
-	return iface.typeResolver.Resolve(params)
 }
