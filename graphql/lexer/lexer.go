@@ -27,7 +27,7 @@ import (
 
 // Lexer is the return type of newLexer.
 type Lexer struct {
-	source *graphql.Source
+	source *token.Source
 
 	// The previously focused non-ignored token
 	lastToken *token.Token
@@ -46,7 +46,7 @@ type Lexer struct {
 // every time it is advanced, it returns the next token in the Source. Assuming the source lexes,
 // the final Token emitted by the lexer will be of kind EOF, after which the lexer will repeatedly
 // return the same EOF token whenever called.
-func New(source *graphql.Source) *Lexer {
+func New(source *token.Source) *Lexer {
 	startOfFileToken := &token.Token{
 		Kind: token.KindSOF,
 	}
@@ -60,7 +60,7 @@ func New(source *graphql.Source) *Lexer {
 }
 
 // Source returns the source being lexed.
-func (lexer *Lexer) Source() *graphql.Source {
+func (lexer *Lexer) Source() *token.Source {
 	return lexer.source
 }
 

@@ -27,7 +27,7 @@ import (
 //===----------------------------------------------------------------------------------------====//
 
 type syntaxError struct {
-	source      *Source
+	source      *token.Source
 	location    token.SourceLocation
 	description string
 }
@@ -55,7 +55,7 @@ func (e *syntaxError) Locations() []ErrorLocation {
 
 // NewSyntaxError produces an error representing a syntax error, containing useful descriptive
 // information about the syntax error's position in the source.
-func NewSyntaxError(source *Source, location token.SourceLocation, description string) error {
+func NewSyntaxError(source *token.Source, location token.SourceLocation, description string) error {
 	e := &syntaxError{
 		source:      source,
 		location:    location,

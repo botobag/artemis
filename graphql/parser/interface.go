@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 	"github.com/botobag/artemis/graphql/token"
 )
@@ -43,7 +42,7 @@ type ParseOptions struct {
 }
 
 // Parse parses the given GraphQL source into a Document.
-func Parse(source *graphql.Source, options ParseOptions) (ast.Document, error) {
+func Parse(source *token.Source, options ParseOptions) (ast.Document, error) {
 	parser, err := newParser(source, options)
 	if err != nil {
 		return ast.Document{}, err
@@ -52,7 +51,7 @@ func Parse(source *graphql.Source, options ParseOptions) (ast.Document, error) {
 }
 
 // ParseValue parses the AST for string containing a GraphQL value (e.g., `[42]`).
-func ParseValue(source *graphql.Source) (ast.Value, error) {
+func ParseValue(source *token.Source) (ast.Value, error) {
 	parser, err := newParser(source, ParseOptions{})
 	if err != nil {
 		return nil, err
@@ -75,7 +74,7 @@ func ParseValue(source *graphql.Source) (ast.Value, error) {
 }
 
 // ParseType parses the AST for string containing a GraphQL Type (e.g., `[Int!]`).
-func ParseType(source *graphql.Source) (ast.Type, error) {
+func ParseType(source *token.Source) (ast.Type, error) {
 	parser, err := newParser(source, ParseOptions{})
 	if err != nil {
 		return nil, err

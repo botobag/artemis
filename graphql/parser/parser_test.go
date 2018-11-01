@@ -36,20 +36,20 @@ import (
 )
 
 func parse(s string) (ast.Document, error) {
-	return parser.Parse(graphql.NewSource(&graphql.SourceConfig{
-		Body: graphql.SourceBody([]byte(s)),
+	return parser.Parse(token.NewSource(&token.SourceConfig{
+		Body: token.SourceBody([]byte(s)),
 	}), parser.ParseOptions{})
 }
 
 func parseValue(s string) (ast.Value, error) {
-	return parser.ParseValue(graphql.NewSource(&graphql.SourceConfig{
-		Body: graphql.SourceBody([]byte(s)),
+	return parser.ParseValue(token.NewSource(&token.SourceConfig{
+		Body: token.SourceBody([]byte(s)),
 	}))
 }
 
 func parseType(s string) (ast.Type, error) {
-	return parser.ParseType(graphql.NewSource(&graphql.SourceConfig{
-		Body: graphql.SourceBody([]byte(s)),
+	return parser.ParseType(token.NewSource(&token.SourceConfig{
+		Body: token.SourceBody([]byte(s)),
 	}))
 }
 
@@ -234,8 +234,8 @@ var _ = Describe("Parser", func() {
 		kitchenSink, err := ioutil.ReadFile("./kitchen-sink.graphql")
 		Expect(err).ShouldNot(HaveOccurred())
 
-		_, err = parser.Parse(graphql.NewSource(&graphql.SourceConfig{
-			Body: graphql.SourceBody(kitchenSink),
+		_, err = parser.Parse(token.NewSource(&token.SourceConfig{
+			Body: token.SourceBody(kitchenSink),
 		}), parser.ParseOptions{})
 		Expect(err).ShouldNot(HaveOccurred())
 	})
@@ -279,8 +279,8 @@ var _ = Describe("Parser", func() {
 				FragmentName: fragmentName,
 			})).Should(Succeed())
 
-			_, err = parser.Parse(graphql.NewSource(&graphql.SourceConfig{
-				Body: graphql.SourceBody(buf.Bytes()),
+			_, err = parser.Parse(token.NewSource(&token.SourceConfig{
+				Body: token.SourceBody(buf.Bytes()),
 			}), parser.ParseOptions{})
 			Expect(err).ShouldNot(HaveOccurred())
 		}
@@ -460,8 +460,8 @@ var _ = Describe("Parser", func() {
 			Column: 11,
 		})
 
-		_, err := parser.Parse(graphql.NewSource(&graphql.SourceConfig{
-			Body: graphql.SourceBody([]byte(document)),
+		_, err := parser.Parse(token.NewSource(&token.SourceConfig{
+			Body: token.SourceBody([]byte(document)),
 		}), parser.ParseOptions{
 			ExperimentalFragmentVariables: true,
 		})
@@ -469,8 +469,8 @@ var _ = Describe("Parser", func() {
 	})
 
 	It("contains location information", func() {
-		source := graphql.NewSource(&graphql.SourceConfig{
-			Body: graphql.SourceBody([]byte("{ id }")),
+		source := token.NewSource(&token.SourceConfig{
+			Body: token.SourceBody([]byte("{ id }")),
 		})
 		result, err := parser.Parse(source, parser.ParseOptions{})
 		Expect(err).ShouldNot(HaveOccurred())
@@ -1095,8 +1095,8 @@ var _ = Describe("Parser", func() {
 		}
 		query.WriteString("}")
 
-		source := graphql.NewSource(&graphql.SourceConfig{
-			Body: graphql.SourceBody(query.Bytes()),
+		source := token.NewSource(&token.SourceConfig{
+			Body: token.SourceBody(query.Bytes()),
 		})
 
 		b.Time("parse time", func() {

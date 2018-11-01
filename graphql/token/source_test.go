@@ -14,12 +14,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package graphql_test
+package token_test
 
 import (
 	"regexp"
 
-	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/token"
 
 	. "github.com/onsi/ginkgo"
@@ -63,8 +62,8 @@ func verifyLocationInfo(test *SourceTest) {
 	sourceBody := test.source
 	Expect(uint(len(sourceBody))).Should(Equal(test.size), test.name)
 
-	source := graphql.NewSource(&graphql.SourceConfig{
-		Body:         graphql.SourceBody(sourceBody),
+	source := token.NewSource(&token.SourceConfig{
+		Body:         token.SourceBody(sourceBody),
 		Name:         test.name,
 		LineOffset:   test.lineOffset,
 		ColumnOffset: test.columnOffset,
@@ -76,7 +75,7 @@ func verifyLocationInfo(test *SourceTest) {
 		locationInfo := source.LocationInfoOf(location)
 
 		line, column := getLocationReference(sourceBody, pos)
-		Expect(locationInfo).Should(Equal(graphql.SourceLocationInfo{
+		Expect(locationInfo).Should(Equal(token.SourceLocationInfo{
 			Name:   test.name,
 			Line:   line + test.lineOffset,
 			Column: column + test.columnOffset,
@@ -86,12 +85,12 @@ func verifyLocationInfo(test *SourceTest) {
 
 var _ = Describe("Source", func() {
 	It("accepts nil Body", func() {
-		Expect(graphql.NewSource(&graphql.SourceConfig{})).ShouldNot(BeNil())
+		Expect(token.NewSource(&token.SourceConfig{})).ShouldNot(BeNil())
 	})
 
 	It("converts offset into SourceLocation", func() {
-		body := graphql.SourceBody([]byte("hello"))
-		source := graphql.NewSource(&graphql.SourceConfig{
+		body := token.SourceBody([]byte("hello"))
+		source := token.NewSource(&token.SourceConfig{
 			Body: body,
 		})
 		Expect(source).ShouldNot(BeNil())
@@ -184,11 +183,11 @@ var _ = Describe("Source", func() {
 		})
 
 		It("accepts invalid SourceLoction", func() {
-			source := graphql.NewSource(&graphql.SourceConfig{
+			source := token.NewSource(&token.SourceConfig{
 				Name: "test",
-				Body: graphql.SourceBody([]byte("test source")),
+				Body: token.SourceBody([]byte("test source")),
 			})
-			Expect(source.LocationInfoOf(token.NoSourceLocation)).Should(Equal(graphql.SourceLocationInfo{
+			Expect(source.LocationInfoOf(token.NoSourceLocation)).Should(Equal(token.SourceLocationInfo{
 				Name: "test",
 			}))
 		})

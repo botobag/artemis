@@ -34,7 +34,7 @@ type parser struct {
 	options ParseOptions
 }
 
-func newParser(source *graphql.Source, options ParseOptions) (*parser, error) {
+func newParser(source *token.Source, options ParseOptions) (*parser, error) {
 	if source == nil {
 		return nil, graphql.NewError("Must provide Source. Received: nil")
 	}

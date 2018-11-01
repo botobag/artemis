@@ -29,8 +29,8 @@ import (
 )
 
 func lexOne(str string) (*token.Token, error) {
-	lexer := lexer.New(graphql.NewSource(&graphql.SourceConfig{
-		Body: graphql.SourceBody(str),
+	lexer := lexer.New(token.NewSource(&token.SourceConfig{
+		Body: token.SourceBody(str),
 	}))
 	return lexer.Advance()
 }
@@ -486,8 +486,8 @@ var _ = Describe("Lexer", func() {
 	})
 
 	It("lex reports useful information for dashes in names", func() {
-		lexer := lexer.New(graphql.NewSource(&graphql.SourceConfig{
-			Body: graphql.SourceBody("a-b"),
+		lexer := lexer.New(token.NewSource(&token.SourceConfig{
+			Body: token.SourceBody("a-b"),
 		}))
 
 		Expect(lexer.Advance()).Should(MatchToken(&token.Token{
@@ -507,8 +507,8 @@ var _ = Describe("Lexer", func() {
 	})
 
 	It("produces double linked list of tokens, including comments", func() {
-		lexer := lexer.New(graphql.NewSource(&graphql.SourceConfig{
-			Body: graphql.SourceBody(`{
+		lexer := lexer.New(token.NewSource(&token.SourceConfig{
+			Body: token.SourceBody(`{
       #comment
       field
     }`),

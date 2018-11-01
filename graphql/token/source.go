@@ -14,12 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package graphql
+package token
 
 import (
 	"unicode/utf8"
-
-	"github.com/botobag/artemis/graphql/token"
 )
 
 // SourceBody contains contents of a GraphQL document in a byte sequence.
@@ -57,8 +55,8 @@ func (body SourceBody) Size() uint {
 	return uint(len(body))
 }
 
-// SourceLocationInfo describes a source location for a token.SourceLocation
-// with source name, line and column number.
+// SourceLocationInfo describes a source location for a SourceLocation with source name, line and
+// column number.
 type SourceLocationInfo struct {
 	Name   string
 	Line   uint
@@ -117,28 +115,28 @@ func (source *Source) ColumnOffset() uint {
 
 // LocationFromPos returns a SourceLocation that represent the location for given position in the
 // body.
-func (source *Source) LocationFromPos(bytePos uint) token.SourceLocation {
+func (source *Source) LocationFromPos(bytePos uint) SourceLocation {
 	if bytePos > source.Body().Size() {
 		panic("illegal byte position value")
 	}
-	return token.SourceLocation(bytePos + 1)
+	return SourceLocation(bytePos + 1)
 }
 
 // PosFromLocation is a reverse operation of LocationFromPos. It converts the given SourceLocation
 // to the byte position in the source which is a 0-based offset relative to the beginning of the
 // source body.
-func (source *Source) PosFromLocation(location token.SourceLocation) uint {
+func (source *Source) PosFromLocation(location SourceLocation) uint {
 	if !location.IsValid() || uint(location) > (source.Body().Size()+1) {
 		panic("illegal location value")
 	}
 	return uint(location) - 1
 }
 
-// LocationInfoOf computes and returns a SourceLocationInfo for a given token.SourceLocation.
-func (source *Source) LocationInfoOf(loc token.SourceLocation) SourceLocationInfo {
+// LocationInfoOf computes and returns a SourceLocationInfo for a given SourceLocation.
+func (source *Source) LocationInfoOf(loc SourceLocation) SourceLocationInfo {
 	// TODO: Cache table of line offsets for a Source for the first time this is called. #5
 
-	// Handle invalid SourceLocation (token.SourceLocation).
+	// Handle invalid SourceLocation (SourceLocation).
 	if !loc.IsValid() {
 		return SourceLocationInfo{
 			Name: source.Name(),
