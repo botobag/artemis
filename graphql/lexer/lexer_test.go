@@ -532,7 +532,7 @@ var _ = Describe("Lexer", func() {
 		Expect(startToken.Prev).Should(BeNil())
 		Expect(endToken.Next).Should(BeNil())
 
-		tokens := []*token.Token{}
+		var tokens []*token.Token
 		for token := startToken; token != nil; token = token.Next {
 			if len(tokens) > 0 {
 				// Tokens are double-linked, prev should point to last seen token.
@@ -594,7 +594,7 @@ var _ = Describe("Lexer", func() {
 		}))
 	})
 
-	It("reject incomplete escape unicode sequence at the end", func() {
+	It("rejects incomplete escape unicode sequence at the end", func() {
 		expectSyntaxError(
 			`"\u"`,
 			`Invalid character escape sequence: \u`,
@@ -630,7 +630,7 @@ var _ = Describe("Lexer", func() {
 		)
 	})
 
-	It("accept whitespace characters at the end", func() {
+	It("accepts whitespace characters at the end", func() {
 		Expect(lexOne(`simple
 
 
@@ -641,5 +641,46 @@ var _ = Describe("Lexer", func() {
 			Length:   6,
 			Value:    "simple",
 		}))
+	})
+
+	It("lexes tokens with matching source", func() {
+		source := token.NewSource(&token.SourceConfig{
+			Name: "Source Test",
+			Body: token.SourceBody(`{
+      field
+      123
+      123.45
+    }`),
+		})
+		lexer := lexer.New(source)
+
+		tokens := []*token.Token{
+			lexer.Token(),
+		}
+		for {
+			tok, err := lexer.Advance()
+			Expect(err).ShouldNot(HaveOccurred())
+			tokens = append(tokens, tok)
+			if tok.Kind == token.KindEOF {
+				break
+			}
+		}
+
+		expectedLocationInfo := [][2]token.SourceLocationInfo{
+			{{Name: "Source Test", Line: 0, Column: 0}, {Name: "Source Test", Line: 0, Column: 0}},
+			{{Name: "Source Test", Line: 1, Column: 1}, {Name: "Source Test", Line: 1, Column: 2}},
+			{{Name: "Source Test", Line: 2, Column: 7}, {Name: "Source Test", Line: 2, Column: 12}},
+			{{Name: "Source Test", Line: 3, Column: 7}, {Name: "Source Test", Line: 3, Column: 10}},
+			{{Name: "Source Test", Line: 4, Column: 7}, {Name: "Source Test", Line: 4, Column: 13}},
+			{{Name: "Source Test", Line: 5, Column: 5}, {Name: "Source Test", Line: 5, Column: 6}},
+			{{Name: "Source Test", Line: 5, Column: 6}, {Name: "Source Test", Line: 5, Column: 6}},
+		}
+
+		Expect(len(tokens)).Should(Equal(len(expectedLocationInfo)))
+		for i, tok := range tokens {
+			Expect(tok.Source()).Should(Equal(source))
+			Expect(tok.LocationInfo()).Should(Equal(expectedLocationInfo[i][0]))
+			Expect(tok.EndLocationInfo()).Should(Equal(expectedLocationInfo[i][1]))
+		}
 	})
 })

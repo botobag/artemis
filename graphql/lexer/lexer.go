@@ -47,9 +47,9 @@ type Lexer struct {
 // the final Token emitted by the lexer will be of kind EOF, after which the lexer will repeatedly
 // return the same EOF token whenever called.
 func New(source *token.Source) *Lexer {
-	startOfFileToken := &token.Token{
-		Kind: token.KindSOF,
-	}
+	// Use SOF token created from token.NewSOFToken. This magic SOF token will allow all tokens to be
+	// traced back to the given source reference. See comments in token package for .NewSOFToken
+	startOfFileToken := token.NewSOFToken(source)
 	return &Lexer{
 		source:    source,
 		lastToken: startOfFileToken,

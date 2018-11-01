@@ -136,7 +136,8 @@ func (source *Source) PosFromLocation(location SourceLocation) uint {
 func (source *Source) LocationInfoOf(loc SourceLocation) SourceLocationInfo {
 	// TODO: Cache table of line offsets for a Source for the first time this is called. #5
 
-	// Handle invalid SourceLocation (SourceLocation).
+	// Handle invalid SourceLocation (NoSourceLocation). This may happen when querying location for
+	// special token like SOF which inherently has no source location.
 	if !loc.IsValid() {
 		return SourceLocationInfo{
 			Name: source.Name(),

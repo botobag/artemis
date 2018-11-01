@@ -18,6 +18,7 @@ package token
 
 import (
 	"fmt"
+	"unsafe"
 )
 
 // Kind describes the different kinds of tokens that the lexer emits.
@@ -166,6 +167,69 @@ func (token *Token) Description() string {
 	}
 	return token.Kind.String()
 }
+
+// Source finds the Source where this token is lexed from.
+func (token *Token) Source() *Source {
+	// Follow the link to get the SOF token.
+	tok := token
+	for tok.Prev != nil {
+		tok = tok.Prev
+	}
+
+	// Assume tok is embedded in a sofToken object. Use unsafe.Pointer to calculate the address of its
+	// adjacent Source reference.
+	return (*sofToken)(unsafe.Pointer(
+		uintptr(unsafe.Pointer(tok)) -
+			unsafe.Offsetof((*sofToken)(nil).token))).source
+}
+
+// LocationInfo returns the line and column number at which a token begins in the source.
+func (token *Token) LocationInfo() SourceLocationInfo {
+	return token.Source().LocationInfoOf(token.Location)
+}
+
+// EndLocationInfo returns the line and column number at which a token ends in the source.
+func (token *Token) EndLocationInfo() SourceLocationInfo {
+	return token.Source().LocationInfoOf(token.EndLocation())
+}
+
+//===------------------------------------------------------------------------------------------===//
+// "Magic" SOF Token
+//===------------------------------------------------------------------------------------------===//
+
+// This token is a *real hack*.
+//
+// The token is just an ordinary Start-of-File token (i.e., token.Kind is token.KindSOF and
+// token.Prev is nil). What makes it special is that it is put along side with a Source. With the
+// help of unsafe.Pointer [0] we can get the Source object from that Token. Then, based on fact that
+// all tokens in a Source are put in a doubly linked list, by walking along the links to this SOF
+// token, we can know the Source of a Token, and we can know its location (line and column number)
+// by calling Source.LocationInfoOf. Furthermore, every AST node exposes an interface TokenRange().
+// By applying the abovementioned techniques on the token returning from this interface, we can
+// access the location information for a AST node without storing Source reference in every ast.Node
+// and token.Token!
+//
+// [0]: https://golang.org/pkg/unsafe/#Pointer
+type sofToken struct {
+	token  Token
+	source *Source
+}
+
+// NewSOFToken creates a special SOF token which enables tokens to trace back to their Source.
+func NewSOFToken(source *Source) *Token {
+	tok := sofToken{
+		// Initialize an ordinary SOF token.
+		token: Token{
+			Kind: KindSOF,
+		},
+		source: source,
+	}
+	return &tok.token
+}
+
+//===------------------------------------------------------------------------------------------===//
+// Range
+//===------------------------------------------------------------------------------------------===//
 
 // Range represent a range of tokens covered by [First, Last].
 type Range struct {
