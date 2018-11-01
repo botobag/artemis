@@ -66,7 +66,7 @@ var _ = Describe("NonNull", func() {
 			intTypeDef := graphql.T(graphql.Int())
 			nonNullType, err := graphql.NewNonNullOf(intTypeDef)
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(nonNullType.ElementType()).Should(Equal(graphql.Int()))
+			Expect(nonNullType.InnerType()).Should(Equal(graphql.Int()))
 
 			nonNullType1 := graphql.MustNewNonNullOf(intTypeDef)
 			Expect(nonNullType1).ShouldNot(BeNil())

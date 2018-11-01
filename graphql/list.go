@@ -109,7 +109,8 @@ type List struct {
 }
 
 var (
-	_ Type = (*List)(nil)
+	_ Type         = (*List)(nil)
+	_ WrappingType = (*List)(nil)
 )
 
 // NewListOfType defines a List type from a given Type of element type.
@@ -156,12 +157,20 @@ func MustNewList(typeDef ListTypeDefinition) *List {
 // graphqlType implements Type.
 func (*List) graphqlType() {}
 
-// Values implemennts Type.
+// graphqlWrappingType implements WrappingType.
+func (*List) graphqlWrappingType() {}
+
+// Values implements Type.
 func (n *List) String() string {
 	return n.notation
 }
 
-// ElementType indicates the the type of the element wrapped in this non-null type.
+// UnwrappedType implements WrappingType.
+func (n *List) UnwrappedType() Type {
+	return n.ElementType()
+}
+
+// ElementType indicates the type of the element wrapped in this non-null type.
 func (n *List) ElementType() Type {
 	return n.elementType
 }

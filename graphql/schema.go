@@ -50,7 +50,6 @@ func (typeMap TypeMap) add(t Type) error {
 			if !exists {
 				// Add the type into typeMap.
 				typeMap.types[name] = t
-				fmt.Println(name, t)
 			} else {
 				if prev != t {
 					return NewError(fmt.Sprintf(
@@ -108,7 +107,7 @@ func (typeMap TypeMap) add(t Type) error {
 		case *List:
 			stack = append(stack, t.ElementType())
 		case *NonNull:
-			stack = append(stack, t.ElementType())
+			stack = append(stack, t.InnerType())
 
 		case nil:
 			// Skip nil type silently.

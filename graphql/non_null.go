@@ -115,7 +115,8 @@ type NonNull struct {
 }
 
 var (
-	_ Type = (*NonNull)(nil)
+	_ Type         = (*NonNull)(nil)
+	_ WrappingType = (*NonNull)(nil)
 )
 
 // NewNonNullOfType defines a NonNull type from a given Type of element type.
@@ -162,12 +163,20 @@ func MustNewNonNull(typeDef NonNullTypeDefinition) *NonNull {
 // graphqlType implements Type.
 func (*NonNull) graphqlType() {}
 
+// graphqlWrappingType implements WrappingType.
+func (*NonNull) graphqlWrappingType() {}
+
 // Values implemennts Type.
 func (n *NonNull) String() string {
 	return n.notation
 }
 
-// ElementType indicates the the type of the element wrapped in this non-null type.
-func (n *NonNull) ElementType() Type {
+// UnwrappedType implements WrappingType.
+func (n *NonNull) UnwrappedType() Type {
+	return n.InnerType()
+}
+
+// InnerType indicates the type of the element wrapped in this non-null type.
+func (n *NonNull) InnerType() Type {
 	return n.elementType
 }

@@ -58,6 +58,19 @@ type AbstractType interface {
 	graphqlAbstractType()
 }
 
+// WrappingType is a type that wraps another type. There are two wrapping type in GraphQL: List and
+// NonNull.
+//
+// Reference: https://facebook.github.io/graphql/draft/#sec-Wrapping-Types
+type WrappingType interface {
+	Type
+
+	// UnwrappedType returns the type that is wrapped by this type.
+	UnwrappedType() Type
+
+	graphqlWrappingType()
+}
+
 // Deprecation contains information about deprecation for a field or an enum value.
 //
 // See https://facebook.github.io/graphql/June2018/#sec-Deprecation.
@@ -91,15 +104,41 @@ type TypeWithDescription interface {
 // Type Predication
 //===------------------------------------------------------------------------------------------===//
 
+// NamedTypeOf returns the given type if it is a non-wrapping type. Otherwise, return the underlying
+// type of a wrapping type.
+//
+// Reference: https://facebook.github.io/graphql/draft/#sec-Wrapping-Types
+func NamedTypeOf(t Type) Type {
+	for {
+		switch ttype := t.(type) {
+		case *List:
+			if ttype == nil {
+				return nil
+			}
+			t = ttype.ElementType()
+
+		case *NonNull:
+			if ttype == nil {
+				return nil
+			}
+			t = ttype.InnerType()
+
+		default:
+			return t
+		}
+	}
+}
+
 // IsInputType returns true if the given type is valid an input field argument.
 //
 // Reference: https://facebook.github.io/graphql/June2018/#IsInputType()
 func IsInputType(t Type) bool {
-	switch t.(type) {
-	case *Scalar, *Enum:
+	switch NamedTypeOf(t).(type) {
+	case *Scalar, *Enum, *InputObject:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 // IsNullableType returns true if the type accepts null value.
