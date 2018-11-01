@@ -24,6 +24,7 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/botobag/artemis/graphql/ast"
 	"github.com/botobag/artemis/internal/util"
 )
 
@@ -80,6 +81,29 @@ type ErrorLocation struct {
 // implements this interface.
 type ErrorWithLocations interface {
 	Locations() []ErrorLocation
+}
+
+// ErrorWithASTNodes is a utility base which implements ErrorWithLocations by querying location
+// information from ast.Node's.
+type ErrorWithASTNodes struct {
+	Nodes []ast.Node
+}
+
+var _ ErrorWithLocations = ErrorWithASTNodes{}
+
+// Locations implements ErrorWithLocations.
+func (err ErrorWithASTNodes) Locations() []ErrorLocation {
+	if len(err.Nodes) > 0 {
+		locations := make([]ErrorLocation, len(err.Nodes))
+		for i, node := range err.Nodes {
+			tok := node.TokenRange().First
+			locationInfo := tok.LocationInfo()
+			locations[i].Line = locationInfo.Line
+			locations[i].Column = locationInfo.Column
+		}
+		return locations
+	}
+	return nil
 }
 
 // ResponsePath is an array of "key" where each key is either a string (indicating the field name)

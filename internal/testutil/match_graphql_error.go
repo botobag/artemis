@@ -48,6 +48,13 @@ func LocationEqual(location graphql.ErrorLocation) ErrorFieldsMatcher {
 	}
 }
 
+// LocationsConsistOf matches locations in the error to include all given locations.
+func LocationsConsistOf(locations []graphql.ErrorLocation) ErrorFieldsMatcher {
+	return func(fields gstruct.Fields) {
+		fields["Locations"] = gomega.ConsistOf(locations)
+	}
+}
+
 // KindIs matches the kind in the error to be the same as the given one.
 func KindIs(errKind graphql.ErrKind) ErrorFieldsMatcher {
 	return func(fields gstruct.Fields) {

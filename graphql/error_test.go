@@ -21,6 +21,10 @@ import (
 	"errors"
 
 	"github.com/botobag/artemis/graphql"
+	"github.com/botobag/artemis/graphql/ast"
+	"github.com/botobag/artemis/graphql/parser"
+	"github.com/botobag/artemis/graphql/token"
+	"github.com/botobag/artemis/internal/testutil"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -88,6 +92,15 @@ func (e *errWithExtensions) Extensions() graphql.ErrorExtensions {
 // Error implements Go's error interface
 func (e *errWithExtensions) Error() string {
 	return "error provided extensions"
+}
+
+type errWithASTNodes struct {
+	graphql.ErrorWithASTNodes
+}
+
+// Error implements Go's error interface
+func (e *errWithASTNodes) Error() string {
+	return "error with AST nodes"
 }
 
 var (
@@ -342,5 +355,52 @@ var _ = Describe("Error", func() {
 		e := graphql.WrapErrorf(errors.New("internal error"), "error for type %T", 1)
 		Expect(e).ShouldNot(BeNil())
 		Expect(e.Error()).Should(Equal("error for type int: internal error"))
+	})
+
+	Describe("ErrorWithASTNodes", func() {
+		It("pulls locations from AST nodes", func() {
+			document, err := parser.Parse(token.NewSource(&token.SourceConfig{
+				Body: token.SourceBody([]byte(`
+      mutation {
+        mutationField
+      }
+    `))}), parser.ParseOptions{})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			nodes := []ast.Node{document}
+
+			// TODO: Use AST visitor to walk through all nodes.
+			Expect(len(document.Definitions)).Should(Equal(1))
+			definition, ok := document.Definitions[0].(*ast.OperationDefinition)
+			Expect(ok).Should(BeTrue())
+			nodes = append(nodes, definition)
+
+			Expect(len(definition.SelectionSet)).Should(Equal(1))
+			nodes = append(nodes, definition.SelectionSet)
+
+			fieldSelection, ok := definition.SelectionSet[0].(*ast.Field)
+			Expect(ok).Should(BeTrue())
+
+			Expect(fieldSelection.Name).ShouldNot(BeNil())
+			nodes = append(nodes, fieldSelection.Name)
+
+			e := graphql.NewError("msg", &errWithASTNodes{
+				ErrorWithASTNodes: graphql.ErrorWithASTNodes{
+					Nodes: nodes,
+				},
+			})
+			Expect(e).Should(testutil.MatchGraphQLError(
+				testutil.LocationsConsistOf([]graphql.ErrorLocation{
+					// Start of document
+					{Line: 0, Column: 0},
+					// mutation
+					{Line: 2, Column: 7},
+					// Start of Selection Set
+					{Line: 2, Column: 16},
+					// mutationField
+					{Line: 3, Column: 9},
+				}),
+			))
+		})
 	})
 })
