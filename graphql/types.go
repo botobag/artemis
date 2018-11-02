@@ -129,7 +129,16 @@ func NamedTypeOf(t Type) Type {
 	}
 }
 
-// IsInputType returns true if the given type is valid an input field argument.
+// NullableTypeOf return the given type if it is not a non-null type. Otherwise, return the inner
+// type of the non-null type.
+func NullableTypeOf(t Type) Type {
+	if t, ok := t.(*NonNull); ok && t != nil {
+		return t.InnerType()
+	}
+	return t
+}
+
+// IsInputType returns true if the given type is valid for values in input arguments and variables.
 //
 // Reference: https://facebook.github.io/graphql/June2018/#IsInputType()
 func IsInputType(t Type) bool {
@@ -141,8 +150,106 @@ func IsInputType(t Type) bool {
 	}
 }
 
+// IsOutputType returns true if the given type is valid for values in field output.
+//
+// Reference: https://facebook.github.io/graphql/draft/#IsOutputType()
+func IsOutputType(t Type) bool {
+	switch NamedTypeOf(t).(type) {
+	case *Scalar, *Object, *Interface, *Union, *Enum:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsCompositeType true if the given type is one of object, interface or union.
+func IsCompositeType(t Type) bool {
+	switch t.(type) {
+	case *Object, *Interface, *Union:
+		return true
+	default:
+		return false
+	}
+}
+
 // IsNullableType returns true if the type accepts null value.
 func IsNullableType(t Type) bool {
 	_, ok := t.(*NonNull)
 	return !ok
+}
+
+// IsNamedType returns true if the type is a non-wrapping type.
+//
+// Reference: https://facebook.github.io/graphql/draft/#sec-Wrapping-Types
+func IsNamedType(t Type) bool {
+	return !IsWrappingType(t)
+}
+
+// The following predications are simple wrappers of type assertions to corresponding class. This
+// makes the use of predications in "if" easily.
+
+// IsLeafType returns true if the given type is a leaf.
+func IsLeafType(t Type) bool {
+	_, ok := t.(LeafType)
+	return ok
+}
+
+// IsAbstractType returns true if the given type is a abstract.
+func IsAbstractType(t Type) bool {
+	_, ok := t.(AbstractType)
+	return ok
+}
+
+// IsWrappingType returns true if the given type is a wrapping type.
+func IsWrappingType(t Type) bool {
+	_, ok := t.(WrappingType)
+	return ok
+}
+
+// IsScalarType returns true if the given type is a Scalar type.
+func IsScalarType(t Type) bool {
+	_, ok := t.(*Scalar)
+	return ok
+}
+
+// IsObjectType returns true if the given type is an Object type.
+func IsObjectType(t Type) bool {
+	_, ok := t.(*Object)
+	return ok
+}
+
+// IsInterfaceType returns true if the given type is an Interface type.
+func IsInterfaceType(t Type) bool {
+	_, ok := t.(*Interface)
+	return ok
+}
+
+// IsUnionType returns true if the given type is an Union type.
+func IsUnionType(t Type) bool {
+	_, ok := t.(*Union)
+	return ok
+}
+
+// IsEnumType returns true if the given type is an Enum type.
+func IsEnumType(t Type) bool {
+	_, ok := t.(*Enum)
+	return ok
+}
+
+// IsInputObjectType returns true if the given type is an Input Object type.
+func IsInputObjectType(t Type) bool {
+	_, ok := t.(*InputObject)
+	return ok
+}
+
+// IsListType returns true if the given type is a List type.
+func IsListType(t Type) bool {
+	_, ok := t.(*List)
+	return ok
+}
+
+// IsNonNullType returns true if the given type is a NonNull type.
+func IsNonNullType(t Type) bool {
+	_, ok := t.(*NonNull)
+	return ok
 }
