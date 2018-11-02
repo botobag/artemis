@@ -80,6 +80,7 @@ var _ = Describe("Type System: Schema", func() {
 				},
 			},
 		})
+		Expect(err).ShouldNot(HaveOccurred())
 
 		query, err := graphql.NewObject(&graphql.ObjectConfig{
 			Name: "Query",
@@ -97,6 +98,7 @@ var _ = Describe("Type System: Schema", func() {
 				Directive,
 			},
 		})
+		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	Describe("Type Map", func() {
