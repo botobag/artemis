@@ -56,7 +56,7 @@ func parseType(s string) (ast.Type, error) {
 func expectSyntaxError(text string, message string, location graphql.ErrorLocation) {
 	_, err := parse(text)
 	Expect(err).Should(testutil.MatchGraphQLError(
-		testutil.MessagaContainSubstring(message),
+		testutil.MessageContainSubstring(message),
 		testutil.LocationEqual(location),
 		testutil.KindIs(graphql.ErrKindSyntax),
 	))
@@ -826,7 +826,7 @@ var _ = Describe("Parser", func() {
 		It("rejects multiple values", func() {
 			_, err := parseValue(`1 2`)
 			Expect(err).Should(testutil.MatchGraphQLError(
-				testutil.MessagaContainSubstring(`Expected <EOF>, found Int "2"`),
+				testutil.MessageContainSubstring(`Expected <EOF>, found Int "2"`),
 				testutil.LocationEqual(graphql.ErrorLocation{
 					Line:   1,
 					Column: 3,
@@ -838,7 +838,7 @@ var _ = Describe("Parser", func() {
 		It("reject invalid values", func() {
 			_, err := parseValue("@deprecated")
 			Expect(err).Should(testutil.MatchGraphQLError(
-				testutil.MessagaContainSubstring("Unexpected @"),
+				testutil.MessageContainSubstring("Unexpected @"),
 				testutil.LocationEqual(graphql.ErrorLocation{
 					Line:   1,
 					Column: 1,
@@ -1031,7 +1031,7 @@ var _ = Describe("Parser", func() {
 		It("rejects incompleted list types", func() {
 			_, err := parseType("[[[MyType]]")
 			Expect(err).Should(testutil.MatchGraphQLError(
-				testutil.MessagaContainSubstring("Expected ], found <EOF>"),
+				testutil.MessageContainSubstring("Expected ], found <EOF>"),
 				testutil.LocationEqual(graphql.ErrorLocation{
 					Line:   1,
 					Column: 12,
@@ -1043,7 +1043,7 @@ var _ = Describe("Parser", func() {
 		It("rejects list type without item type", func() {
 			_, err := parseType("[]")
 			Expect(err).Should(testutil.MatchGraphQLError(
-				testutil.MessagaContainSubstring("Expected Name, found ]"),
+				testutil.MessageContainSubstring("Expected Name, found ]"),
 				testutil.LocationEqual(graphql.ErrorLocation{
 					Line:   1,
 					Column: 2,
@@ -1055,7 +1055,7 @@ var _ = Describe("Parser", func() {
 		It("rejects non-null type without item type", func() {
 			_, err := parseType("!")
 			Expect(err).Should(testutil.MatchGraphQLError(
-				testutil.MessagaContainSubstring("Expected Name, found !"),
+				testutil.MessageContainSubstring("Expected Name, found !"),
 				testutil.LocationEqual(graphql.ErrorLocation{
 					Line:   1,
 					Column: 1,
@@ -1067,7 +1067,7 @@ var _ = Describe("Parser", func() {
 		It("rejects non-null type with non-null item type", func() {
 			_, err := parseType("MyType!!")
 			Expect(err).Should(testutil.MatchGraphQLError(
-				testutil.MessagaContainSubstring("Expected <EOF>, found !"),
+				testutil.MessageContainSubstring("Expected <EOF>, found !"),
 				testutil.LocationEqual(graphql.ErrorLocation{
 					Line:   1,
 					Column: 8,
@@ -1077,7 +1077,7 @@ var _ = Describe("Parser", func() {
 
 			_, err = parseType("[[MyType!]!!]")
 			Expect(err).Should(testutil.MatchGraphQLError(
-				testutil.MessagaContainSubstring("Expected ], found !"),
+				testutil.MessageContainSubstring("Expected ], found !"),
 				testutil.LocationEqual(graphql.ErrorLocation{
 					Line:   1,
 					Column: 12,

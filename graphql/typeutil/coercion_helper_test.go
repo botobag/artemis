@@ -29,7 +29,7 @@ import (
 // tracedCoercionHelper implments graphql.CoercionHelper which traces the method dispatching in
 // CoercionHelperBase.
 type tracedCoercionHelper struct {
-	// Avoid using embeded struct to force tracedCoercionHelper to provide implementation for all
+	// Avoid using embedded struct to force tracedCoercionHelper to provide implementation for all
 	// interfaces required by CoercionHelper and not inherits missing ones from tracedCoercionHelper.
 	base typeutil.CoercionHelperBase
 

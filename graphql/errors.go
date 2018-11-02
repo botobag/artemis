@@ -72,21 +72,18 @@ func NewSyntaxError(source *token.Source, location token.SourceLocation, descrip
 // coercion or result coercion defined in [0]). The error is tagged with ErrKindCoercion and several
 // functions will take special care of it which described as follows:
 //
-//	1. For coercion errors returning from Enum and Scalar's CoerceResultValue:
+// 1. For coercion errors returning from Enum and Scalar's CoerceResultValue:
+//  - When execution engine sees these error (in `CompleteValue` [1], more specifically), it will
+//    bypass the errors directly to the caller, resulting a field/query error containing the message
+//    as the one carried by the errors. Otherwise, execution engine will wrap the error with
+//    NewDefaultCoercionError.
 //
-//		- When execution engine sees these error (in `CompleteValue` [1], more specifically), it will
-//		bypass the errors directly to the caller, resulting a field/query error containing the message
-//		as the one carried by the errors. Otherwise, execution engine will wrap the error with
-//		NewDefaultCoercionError.
+// 2. For coercion errors returning from Enum and Scalar's CoerceVariableValue:
+//  - When CoerceValue sees these errors, it will present a query error with the message specified
+//    in the error to the user.
 //
-//	2. For coercion errors returning from Enum and Scalar's CoerceVariableValue:
-//
-//		- When CoerceType sees these errors, it will present a query error with the message specified
-//			in the error to the user.
-//
-//	3. For coercion errors returning from Enum and Scalar's CoerceArgumentValue:
-//
-//		- Currently it makes no difference than other errors.
+// 3. For coercion errors returning from Enum and Scalar's CoerceArgumentValue:
+//  - Currently it makes no difference than other errors.
 //
 // [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars
 // [1]: https://facebook.github.io/graphql/June2018/#CompleteValue()

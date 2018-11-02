@@ -182,10 +182,10 @@ var _ ScalarInputCoercer = ScalarInputCoercerFuncs{}
 
 // ScalarTypeData contains type data for Scalar.
 type ScalarTypeData struct {
-	// The name of the scalar type
+	// The name of the Scalar type
 	Name string
 
-	// Description of the scalar type
+	// Description of the Scalar type
 	Description string
 }
 
@@ -249,13 +249,13 @@ type EnumValueDefinition struct {
 
 // EnumTypeData contains type data for Enum.
 type EnumTypeData struct {
-	// The name of the enum type
+	// The name of the Enum type
 	Name string
 
-	// Description of the enum type
+	// Description of the Enum type
 	Description string
 
-	// Values to be defined in the enum type
+	// Values to be defined in the Enum type
 	Values EnumValueDefinitionMap
 }
 
@@ -304,10 +304,10 @@ type EnumTypeDefinition interface {
 
 // ObjectTypeData contains type data for Object.
 type ObjectTypeData struct {
-	// The name of the enum type
+	// The name of the Object type
 	Name string
 
-	// Description of the enum type
+	// Description of the Object type
 	Description string
 
 	// Interfaces that implemented by the defining Object
@@ -343,10 +343,10 @@ type ObjectTypeDefinition interface {
 
 // InterfaceTypeData contains type data for Interface.
 type InterfaceTypeData struct {
-	// The name of the enum type
+	// The name of the Interface type
 	Name string
 
-	// Description of the enum type
+	// Description of the Interface type
 	Description string
 
 	// Fields in the Interface Type
@@ -422,10 +422,10 @@ type InterfaceTypeDefinition interface {
 
 // UnionTypeData contains type data for Union.
 type UnionTypeData struct {
-	// The name of the enum type
+	// The name of the Union type
 	Name string
 
-	// Description of the enum type
+	// Description of the Union type
 	Description string
 
 	// PossibleTypes describes which Object types can be represented by the defining union.
@@ -462,10 +462,10 @@ type UnionTypeDefinition interface {
 
 // InputObjectTypeData contains type data for InputObject.
 type InputObjectTypeData struct {
-	// The name of the enum type
+	// The name of the Input Object type
 	Name string
 
-	// Description of the enum type
+	// Description of the Input Object type
 	Description string
 
 	// Fields in the InputObject Type

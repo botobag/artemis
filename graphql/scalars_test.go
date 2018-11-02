@@ -30,7 +30,7 @@ import (
 
 func MatchCoercionError(message string) types.GomegaMatcher {
 	return testutil.MatchGraphQLError(
-		testutil.MessagaEqual(message),
+		testutil.MessageEqual(message),
 		testutil.KindIs(graphql.ErrKindCoercion),
 	)
 }

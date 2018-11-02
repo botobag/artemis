@@ -39,7 +39,7 @@ import (
 //
 // That is, the type of underlying value behind the interface{} returned by CoerceArgumentValue and
 // CoerceVariableValue are fixed to the one given in the table for each type. Therefore, for
-// example, when you recieve an Int argument, you can expect you got an "int" not int32 or others.
+// example, when you receive an Int argument, you can expect you got an "int" not int32 or others.
 
 // Reasons for the error when coercing built-in scalar types
 const (

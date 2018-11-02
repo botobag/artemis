@@ -167,7 +167,7 @@ type SchemaConfig struct {
 // Definitions including types and directives in schema are assumed to be immutable after creation.
 // This allows us to cache the results for some operations such as PossibleTypes.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec-Schema
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Schema
 type Schema struct {
 	// query, mutation and subscription are root operation objects.
 	query        *Object
@@ -274,21 +274,21 @@ func (schema *Schema) Directives() DirectiveList {
 
 // Query is one of the three GraphQL Root Operations.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
 func (schema *Schema) Query() *Object {
 	return schema.query
 }
 
 // Mutation is one of the three GraphQL Root Operations.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
 func (schema *Schema) Mutation() *Object {
 	return schema.mutation
 }
 
 // Subscription is one of the three GraphQL Root Operations.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
 func (schema *Schema) Subscription() *Object {
 	return schema.subscription
 }

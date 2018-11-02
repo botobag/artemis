@@ -18,7 +18,7 @@ package graphql
 
 // This files implements 3 directives required by specification.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec-Type-System.Directives
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.Directives
 
 //===----------------------------------------------------------------------------------------====//
 // @skip
@@ -54,7 +54,7 @@ func SkipDirective() *Directive {
 // The @include directive may be provided for fields, fragment spreads, and inline fragments, and
 // allows for conditional inclusion during execution as described by the if argument.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec--include
+// Reference: https://facebook.github.io/graphql/June2018/#sec--include
 
 // IncludeDirective is used to conditionally include fields or fragments.
 var includeDirective = MustNewDirective(&DirectiveConfig{
@@ -86,7 +86,7 @@ func IncludeDirective() *Directive {
 // deprecated portions of a GraphQL service’s schema, such as deprecated fields on a type or
 // deprecated enum values.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec--deprecated
+// Reference: https://facebook.github.io/graphql/June2018/#sec--deprecated
 
 // DefaultDeprecationReason is a constant string used for default reason for a deprecation.
 const DefaultDeprecationReason = "No longer supported"
@@ -118,7 +118,7 @@ func DeprecatedDirective() *Directive {
 // StandardDirectives returns list of directives that should be included in a standard GraphQL as
 // per specification.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec-Type-System.Directives
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.Directives
 func StandardDirectives() []*Directive {
 	return []*Directive{
 		// @skip

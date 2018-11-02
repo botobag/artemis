@@ -60,17 +60,17 @@ const (
 	KindPipe
 	// }
 	KindRightBrace
-	// Ref: https://facebook.github.io/graphql/June2018/#Name
+	// Reference: https://facebook.github.io/graphql/June2018/#Name
 	KindName
-	// Ref: https://facebook.github.io/graphql/June2018/#IntValue
+	// Reference: https://facebook.github.io/graphql/June2018/#IntValue
 	KindInt
-	// Ref: https://facebook.github.io/graphql/June2018/#sec-Float-Value
+	// Reference: https://facebook.github.io/graphql/June2018/#sec-Float-Value
 	KindFloat
-	// Ref: https://facebook.github.io/graphql/June2018/#sec-String-Value
+	// Reference: https://facebook.github.io/graphql/June2018/#sec-String-Value
 	KindString
-	// Ref: https://facebook.github.io/graphql/June2018/#sec-String-Value
+	// Reference: https://facebook.github.io/graphql/June2018/#sec-String-Value
 	KindBlockString
-	// Ref: https://facebook.github.io/graphql/June2018/#sec-Comments
+	// Reference: https://facebook.github.io/graphql/June2018/#sec-Comments
 	KindComment
 )
 

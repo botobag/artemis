@@ -64,7 +64,7 @@ func (result *newTypeResult) completeWithError(err error) {
 	close(result.done)
 }
 
-// typeDefinitionResolver resovles a TypeDefinition into a Type during type finalization.
+// typeDefinitionResolver resolves a TypeDefinition into a Type during type finalization.
 type typeDefinitionResolver func(typeDef TypeDefinition) (Type, error)
 
 // Resolve simply calls resolver(typeDef) to make typeDefinitionResolver looks like an object.

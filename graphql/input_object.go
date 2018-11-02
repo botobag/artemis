@@ -190,7 +190,7 @@ func (*inputObjectTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionRe
 // used as an input argument. More specifically, fields in an Input Object type cannot define
 // arguments or contain references to interfaces and unions.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec-Input-Objects
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Input-Objects
 type InputObject struct {
 	data   InputObjectTypeData
 	fields InputFieldMap

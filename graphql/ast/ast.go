@@ -120,7 +120,7 @@ func (DefinitionBase) definitionNode() {}
 
 // ExecutableDefinition represents an executable definition.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#ExecutableDefinition
+// Reference: https://facebook.github.io/graphql/June2018/#ExecutableDefinition
 type ExecutableDefinition interface {
 	Definition
 
@@ -143,11 +143,11 @@ var (
 //	* mutation – a write followed by a fetch.
 // 	* subscription – a long‐lived request that fetches data in response to source events.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec-Language.Operations
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Operations
 
 // OperationType specifies the type of operation model.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#OperationType
+// Reference: https://facebook.github.io/graphql/June2018/#OperationType
 type OperationType string
 
 // Enumeration of OperationType
@@ -159,7 +159,7 @@ const (
 
 // OperationDefinition represents a GraphQL operation.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#OperationDefinition
+// Reference: https://facebook.github.io/graphql/June2018/#OperationDefinition
 type OperationDefinition struct {
 	DefinitionBase
 
@@ -216,11 +216,11 @@ func (definition *OperationDefinition) OperationType() OperationType {
 // An operation selects the set of information it needs, and will receive exactly that information
 // and nothing more, avoiding over‐fetching and under‐fetching data.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec-Selection-Sets
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Selection-Sets
 
 // SelectionSet specifies the information to be fetched.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#SelectionSet
+// Reference: https://facebook.github.io/graphql/June2018/#SelectionSet
 type SelectionSet []Selection
 
 var _ Node = SelectionSet{}
@@ -258,7 +258,7 @@ func (set SelectionSet) TokenRange() token.Range {
 //		FragmentSpread
 //		InlineFragment
 //
-// Ref: https://facebook.github.io/graphql/June2018/#Selection
+// Reference: https://facebook.github.io/graphql/June2018/#Selection
 type Selection interface {
 	Node
 
@@ -279,16 +279,16 @@ var (
 // A selection set is primarily composed of fields. A field describes one discrete piece of
 // information available to request within a selection set.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec-Language.Fields
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Fields
 
 // Field describes a field selection.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#Field
+// Reference: https://facebook.github.io/graphql/June2018/#Field
 type Field struct {
 	// Alias specifies a different name of the key to be used in response object for returning the
 	// field value.
 	//
-	// Ref: https://facebook.github.io/graphql/June2018/#sec-Field-Alias
+	// Reference: https://facebook.github.io/graphql/June2018/#sec-Field-Alias
 	Alias Name
 
 	// Name of the field
@@ -386,11 +386,11 @@ func (node *Argument) TokenRange() token.Range {
 // Fragments allow for the reuse of common repeated selections of fields, reducing duplicated text
 // in the document.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#sec-Language.Fragments
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Fragments
 
 // FragmentDefinition represents a reusable selections of fields.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#FragmentDefinition
+// Reference: https://facebook.github.io/graphql/June2018/#FragmentDefinition
 type FragmentDefinition struct {
 	DefinitionBase
 
@@ -424,7 +424,7 @@ func (definition *FragmentDefinition) GetSelectionSet() SelectionSet {
 // FragmentSpread uses the spread operator (...) on a fragment to adds a set of fields defined by
 // the fragment to selection set.
 //
-// Ref: https://facebook.github.io/graphql/June2018/#FragmentSpread
+// Reference: https://facebook.github.io/graphql/June2018/#FragmentSpread
 type FragmentSpread struct {
 	// Name of the fragment to be consumed by the selection set
 	Name Name

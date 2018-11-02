@@ -85,7 +85,7 @@ func (d *Deprecation) Defined() bool {
 }
 
 //===----------------------------------------------------------------------------------------====//
-// Metafields that only available in certian types
+// Metafields that only available in certain types
 //===----------------------------------------------------------------------------------------====//
 
 // TypeWithName is implemented by the type definition for named type.

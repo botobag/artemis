@@ -38,7 +38,7 @@ func lexOne(str string) (*token.Token, error) {
 func expectSyntaxError(text string, message string, location graphql.ErrorLocation) {
 	_, err := lexOne(text)
 	Expect(err).Should(testutil.MatchGraphQLError(
-		testutil.MessagaContainSubstring(message),
+		testutil.MessageContainSubstring(message),
 		testutil.LocationEqual(location),
 		testutil.KindIs(graphql.ErrKindSyntax),
 	))
