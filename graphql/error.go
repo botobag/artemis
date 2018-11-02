@@ -91,15 +91,22 @@ type ErrorWithASTNodes struct {
 
 var _ ErrorWithLocations = ErrorWithASTNodes{}
 
+// ErrorLocationOfASTNode formats location of an AST node into an ErrorLocation.
+func ErrorLocationOfASTNode(node ast.Node) ErrorLocation {
+	tok := node.TokenRange().First
+	locationInfo := tok.LocationInfo()
+	return ErrorLocation{
+		Line:   locationInfo.Line,
+		Column: locationInfo.Column,
+	}
+}
+
 // Locations implements ErrorWithLocations.
 func (err ErrorWithASTNodes) Locations() []ErrorLocation {
 	if len(err.Nodes) > 0 {
 		locations := make([]ErrorLocation, len(err.Nodes))
 		for i, node := range err.Nodes {
-			tok := node.TokenRange().First
-			locationInfo := tok.LocationInfo()
-			locations[i].Line = locationInfo.Line
-			locations[i].Column = locationInfo.Column
+			locations[i] = ErrorLocationOfASTNode(node)
 		}
 		return locations
 	}
@@ -405,4 +412,16 @@ func (e *Error) printError(b *util.StringBuilder, nextErr *Error) {
 	}
 
 	return
+}
+
+// Errors wraps a list of Error.
+type Errors []*Error
+
+// Emplace constructs an Error and append to the list. (We borrowed the name from C++'s
+// std::list::emaplce.) Note that it would panic if unsupported argument is supplied in args.
+func (errs *Errors) Emplace(message string, args ...interface{}) {
+	err := NewError(message, args...)
+	// The type assertion may fail resulting a panic if args contains unsupported type of value (which
+	// NewError will return an error built from fmt.Errorf).
+	*errs = append(*errs, err.(*Error))
 }
