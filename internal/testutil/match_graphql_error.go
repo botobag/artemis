@@ -78,3 +78,21 @@ func MatchGraphQLError(matchers ...ErrorFieldsMatcher) types.GomegaMatcher {
 	}
 	return gstruct.PointTo(gstruct.MatchFields(gstruct.IgnoreExtras, fields))
 }
+
+// ConsistOfGraphQLErrors is used to match a graphql.Errors like an array of graphql.Error's with
+// Gomega's ConsistOf.
+//
+//		Expect(errs).Should(MatchGraphQLErrors(
+//			MatchGraphQLError(
+//				MessageContainSubstring("First error"),
+//				KindIs(graphql.ErrKindSyntax),
+//			),
+//			MatchGraphQLError(
+//				MessageContainSubstring("Second error"),
+//			),
+//		))
+func ConsistOfGraphQLErrors(matchers ...interface{}) types.GomegaMatcher {
+	return gstruct.MatchAllFields(gstruct.Fields{
+		"Errors": gomega.ConsistOf(matchers...),
+	})
+}

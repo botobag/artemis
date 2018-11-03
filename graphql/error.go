@@ -414,14 +414,97 @@ func (e *Error) printError(b *util.StringBuilder, nextErr *Error) {
 	return
 }
 
-// Errors wraps a list of Error.
-type Errors []*Error
+// Errors wraps a list of Error. Intentionally wrapped in a struct instead of a simple alias to
+// []*Error (i.e., "type Errors []*Error") to enforce error checks to use errs.HaveOccurred()
+// instead of (errs != nil) (errs may be an empty array which should be treat as no error).
+type Errors struct {
+	Errors []*Error
+}
 
-// Emplace constructs an Error and append to the list. (We borrowed the name from C++'s
-// std::list::emaplce.) Note that it would panic if unsupported argument is supplied in args.
+// ErrorsOf is an utility function to constructs an Errors value. It takes arguments in one of the
+// form otherwise it panics:
+//
+// 1. An array of *graphql.Error's; or
+// 2. Arguments that can be taken by NewError to construct an Error value; That is, a string
+//    specified the error message followed by other error context (e.g., locations).
+// 3. An array of *graphql.Error's followed by arguments that can be taken by NewError.
+//
+// This is useful for use in construct-and-return. For example,
+//
+//	func SomethingMightFail() graphql.Errors {
+//		...
+//
+//		// Something wrong; Construct an error and return it.
+//		return nil, graphql.ErrorsOf("something wrong")
+//	}
+func ErrorsOf(args ...interface{}) Errors {
+	var errs Errors
+	for i, arg := range args {
+		switch arg := arg.(type) {
+		case error:
+			errs.Append(arg)
+
+		case string:
+			errs.Emplace(arg, args[(i+1):]...)
+			return errs
+
+		default:
+			panic("Errors.Emplace: bad call")
+		}
+	}
+	return errs
+}
+
+// NoErrors constructs an empty Errors.
+func NoErrors() Errors {
+	return Errors{}
+}
+
+// Emplace constructs an Error from arguments and append to the errs. (We borrowed the name from
+// C++'s std::list::emaplce.) It updates the list in the receiving Errors object (note about the
+// pointer receiver). Note that it would panic if unsupported argument is supplied in args.
 func (errs *Errors) Emplace(message string, args ...interface{}) {
-	err := NewError(message, args...)
-	// The type assertion may fail resulting a panic if args contains unsupported type of value (which
-	// NewError will return an error built from fmt.Errorf).
-	*errs = append(*errs, err.(*Error))
+	// Construct an Error value from arguments and append to the list.
+	errs.Append(NewError(message, args...))
+}
+
+// Append appends list of Error's to the end of the Errors. Note that the given error must be an
+// graphql.Error otherwise it panics. The update is occurred in-place to the given Errors.
+func (errs *Errors) Append(e ...error) {
+	for _, err := range e {
+		// The type assertion may fail resulting a panic if args contains unsupported type of value
+		// (in which NewError will return an error built from fmt.Errorf).
+		errs.Errors = append(errs.Errors, err.(*Error))
+	}
+}
+
+// AppendErrors takes a list of Errors's and pulls every Error in each Errors to append to "errs".
+// The update is occurred in-place to the given Errors.
+func (errs *Errors) AppendErrors(e ...Errors) {
+	size := len(errs.Errors)
+	// Compute the new size.
+	for _, err := range e {
+		size += len(err.Errors)
+	}
+
+	// Make a new array.
+	newErrors := make([]*Error, size)
+
+	// Make a copy of current errs in new array.
+	copy(newErrors, errs.Errors)
+
+	// Make a copy of every Error's in given ones.
+	i := len(errs.Errors)
+	for _, err := range e {
+		copy(newErrors[i:], err.Errors)
+		i += len(err.Errors)
+	}
+
+	errs.Errors = newErrors
+}
+
+// HaveOccurred returns true if some errors exist. Use this instead of relying on "errs != nil" for
+// checking existence of error because errs may be an empty array.
+func (errs Errors) HaveOccurred() bool {
+	return len(errs.Errors) > 0
 }

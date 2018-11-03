@@ -32,7 +32,7 @@ var _ = Describe("CoerceValue", func() {
 	Describe("for String", func() {
 		It("returns error for array input as string", func() {
 			_, errs := value.CoerceValue([]interface{}{1, 2, 3}, graphql.String(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type String; String cannot represent [1 2 3]: invalid variable type `[]interface {}`"),
 			)))
 		})
@@ -41,7 +41,7 @@ var _ = Describe("CoerceValue", func() {
 	Describe("for ID", func() {
 		It("returns error for array input as ID", func() {
 			_, errs := value.CoerceValue([]interface{}{1, 2, 3}, graphql.ID(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type ID; ID cannot represent [1 2 3]: invalid variable type `[]interface {}`"),
 			)))
 		})
@@ -54,7 +54,7 @@ var _ = Describe("CoerceValue", func() {
 
 		It("returns error for numeric looking string", func() {
 			_, errs := value.CoerceValue("1", graphql.Int(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Int; Int cannot represent \"1\": invalid variable type `string`"),
 			)))
 		})
@@ -65,7 +65,7 @@ var _ = Describe("CoerceValue", func() {
 
 		It("rejects value for exponent input", func() {
 			_, errs := value.CoerceValue(1e3, graphql.Int(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Int; Int cannot represent 1000: invalid variable type `float64`"),
 			)))
 		})
@@ -76,54 +76,54 @@ var _ = Describe("CoerceValue", func() {
 
 		It("returns a single error for empty string as value", func() {
 			_, errs := value.CoerceValue("", graphql.Int(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Int; Int cannot represent \"\": invalid variable type `string`"),
 			)))
 		})
 
 		It("returns a single error for 2^32 input as int", func() {
 			_, errs := value.CoerceValue(uint64(1<<32), graphql.Int(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Int; Int cannot represent 4294967296: value too large for 32-bit signed integer"),
 			)))
 		})
 
 		It("returns a single error for float input as int", func() {
 			_, errs := value.CoerceValue(1.5, graphql.Int(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Int; Int cannot represent 1.5: invalid variable type `float64`"),
 			)))
 		})
 
 		It("returns a single error for NaN input as int", func() {
 			_, errs := value.CoerceValue(math.NaN(), graphql.Int(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Int; Int cannot represent NaN: not an integer"),
 			)))
 		})
 
 		It("returns a single error for Infinity input as int", func() {
 			_, errs := value.CoerceValue(math.Inf(+1), graphql.Int(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Int; Int cannot represent +Inf: not an integer"),
 			)))
 
 			_, errs = value.CoerceValue(math.Inf(-1), graphql.Int(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Int; Int cannot represent -Inf: not an integer"),
 			)))
 		})
 
 		It("returns a single error for char input", func() {
 			_, errs := value.CoerceValue("a", graphql.Int(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Int; Int cannot represent \"a\": invalid variable type `string`"),
 			)))
 		})
 
 		It("returns a single error for string input", func() {
 			_, errs := value.CoerceValue("meow", graphql.Int(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Int; Int cannot represent \"meow\": invalid variable type `string`"),
 			)))
 		})
@@ -144,7 +144,7 @@ var _ = Describe("CoerceValue", func() {
 
 		It("returns error for numeric looking string", func() {
 			_, errs := value.CoerceValue("1", graphql.Float(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Float; Float cannot represent \"1\": invalid variable type `string`"),
 			)))
 		})
@@ -155,40 +155,40 @@ var _ = Describe("CoerceValue", func() {
 
 		It("returns a single error for empty string as value", func() {
 			_, errs := value.CoerceValue("", graphql.Float(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Float; Float cannot represent \"\": invalid variable type `string`"),
 			)))
 		})
 
 		It("returns a single error for NaN input as int", func() {
 			_, errs := value.CoerceValue(math.NaN(), graphql.Float(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Float; Float cannot represent NaN: not a numeric value"),
 			)))
 		})
 
 		It("returns a single error for Infinity input as int", func() {
 			_, errs := value.CoerceValue(math.Inf(+1), graphql.Float(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Float; Float cannot represent +Inf: not a numeric value"),
 			)))
 
 			_, errs = value.CoerceValue(math.Inf(-1), graphql.Float(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Float; Float cannot represent -Inf: not a numeric value"),
 			)))
 		})
 
 		It("returns a single error for char input", func() {
 			_, errs := value.CoerceValue("a", graphql.Float(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Float; Float cannot represent \"a\": invalid variable type `string`"),
 			)))
 		})
 
 		It("returns a single error for string input", func() {
 			_, errs := value.CoerceValue("meow", graphql.Float(), nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Float; Float cannot represent \"meow\": invalid variable type `string`"),
 			)))
 		})
@@ -216,19 +216,19 @@ var _ = Describe("CoerceValue", func() {
 
 		It("results error for misspelled enum value", func() {
 			_, errs := value.CoerceValue("foo", TestEnum, nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type TestEnum; did you mean FOO?"),
 			)))
 		})
 
 		It("results error for incorrect value type", func() {
 			_, errs := value.CoerceValue(123, TestEnum, nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type TestEnum."),
 			)))
 
 			_, errs = value.CoerceValue(map[string]interface{}{"field": "value"}, TestEnum, nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type TestEnum."),
 			)))
 		})
@@ -260,14 +260,14 @@ var _ = Describe("CoerceValue", func() {
 
 		It("returns an error for a non-object type", func() {
 			_, errs := value.CoerceValue(123, TestInputObject, nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type TestInputObject to be an object."),
 			)))
 		})
 
 		It("returns an error for an invalid field", func() {
 			_, errs := value.CoerceValue(map[string]interface{}{"foo": "abc"}, TestInputObject, nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Expected type Int at value.foo; Int cannot represent \"abc\": invalid variable type `string`"),
 			)))
 		})
@@ -277,7 +277,7 @@ var _ = Describe("CoerceValue", func() {
 				"foo": "abc",
 				"bar": "def",
 			}, TestInputObject, nil)
-			Expect(errs).Should(ConsistOf(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(
 				testutil.MatchGraphQLError(
 					testutil.MessageEqual("Expected type Int at value.foo; Int cannot represent \"abc\": invalid variable type `string`"),
 				),
@@ -288,7 +288,7 @@ var _ = Describe("CoerceValue", func() {
 
 		It("returns error for a missing required field", func() {
 			_, errs := value.CoerceValue(map[string]interface{}{"bar": 123}, TestInputObject, nil)
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Field value.foo of required type Int! was not provided."),
 			)))
 		})
@@ -299,7 +299,7 @@ var _ = Describe("CoerceValue", func() {
 				"unknownField": 123,
 			}, TestInputObject, nil)
 
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual(`Field "unknownField" is not defined by type TestInputObject.`),
 			)))
 		})
@@ -310,7 +310,7 @@ var _ = Describe("CoerceValue", func() {
 				"bart": 123,
 			}, TestInputObject, nil)
 
-			Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual(`Field "bart" is not defined by type TestInputObject; did you mean bar?`),
 			)))
 		})
@@ -333,7 +333,7 @@ var _ = Describe("CoerceValue", func() {
 		It("returns an error for an invalid input", func() {
 			_, errs := value.CoerceValue([]interface{}{1, "b", true}, TestList, nil)
 
-			Expect(errs).Should(ConsistOf(
+			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(
 				testutil.MatchGraphQLError(
 					testutil.MessageEqual("Expected type Int at value[1]; Int cannot represent \"b\": invalid variable type `string`"),
 				),
@@ -405,7 +405,7 @@ var _ = Describe("CoerceValue", func() {
 		Expect(err).ShouldNot(HaveOccurred())
 
 		_, errs := value.CoerceValue(nil, testNonNull, nil)
-		Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+		Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 			testutil.MessageEqual(`Expected non-nullable type Int! not to be null.`),
 		)))
 	})
@@ -422,7 +422,7 @@ var _ = Describe("CoerceValue", func() {
 		Expect(err).ShouldNot(HaveOccurred())
 
 		_, errs := value.CoerceValue(map[string]interface{}{"int": 2}, testObject, nil)
-		Expect(errs).Should(ConsistOf(testutil.MatchGraphQLError(
+		Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 			testutil.MessageEqual(`TestObject is not a valid input type.`),
 		)))
 	})

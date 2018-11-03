@@ -77,21 +77,21 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 	// A value must be provided if the type is non-null.
 	if nonNullType, isNonNullType := t.(*graphql.NonNull); isNonNullType {
 		if value == nil {
-			return nil, graphql.Errors{
+			return nil, graphql.ErrorsOf(
 				newCoercionError(
 					fmt.Sprintf(`Expected non-nullable type %v not to be null`, t),
 					blameNode,
 					path,
 					"",  /* subMessage */
 					nil, /* originalError */
-				)}
+				))
 		}
 		return coerceValueImpl(value, nonNullType.InnerType(), blameNode, path)
 	}
 
 	if value == nil {
 		// Explicitly return the value null.
-		return nil, nil
+		return nil, graphql.NoErrors()
 	}
 
 	switch t := t.(type) {
@@ -105,16 +105,16 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 				// Include the message in the error message.
 				subMessage = e.Message
 			}
-			return nil, graphql.Errors{
+			return nil, graphql.ErrorsOf(
 				newCoercionError(
 					fmt.Sprintf(`Expected type %s`, t.String()),
 					blameNode,
 					path,
 					subMessage,
 					err,
-				)}
+				))
 		}
-		return coerced, nil
+		return coerced, graphql.NoErrors()
 
 	case *graphql.Enum:
 		coerced, err := t.CoerceVariableValue(value)
@@ -130,16 +130,16 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 				didYouMean = fmt.Sprintf("did you mean %s?",
 					util.OrList(suggestions, 5 /* maxLength */, false /* quoted */))
 			}
-			return nil, graphql.Errors{
+			return nil, graphql.ErrorsOf(
 				newCoercionError(
 					fmt.Sprintf(`Expected type %s`, t.String()),
 					blameNode,
 					path,
 					didYouMean,
 					err,
-				)}
+				))
 		}
-		return coerced, nil
+		return coerced, graphql.NoErrors()
 
 	case *graphql.List:
 		elementType := t.ElementType()
@@ -147,7 +147,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 		if reflectValue.Kind() == reflect.Slice || reflectValue.Kind() == reflect.Array {
 			numElements := reflectValue.Len()
 			if numElements == 0 {
-				return []interface{}{}, nil
+				return []interface{}{}, graphql.NoErrors()
 			}
 
 			var errs graphql.Errors
@@ -162,37 +162,37 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 					elementType,
 					blameNode,
 					path)
-				if len(elementErrs) > 0 {
-					errs = append(errs, elementErrs...)
-				} else if len(errs) == 0 {
+				if elementErrs.HaveOccurred() {
+					errs.AppendErrors(elementErrs)
+				} else if !errs.HaveOccurred() {
 					coercedValues = append(coercedValues, coercedValue)
 				}
 			}
-			if len(errs) > 0 {
+			if errs.HaveOccurred() {
 				return nil, errs
 			}
-			return coercedValues, nil
+			return coercedValues, graphql.NoErrors()
 		}
 
 		// Lists accept a non-list value as a list of one.
 		coercedValue, errs := coerceValueImpl(value, elementType, blameNode, path)
-		if len(errs) > 0 {
+		if errs.HaveOccurred() {
 			return nil, errs
 		}
-		return []interface{}{coercedValue}, nil
+		return []interface{}{coercedValue}, graphql.NoErrors()
 
 	case *graphql.InputObject:
 		// Currently we only accept map[string]interface{}. See #52.
 		objectValue, isObjectValue := value.(map[string]interface{})
 		if !isObjectValue {
-			return nil, graphql.Errors{
+			return nil, graphql.ErrorsOf(
 				newCoercionError(
 					fmt.Sprintf(`Expected type %s to be an object`, t.String()),
 					blameNode,
 					path,
 					"", /* subMessage */
 					graphql.NewError(fmt.Sprintf("value for InputObject should be given in a map[string]interface{}, but got: %T", value)),
-				)}
+				))
 		}
 
 		var errs graphql.Errors
@@ -209,7 +209,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 				if field.HasDefaultValue() {
 					coercedValue[name] = field.DefaultValue()
 				} else if graphql.IsNonNullType(field.Type()) {
-					errs = append(errs,
+					errs.Append(
 						newCoercionError(
 							fmt.Sprintf(`Field %s of required type %v was not provided`, path.String(), field.Type()),
 							blameNode,
@@ -220,9 +220,9 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 				}
 			} else {
 				coercedField, fieldErrs := coerceValueImpl(fieldValue, field.Type(), blameNode, path)
-				if len(fieldErrs) > 0 {
-					errs = append(errs, fieldErrs...)
-				} else if len(errs) == 0 {
+				if fieldErrs.HaveOccurred() {
+					errs.AppendErrors(fieldErrs)
+				} else if !errs.HaveOccurred() {
 					coercedValue[name] = coercedField
 				}
 			}
@@ -249,7 +249,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 					didYouMean = fmt.Sprintf("did you mean %s?", util.OrList(suggestions, 5 /* maxLength*/, false /*quoted*/))
 				}
 
-				errs = append(errs,
+				errs.Append(
 					newCoercionError(
 						fmt.Sprintf(`Field "%s" is not defined by type %s`, name, t.String()),
 						blameNode,
@@ -260,21 +260,20 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 			}
 		}
 
-		if len(errs) > 0 {
+		if errs.HaveOccurred() {
 			return nil, errs
 		}
-		return coercedValue, nil
+		return coercedValue, graphql.NoErrors()
 	}
 
-	return nil, graphql.Errors{
+	return nil, graphql.ErrorsOf(
 		newCoercionError(
 			fmt.Sprintf("%v is not a valid input type", t),
 			blameNode,
 			path,
 			"",  /* subMessage */
 			nil, /* originalError */
-		),
-	}
+		))
 }
 
 func newCoercionError(
@@ -282,7 +281,7 @@ func newCoercionError(
 	blameNode ast.Node,
 	path *valuePath,
 	subMessage string,
-	originalError error) *graphql.Error {
+	originalError error) error {
 	var messageBuilder util.StringBuilder
 
 	messageBuilder.WriteString(message)
@@ -315,5 +314,5 @@ func newCoercionError(
 	return graphql.NewError(
 		messageBuilder.String(),
 		locations,
-		originalError).(*graphql.Error)
+		originalError)
 }
