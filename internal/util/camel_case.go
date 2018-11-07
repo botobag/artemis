@@ -20,6 +20,7 @@ import (
 	"strings"
 )
 
+/*
 func isSnakeCaseLower(b byte) bool {
 	return b >= 'a' && b <= 'z'
 }
@@ -30,59 +31,55 @@ func toSnakeCaseLower(b byte) byte {
 	}
 	return b
 }
+*/
 
-// SnakeCase converts a string of the form "/[_A-Za-z][_0-9A-Za-z]*/" [0] into snake case. For
-// example, it returns "snake_case" for "SnakeCase".
+func toCamelCaseUpper(b byte) byte {
+	if b >= 'a' && b <= 'z' {
+		return b - 'a' + 'A'
+	}
+	return b
+}
+
+// CamelCase converts a string of the form "/[_A-Za-z][_0-9A-Za-z]*/" [0] into camel case. For
+// example, it returns "CamelCase" for "camel_case".
 //
 // [0]: https://facebook.github.io/graphql/June2018/#Name
-func SnakeCase(s string) string {
+func CamelCase(s string) string {
 	sLen := len(s)
 	if sLen == 0 {
 		return s
 	} else if sLen == 1 {
-		return strings.ToLower(s)
+		return strings.ToUpper(s)
 	}
 
 	var buf StringBuilder
 	buf.Grow(sLen)
 
-	var (
-		prev = s[0]
-		cur  = s[1]
-	)
-
 	// Handle the first character.
-	buf.WriteByte(toSnakeCaseLower(prev))
-
-	for i := 1; i < sLen-1; i++ {
-		var (
-			next  = s[i+1]
-			lower = toSnakeCaseLower(cur)
-		)
-
-		if lower != cur {
-			if prev != '_' &&
-				(isSnakeCaseLower(prev) || isSnakeCaseLower(next)) {
-				buf.WriteByte('_')
-			}
+	i := 0
+	for i < sLen {
+		if s[i] == '_' {
+			i++
+			continue
 		}
-		buf.WriteByte(lower)
-
-		prev = cur
-		cur = next
+		buf.WriteByte(toCamelCaseUpper(s[i]))
+		i++
+		break
 	}
 
-	// Handle the last character.
-	{
-		var lower = toSnakeCaseLower(cur)
-
-		if lower != cur {
-			if prev != '_' &&
-				(isSnakeCaseLower(prev) /* || unicode.IsLower(next) */) {
-				buf.WriteRune('_')
+	for ; i < sLen; i++ {
+		if s[i] != '_' {
+			buf.WriteByte(s[i])
+		} else {
+			for i < sLen {
+				if s[i] == '_' {
+					i++
+					continue
+				}
+				buf.WriteByte(toCamelCaseUpper(s[i]))
+				break
 			}
 		}
-		buf.WriteByte(lower)
 	}
 
 	return buf.String()
