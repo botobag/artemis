@@ -297,16 +297,12 @@ var _ = Describe("Error", func() {
 		// Wrap an error with custom extensions.
 		mockExtensions2 := graphql.ErrorExtensions{
 			"timestamp": "Fri Feb 9 14:33:09 UTC 2018",
+			"foo":       "bar",
 		}
 		e = newError("error wraps with custom extensions", e, mockExtensions2)
 		Expect(e.Extensions).Should(Equal(mockExtensions2))
 		expectSerializationResult(e,
-			`{"message":"error wraps with custom extensions","extensions":{"timestamp":"Fri Feb 9 14:33:09 UTC 2018"}}`)
-
-		expectOutputResult(e,
-			`error wraps with custom extensions (additional info: map[timestamp:Fri Feb 9 14:33:09 UTC 2018]):
-  error wraps an error with extensions (additional info: map[code:CAN_NOT_FETCH_BY_ID]):
-  error with extensions: error provided extensions`)
+			`{"message":"error wraps with custom extensions","extensions":{"timestamp":"Fri Feb 9 14:33:09 UTC 2018","foo":"bar"}}`)
 	})
 
 	It("pulls kind from underlying error", func() {

@@ -23,9 +23,12 @@ import (
 	"reflect"
 	"runtime"
 	"strconv"
+	"unsafe"
 
 	"github.com/botobag/artemis/graphql/ast"
 	"github.com/botobag/artemis/internal/util"
+
+	"github.com/json-iterator/go"
 )
 
 // Op describes an operation, usually as the package and method, such as "language/parser.Parse".
@@ -414,6 +417,92 @@ func (e *Error) printError(b *util.StringBuilder, nextErr *Error) {
 	return
 }
 
+// MarshalJSON implements json.Marshaler.
+func (e *Error) MarshalJSON() ([]byte, error) {
+	return jsoniter.Marshal(e)
+}
+
+// errorMarshaller implements jsoniter.ValEncoder to encode Error to JSON.
+type errorMarshaller struct{}
+
+var _ jsoniter.ValEncoder = errorMarshaller{}
+
+// IsEmpty implements jsoniter.ValEncoder.
+func (errorMarshaller) IsEmpty(ptr unsafe.Pointer) bool {
+	return (*Error)(ptr) == nil
+}
+
+// Encode implements jsoniter.ValEncoder.
+func (errorMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	err := (*Error)(ptr)
+	stream.WriteObjectStart()
+
+	stream.WriteObjectField("message")
+	stream.WriteString(err.Message)
+
+	numLoactions := len(err.Locations)
+	if numLoactions > 0 {
+		stream.WriteMore()
+		stream.WriteObjectField("locations")
+		stream.WriteArrayStart()
+		for i := range err.Locations {
+			location := &err.Locations[i]
+			stream.WriteObjectStart()
+			stream.WriteObjectField("line")
+			stream.WriteUint(location.Line)
+			stream.WriteMore()
+			stream.WriteObjectField("column")
+			stream.WriteUint(location.Column)
+			stream.WriteObjectEnd()
+			if i != numLoactions-1 {
+				stream.WriteMore()
+			}
+		}
+		stream.WriteArrayEnd()
+	}
+
+	if err.Path != nil {
+		numPathKeys := len(err.Path.keys)
+		stream.WriteMore()
+		stream.WriteObjectField("path")
+		stream.WriteArrayStart()
+		for i, key := range err.Path.keys {
+			switch key := key.(type) {
+			case string:
+				stream.WriteString(key)
+			case int:
+				stream.WriteInt(key)
+			default:
+				stream.Error = fmt.Errorf(`unsupported type "%T" of key in response path`, key)
+				return
+			}
+
+			if i != numPathKeys-1 {
+				stream.WriteMore()
+			}
+		}
+		stream.WriteArrayEnd()
+	}
+
+	numExtensios := len(err.Extensions)
+	if numExtensios > 0 {
+		stream.WriteMore()
+		stream.WriteObjectField("extensions")
+		stream.WriteObjectStart()
+		for k, v := range err.Extensions {
+			stream.WriteObjectField(k)
+			stream.WriteVal(v)
+			numExtensios--
+			if numExtensios > 0 {
+				stream.WriteMore()
+			}
+		}
+		stream.WriteObjectEnd()
+	}
+
+	stream.WriteObjectEnd()
+}
+
 // Errors wraps a list of Error. Intentionally wrapped in a struct instead of a simple alias to
 // []*Error (i.e., "type Errors []*Error") to enforce error checks to use errs.HaveOccurred()
 // instead of (errs != nil) (errs may be an empty array which should be treat as no error).
@@ -507,4 +596,8 @@ func (errs *Errors) AppendErrors(e ...Errors) {
 // checking existence of error because errs may be an empty array.
 func (errs Errors) HaveOccurred() bool {
 	return len(errs.Errors) > 0
+}
+
+func init() {
+	jsoniter.RegisterTypeEncoder("graphql.Error", errorMarshaller{})
 }
