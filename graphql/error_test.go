@@ -67,11 +67,11 @@ func (e *errWithLocations) Error() string {
 }
 
 type errWithPath struct {
-	path *graphql.ResponsePath
+	path graphql.ResponsePath
 }
 
 // Path implements graphql.ErrorWithPath.
-func (e *errWithPath) Path() *graphql.ResponsePath {
+func (e *errWithPath) Path() graphql.ResponsePath {
 	return e.path
 }
 
@@ -116,7 +116,7 @@ var _ = Describe("Error", func() {
 	var (
 		mockLocation   graphql.ErrorLocation
 		mockLocation2  graphql.ErrorLocation
-		mockPath       *graphql.ResponsePath
+		mockPath       graphql.ResponsePath
 		mockExtensions graphql.ErrorExtensions
 	)
 
@@ -132,7 +132,7 @@ var _ = Describe("Error", func() {
 			Column: 5,
 		}
 
-		mockPath = &graphql.ResponsePath{}
+		mockPath = graphql.ResponsePath{}
 		mockPath.AppendFieldName("path")
 		mockPath.AppendIndex(3)
 		mockPath.AppendFieldName("to")
@@ -258,7 +258,7 @@ var _ = Describe("Error", func() {
   error with path: error provided path`)
 
 		// Wrap an error with custom path.
-		mockPath2 := &graphql.ResponsePath{}
+		var mockPath2 graphql.ResponsePath
 		mockPath2.AppendFieldName("another")
 		mockPath2.AppendFieldName("path")
 		mockPath2.AppendIndex(10)

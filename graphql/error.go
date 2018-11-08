@@ -122,6 +122,11 @@ type ResponsePath struct {
 	keys []interface{}
 }
 
+// Empty returns true if the path doesn't contain any path keys.
+func (path ResponsePath) Empty() bool {
+	return len(path.keys) == 0
+}
+
 // AppendFieldName adds a field name to the end of current path.
 func (path *ResponsePath) AppendFieldName(name string) {
 	path.keys = append(path.keys, name)
@@ -133,14 +138,14 @@ func (path *ResponsePath) AppendIndex(index int) {
 }
 
 // Clone makes a deep copy of the path.
-func (path ResponsePath) Clone() *ResponsePath {
+func (path ResponsePath) Clone() ResponsePath {
 	if len(path.keys) == 0 {
-		return &ResponsePath{}
+		return ResponsePath{}
 	}
 
 	keys := make([]interface{}, len(path.keys))
 	copy(keys, path.keys)
-	return &ResponsePath{keys}
+	return ResponsePath{keys}
 }
 
 // String serializes a ResponsePath to more readable format.
@@ -209,7 +214,7 @@ func (path *ResponsePath) MarshalJSON() ([]byte, error) {
 // the arguments to NewError, NewError will retrieve the one from the underlying error (if provided)
 // that implements this interface.
 type ErrorWithPath interface {
-	Path() *ResponsePath
+	Path() ResponsePath
 }
 
 // ErrorWithExtensions indicates an error that contains extensions data. If "extensions" is not
@@ -252,7 +257,7 @@ type Error struct {
 	// spec.. Currently, it is only included for errors during execution. See example in [0].
 	//
 	// [0]: https://facebook.github.io/graphql/June2018/#example-90475
-	Path *ResponsePath `json:"path,omitempty"`
+	Path ResponsePath `json:"path,omitempty"`
 
 	// Extensions contains data to be added to in the error response
 	Extensions ErrorExtensions `json:"extensions,omitempty"`
@@ -285,7 +290,7 @@ func NewError(message string, args ...interface{}) error {
 		case []ErrorLocation:
 			e.Locations = arg
 
-		case *ResponsePath:
+		case ResponsePath:
 			e.Path = arg
 
 		case ErrorExtensions:
@@ -323,12 +328,12 @@ func NewError(message string, args ...interface{}) error {
 			}
 		}
 
-		if e.Path == nil {
+		if e.Path.Empty() {
 			switch errWithPath := prev.(type) {
 			case ErrorWithPath:
 				e.Path = errWithPath.Path()
 			case *Error:
-				if errWithPath.Path != nil {
+				if !errWithPath.Path.Empty() {
 					e.Path = errWithPath.Path.Clone()
 				}
 			}
@@ -406,7 +411,7 @@ func (e *Error) printError(b *util.StringBuilder, nextErr *Error) {
 		}
 	}
 
-	if e.Path != nil {
+	if !e.Path.Empty() {
 		// Don't print path if the next error already did.
 		if nextErr == nil || !reflect.DeepEqual(nextErr.Path, e.Path) {
 			if b.Len() == initialLen {
@@ -493,10 +498,10 @@ func (errorMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 		stream.WriteArrayEnd()
 	}
 
-	if err.Path != nil {
+	if !err.Path.Empty() {
 		stream.WriteMore()
 		stream.WriteObjectField("path")
-		stream.WriteVal(err.Path)
+		stream.WriteVal(&err.Path)
 	}
 
 	numExtensios := len(err.Extensions)
