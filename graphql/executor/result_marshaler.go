@@ -55,8 +55,8 @@ func (resultMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 }
 
 // MarshalJSON implements json.Marshaler interface for ExecutionResult.
-func (result *ExecutionResult) MarshalJSON() ([]byte, error) {
-	return jsoniter.Marshal(result)
+func (result ExecutionResult) MarshalJSON() ([]byte, error) {
+	return jsoniter.Marshal(&result)
 }
 
 // resultNodeMarshaller implements jsoniter.ValEncoder to encode a ResultNode to JSON.

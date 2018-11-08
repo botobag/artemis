@@ -44,6 +44,14 @@ func (executor Common) BuildRootResultNode(context *ExecutionContext) (*ResultNo
 		},
 	}
 
+	// Collect fields in the selection set. We need to call this before completeObjectValue because
+	// if there's any error occurred, we return the error instead of calling handleFieldError.
+	//
+	// FIXME: Need further refactoring.
+	if _, err := executor.collectFields(context, rootNode, rootType); err != nil {
+		return nil, err
+	}
+
 	err := executor.completeObjectValue(context, rootType, &ResolveInfo{
 		ExecutionContext: context,
 		ExecutionNode:    rootNode,

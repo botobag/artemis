@@ -75,10 +75,12 @@ func CoerceVariableValues(
 						coercedValues[varName] = coerced
 					} else {
 						for _, err := range coercionErrs.Errors {
-							message := fmt.Sprintf(`Variable "$%s" got invalid value %v`, varName, value)
+							var message string
 							if err.Kind == graphql.ErrKindCoercion {
 								// Include err.message.
-								message = fmt.Sprintf("%s; %s", message, err.Message)
+								message = fmt.Sprintf(`Variable "$%s" got invalid value %v; %s`, varName, value, err.Message)
+							} else {
+								message = fmt.Sprintf(`Variable "$%s" got invalid value %v.`, varName, value)
 							}
 							// Push the error.
 							errs.Emplace(message, err)

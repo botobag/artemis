@@ -51,7 +51,7 @@ func ArgumentValues(
 	coercedValues := map[string]interface{}{}
 	argDefs := def.Args()
 	argNodes := node.GetArguments()
-	if len(argDefs) == 0 || len(argNodes) == 0 {
+	if len(argDefs) == 0 && len(argNodes) == 0 {
 		return graphql.NoArgumentValues(), nil
 	}
 
