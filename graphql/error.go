@@ -74,8 +74,8 @@ type ErrorExtensions map[string]interface{}
 // associated syntax element.
 type ErrorLocation struct {
 	// Both line and column are positive numbers starting from 1
-	Line   uint `json:"line"`
-	Column uint `json:"column"`
+	Line   uint
+	Column uint
 }
 
 // ErrorWithLocations indicates an error that contains locations. If "locations" is not given in the
@@ -241,7 +241,7 @@ type ErrorWithExtensions interface {
 type Error struct {
 	// Message describes the error for debugging purposes. It is required by a GraphQL Error as per
 	// spec..
-	Message string `json:"message"`
+	Message string
 
 	// Locations is an array of { line, column } locations within the source GraphQL document which
 	// correspond to this error. It should be included if an error can be associated to a particular
@@ -250,26 +250,26 @@ type Error struct {
 	// Errors during validation often contain multiple locations, for example to point out two things
 	// with the same name. Errors during execution include a single location, the field which produced
 	// the error.
-	Locations []ErrorLocation `json:"locations,omitempty"`
+	Locations []ErrorLocation
 
 	// Path describes the path of the response field which experienced the error. It should be
 	// presented when an error can be associated to a particular field in the GraphQL result as per
 	// spec.. Currently, it is only included for errors during execution. See example in [0].
 	//
 	// [0]: https://facebook.github.io/graphql/June2018/#example-90475
-	Path ResponsePath `json:"path,omitempty"`
+	Path ResponsePath
 
 	// Extensions contains data to be added to in the error response
-	Extensions ErrorExtensions `json:"extensions,omitempty"`
+	Extensions ErrorExtensions
 
 	// The underlying error that triggered this one
-	Err error `json:"-"`
+	Err error
 
 	// Op is the operation being performed, usually the name of the method being invoked.
-	Op Op `json:"-"`
+	Op Op
 
 	// Kind is the class of error
-	Kind ErrKind `json:"-"`
+	Kind ErrKind
 }
 
 // Error implements Go error interface.
