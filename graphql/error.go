@@ -17,7 +17,6 @@
 package graphql
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"reflect"
@@ -134,7 +133,7 @@ func (path *ResponsePath) AppendIndex(index int) {
 }
 
 // Clone makes a deep copy of the path.
-func (path *ResponsePath) Clone() *ResponsePath {
+func (path ResponsePath) Clone() *ResponsePath {
 	if len(path.keys) == 0 {
 		return &ResponsePath{}
 	}
@@ -144,13 +143,8 @@ func (path *ResponsePath) Clone() *ResponsePath {
 	return &ResponsePath{keys}
 }
 
-// MarshalJSON serializes path keys to JSON.
-func (path *ResponsePath) MarshalJSON() ([]byte, error) {
-	return json.Marshal(path.keys)
-}
-
 // String serializes a ResponsePath to more readable format.
-func (path *ResponsePath) String() string {
+func (path ResponsePath) String() string {
 	var b util.StringBuilder
 	for _, key := range path.keys {
 		switch key := key.(type) {
@@ -171,6 +165,44 @@ func (path *ResponsePath) String() string {
 		}
 	}
 	return b.String()
+}
+
+// responsePathMarshaller implements jsoniter.ValEncoder to encode ResponsePath to JSON.
+type responsePathMarshaller struct{}
+
+var _ jsoniter.ValEncoder = responsePathMarshaller{}
+
+// IsEmpty implements jsoniter.ValEncoder.
+func (responsePathMarshaller) IsEmpty(ptr unsafe.Pointer) bool {
+	return len((*ResponsePath)(ptr).keys) == 0
+}
+
+// Encode implements jsoniter.ValEncoder.
+func (responsePathMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	path := (*ResponsePath)(ptr)
+	numPathKeys := len(path.keys)
+	stream.WriteArrayStart()
+	for i, key := range path.keys {
+		switch key := key.(type) {
+		case string:
+			stream.WriteString(key)
+		case int:
+			stream.WriteInt(key)
+		default:
+			stream.Error = fmt.Errorf(`unsupported type "%T" of key in response path`, key)
+			return
+		}
+
+		if i != numPathKeys-1 {
+			stream.WriteMore()
+		}
+	}
+	stream.WriteArrayEnd()
+}
+
+// MarshalJSON serializes path keys to JSON.
+func (path *ResponsePath) MarshalJSON() ([]byte, error) {
+	return jsoniter.Marshal(path)
 }
 
 // ErrorWithPath indicates an error that contains a path for reporting. If "path" is not given in
@@ -462,26 +494,9 @@ func (errorMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	}
 
 	if err.Path != nil {
-		numPathKeys := len(err.Path.keys)
 		stream.WriteMore()
 		stream.WriteObjectField("path")
-		stream.WriteArrayStart()
-		for i, key := range err.Path.keys {
-			switch key := key.(type) {
-			case string:
-				stream.WriteString(key)
-			case int:
-				stream.WriteInt(key)
-			default:
-				stream.Error = fmt.Errorf(`unsupported type "%T" of key in response path`, key)
-				return
-			}
-
-			if i != numPathKeys-1 {
-				stream.WriteMore()
-			}
-		}
-		stream.WriteArrayEnd()
+		stream.WriteVal(err.Path)
 	}
 
 	numExtensios := len(err.Extensions)
@@ -599,5 +614,6 @@ func (errs Errors) HaveOccurred() bool {
 }
 
 func init() {
+	jsoniter.RegisterTypeEncoder("graphql.ResponsePath", responsePathMarshaller{})
 	jsoniter.RegisterTypeEncoder("graphql.Error", errorMarshaller{})
 }
