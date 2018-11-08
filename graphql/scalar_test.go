@@ -27,8 +27,19 @@ import (
 )
 
 func schemaWithFieldType(ttype graphql.Type) (interface{}, error) {
-	// TODO: #35
-	return nil, nil
+	queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+		Name: "Query",
+		Fields: graphql.Fields{
+			"field": {
+				Type: graphql.T(ttype),
+			},
+		},
+	})
+	Expect(err).ShouldNot(HaveOccurred())
+
+	return graphql.NewSchema(&graphql.SchemaConfig{
+		Query: queryType,
+	})
 }
 
 var _ = Describe("Scalar", func() {
