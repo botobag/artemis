@@ -18,8 +18,6 @@ package graphql
 
 import (
 	"context"
-
-	"github.com/botobag/artemis/graphql/ast"
 )
 
 // TypeDefinition defines interfaces that are provided by all TypeDefinition variants. See the
@@ -121,65 +119,6 @@ func I(i *Interface) InterfaceTypeDefinition {
 // Scalar Type Definition
 //===-----------------------------------------------------------------------------------------====//
 
-// ScalarResultCoercer coerces result value into a value represented in the Scalar type. Please read
-// "Result Coercion" in [0] to provide appropriate implementation.
-//
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars
-type ScalarResultCoercer interface {
-	// CoerceResultValue coerces the given value for the field to return. It is called in
-	// CompleteValue() [0] as per spec.
-	//
-	// [0]: https://facebook.github.io/graphql/June2018/#CompleteValue()
-	CoerceResultValue(value interface{}) (interface{}, error)
-}
-
-// CoerceScalarResultFunc is an adapter to allow the use of ordinary functions as
-// ScalarResultCoercer.
-type CoerceScalarResultFunc func(value interface{}) (interface{}, error)
-
-// CoerceResultValue calls f(value).
-func (f CoerceScalarResultFunc) CoerceResultValue(value interface{}) (interface{}, error) {
-	return f(value)
-}
-
-// CoerceScalarResultFunc implements ScalarResultCoercer.
-var _ ScalarResultCoercer = (CoerceScalarResultFunc)(nil)
-
-// ScalarInputCoercer coerces input values in the GraphQL requests into a value represented the
-// Scalar type. Please read "Input Coercion" in [0] to provide appropriate implementation.
-//
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars
-type ScalarInputCoercer interface {
-	// CoerceVariableValue coerces a scalar value in input query variables [0].
-	//
-	// [0]: https://facebook.github.io/graphql/June2018/#CoerceVariableValues()
-	CoerceVariableValue(value interface{}) (interface{}, error)
-
-	// CoerceArgumentValue coerces a scalar value in input field arguments [0].
-	//
-	// [0]: https://facebook.github.io/graphql/June2018/#CoerceArgumentValues()
-	CoerceArgumentValue(value ast.Value) (interface{}, error)
-}
-
-// ScalarInputCoercerFuncs is an adapter to create a ScalarInputCoercer from function values.
-type ScalarInputCoercerFuncs struct {
-	CoerceVariableValueFunc func(value interface{}) (interface{}, error)
-	CoerceArgumentValueFunc func(value ast.Value) (interface{}, error)
-}
-
-// CoerceVariableValue calls f.CoerceVariableValueFunc(value).
-func (f ScalarInputCoercerFuncs) CoerceVariableValue(value interface{}) (interface{}, error) {
-	return f.CoerceVariableValueFunc(value)
-}
-
-// CoerceArgumentValue calls f.CoerceArgumentValueFunc(value).
-func (f ScalarInputCoercerFuncs) CoerceArgumentValue(value ast.Value) (interface{}, error) {
-	return f.CoerceArgumentValueFunc(value)
-}
-
-// ScalarInputCoercerFuncs implements ScalarInputCoercer.
-var _ ScalarInputCoercer = ScalarInputCoercerFuncs{}
-
 // ScalarTypeData contains type data for Scalar.
 type ScalarTypeData struct {
 	// The name of the Scalar type
@@ -207,11 +146,11 @@ type ScalarTypeDefinition interface {
 
 	// NewResultCoercer creates a ScalarResultCoercer instance for the defining Scalar type object
 	// during its initialization.
-	NewResultCoercer(scalar *Scalar) (ScalarResultCoercer, error)
+	NewResultCoercer(scalar Scalar) (ScalarResultCoercer, error)
 
 	// NewInputCoercer creates an ScalarInputCoercer instance for the defining Scalar type object
 	// during its initialization.
-	NewInputCoercer(scalar *Scalar) (ScalarInputCoercer, error)
+	NewInputCoercer(scalar Scalar) (ScalarInputCoercer, error)
 
 	// ThisIsGraphQLScalarTypeDefinition puts a special mark for a ScalarTypeDefinition objects.
 	ThisIsGraphQLScalarTypeDefinition()

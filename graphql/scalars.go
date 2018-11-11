@@ -207,45 +207,52 @@ func (coercer *intCoercer) CoerceArgumentValue(value ast.Value) (interface{}, er
 	return nil, coercer.RaiseInvalidArgumentTypeError(value)
 }
 
-// intTypeDefinition implements TypeDefinition for defining builtin Int type in GraphQL.
-type intTypeDefinition struct {
-	ThisIsScalarTypeDefinition
+// intType implements builtin Int type in GraphQL.
+type intType struct {
+	ThisIsScalarType
 	coercer intCoercer
 }
 
-var (
-	_ TypeDefinition       = (*intTypeDefinition)(nil)
-	_ ScalarTypeDefinition = (*intTypeDefinition)(nil)
-)
-
-// TypeData implements ScalarTypeDefinition.
-func (*intTypeDefinition) TypeData() ScalarTypeData {
-	return ScalarTypeData{
-		Name: "Int",
-		Description: "The `Int` scalar type represents non-fractional signed whole numeric " +
-			"values. Int can represent values between -(2^31) and 2^31 - 1.",
-	}
+// Name implements TypeWithName.
+func (i *intType) Name() string {
+	return "Int"
 }
 
-// NewResultCoercer implments ScalarTypeDefinition.
-func (typeDef *intTypeDefinition) NewResultCoercer(scalar *Scalar) (ScalarResultCoercer, error) {
-	return &typeDef.coercer, nil
+// Description implements TypeWithDescription.
+func (i *intType) Description() string {
+	return "The `Int` scalar type represents non-fractional signed whole numeric " +
+		"values. Int can represent values between -(2^31) and 2^31 - 1."
 }
 
-// NewInputCoercer implments ScalarTypeDefinition.
-func (typeDef *intTypeDefinition) NewInputCoercer(scalar *Scalar) (ScalarInputCoercer, error) {
-	return &typeDef.coercer, nil
+// String implements fmt.Stringer.
+func (i *intType) String() string {
+	return i.Name()
 }
 
-var intTypeInstance = func() *Scalar {
-	typeDef := &intTypeDefinition{}
+// CoerceResultValue implmenets LeafType.
+func (i *intType) CoerceResultValue(value interface{}) (interface{}, error) {
+	return i.coercer.CoerceResultValue(value)
+}
+
+// CoerceVariableValue implmenets Scalar.
+func (i *intType) CoerceVariableValue(value interface{}) (interface{}, error) {
+	return i.coercer.CoerceVariableValue(value)
+}
+
+// CoerceArgumentValue implmenets Scalar.
+func (i *intType) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+	return i.coercer.CoerceArgumentValue(value)
+}
+
+var intTypeInstance = func() Scalar {
+	i := &intType{}
 	// Initialize coercer.
-	typeDef.coercer.init()
-	return MustNewScalar(typeDef)
+	i.coercer.init()
+	return i
 }()
 
 // Int returns the GraphQL builtin Int type definition.
-func Int() *Scalar {
+func Int() Scalar {
 	return intTypeInstance
 }
 
@@ -397,45 +404,52 @@ func (coercer *floatCoercer) CoerceArgumentValue(value ast.Value) (interface{}, 
 	return nil, coercer.RaiseInvalidArgumentTypeError(value)
 }
 
-// floatTypeDefinition implements TypeDefinition for defining builtin Float type in GraphQL.
-type floatTypeDefinition struct {
-	ThisIsScalarTypeDefinition
+// floatType implements builtin Float type in GraphQL.
+type floatType struct {
+	ThisIsScalarType
 	coercer floatCoercer
 }
 
-var (
-	_ TypeDefinition       = (*floatTypeDefinition)(nil)
-	_ ScalarTypeDefinition = (*floatTypeDefinition)(nil)
-)
-
-// TypeData implements ScalarTypeDefinition.
-func (*floatTypeDefinition) TypeData() ScalarTypeData {
-	return ScalarTypeData{
-		Name: "Float",
-		Description: "The `Float` scalar type represents signed double-precision fractional " +
-			"values as specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). ",
-	}
+// Name implements TypeWithName.
+func (f *floatType) Name() string {
+	return "Float"
 }
 
-// NewResultCoercer implments ScalarTypeDefinition.
-func (typeDef *floatTypeDefinition) NewResultCoercer(scalar *Scalar) (ScalarResultCoercer, error) {
-	return &typeDef.coercer, nil
+// Description implements TypeWithDescription.
+func (f *floatType) Description() string {
+	return "The `Float` scalar type represents signed double-precision fractional " +
+		"values as specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). "
 }
 
-// NewInputCoercer implments ScalarTypeDefinition.
-func (typeDef *floatTypeDefinition) NewInputCoercer(scalar *Scalar) (ScalarInputCoercer, error) {
-	return &typeDef.coercer, nil
+// String implements fmt.Stringer.
+func (f *floatType) String() string {
+	return f.Name()
 }
 
-var floatTypeInstance = func() *Scalar {
-	typeDef := &floatTypeDefinition{}
+// CoerceResultValue implmenets LeafType.
+func (f *floatType) CoerceResultValue(value interface{}) (interface{}, error) {
+	return f.coercer.CoerceResultValue(value)
+}
+
+// CoerceVariableValue implmenets Scalar.
+func (f *floatType) CoerceVariableValue(value interface{}) (interface{}, error) {
+	return f.coercer.CoerceVariableValue(value)
+}
+
+// CoerceArgumentValue implmenets Scalar.
+func (f *floatType) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+	return f.coercer.CoerceArgumentValue(value)
+}
+
+var floatTypeInstance = func() Scalar {
+	f := &floatType{}
 	// Initialize coercer.
-	typeDef.coercer.init()
-	return MustNewScalar(typeDef)
+	f.coercer.init()
+	return f
 }()
 
 // Float returns the GraphQL builtin Float type definition.
-func Float() *Scalar {
+func Float() Scalar {
 	return floatTypeInstance
 }
 
@@ -533,46 +547,53 @@ func (coercer *stringCoercer) CoerceArgumentValue(value ast.Value) (interface{},
 	return nil, coercer.RaiseInvalidArgumentTypeError(value)
 }
 
-// stringTypeDefinition implements TypeDefinition for defining builtin String type in GraphQL.
-type stringTypeDefinition struct {
-	ThisIsScalarTypeDefinition
+// stringType implements builtin String type in GraphQL.
+type stringType struct {
+	ThisIsScalarType
 	coercer stringCoercer
 }
 
-var (
-	_ TypeDefinition       = (*stringTypeDefinition)(nil)
-	_ ScalarTypeDefinition = (*stringTypeDefinition)(nil)
-)
-
-// TypeData implements ScalarTypeDefinition.
-func (*stringTypeDefinition) TypeData() ScalarTypeData {
-	return ScalarTypeData{
-		Name: "String",
-		Description: "The `String` scalar type represents textual data, represented as UTF-8 " +
-			"character sequences. The String type is most often used by GraphQL to " +
-			"represent free-form human-readable text.",
-	}
+// Name implements TypeWithName.
+func (s *stringType) Name() string {
+	return "String"
 }
 
-// NewResultCoercer implments ScalarTypeDefinition.
-func (typeDef *stringTypeDefinition) NewResultCoercer(scalar *Scalar) (ScalarResultCoercer, error) {
-	return &typeDef.coercer, nil
+// Description implements TypeWithDescription.
+func (s *stringType) Description() string {
+	return "The `String` scalar type represents textual data, represented as UTF-8 character " +
+		"sequences. The String type is most often used by GraphQL to represent free-form human-" +
+		"readable text."
 }
 
-// NewInputCoercer implments ScalarTypeDefinition.
-func (typeDef *stringTypeDefinition) NewInputCoercer(scalar *Scalar) (ScalarInputCoercer, error) {
-	return &typeDef.coercer, nil
+// String implements fmt.Stringer.
+func (s *stringType) String() string {
+	return s.Name()
 }
 
-var stringTypeInstance = func() *Scalar {
-	typeDef := &stringTypeDefinition{}
+// CoerceResultValue implmenets LeafType.
+func (s *stringType) CoerceResultValue(value interface{}) (interface{}, error) {
+	return s.coercer.CoerceResultValue(value)
+}
+
+// CoerceVariableValue implmenets Scalar.
+func (s *stringType) CoerceVariableValue(value interface{}) (interface{}, error) {
+	return s.coercer.CoerceVariableValue(value)
+}
+
+// CoerceArgumentValue implmenets Scalar.
+func (s *stringType) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+	return s.coercer.CoerceArgumentValue(value)
+}
+
+var stringTypeInstance = func() Scalar {
+	s := &stringType{}
 	// Initialize coercer.
-	typeDef.coercer.init()
-	return MustNewScalar(typeDef)
+	s.coercer.init()
+	return s
 }()
 
 // String returns the GraphQL builtin String type definition.
-func String() *Scalar {
+func String() Scalar {
 	return stringTypeInstance
 }
 
@@ -656,44 +677,51 @@ func (coercer *booleanCoercer) CoerceArgumentValue(value ast.Value) (interface{}
 	return nil, coercer.RaiseInvalidArgumentTypeError(value)
 }
 
-// booleanTypeDefinition implements TypeDefinition for defining builtin Boolean type in GraphQL.
-type booleanTypeDefinition struct {
-	ThisIsScalarTypeDefinition
+// booleanType implements builtin Boolean type in GraphQL.
+type booleanType struct {
+	ThisIsScalarType
 	coercer booleanCoercer
 }
 
-var (
-	_ TypeDefinition       = (*booleanTypeDefinition)(nil)
-	_ ScalarTypeDefinition = (*booleanTypeDefinition)(nil)
-)
-
-// TypeData implements ScalarTypeDefinition.
-func (*booleanTypeDefinition) TypeData() ScalarTypeData {
-	return ScalarTypeData{
-		Name:        "Boolean",
-		Description: "The `Boolean` scalar type represents `true` or `false`.",
-	}
+// Name implements TypeWithName.
+func (b *booleanType) Name() string {
+	return "Boolean"
 }
 
-// NewResultCoercer implments ScalarTypeDefinition.
-func (typeDef *booleanTypeDefinition) NewResultCoercer(scalar *Scalar) (ScalarResultCoercer, error) {
-	return &typeDef.coercer, nil
+// Description implements TypeWithDescription.
+func (b *booleanType) Description() string {
+	return "The `Boolean` scalar type represents `true` or `false`."
 }
 
-// NewInputCoercer implments ScalarTypeDefinition.
-func (typeDef *booleanTypeDefinition) NewInputCoercer(scalar *Scalar) (ScalarInputCoercer, error) {
-	return &typeDef.coercer, nil
+// String implements fmt.Stringer.
+func (b *booleanType) String() string {
+	return b.Name()
 }
 
-var booleanTypeInstance = func() *Scalar {
-	typeDef := &booleanTypeDefinition{}
+// CoerceResultValue implmenets LeafType.
+func (b *booleanType) CoerceResultValue(value interface{}) (interface{}, error) {
+	return b.coercer.CoerceResultValue(value)
+}
+
+// CoerceVariableValue implmenets Scalar.
+func (b *booleanType) CoerceVariableValue(value interface{}) (interface{}, error) {
+	return b.coercer.CoerceVariableValue(value)
+}
+
+// CoerceArgumentValue implmenets Scalar.
+func (b *booleanType) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+	return b.coercer.CoerceArgumentValue(value)
+}
+
+var booleanTypeInstance = func() Scalar {
+	b := &booleanType{}
 	// Initialize coercer.
-	typeDef.coercer.init()
-	return MustNewScalar(typeDef)
+	b.coercer.init()
+	return b
 }()
 
 // Boolean returns the GraphQL builtin Boolean type definition.
-func Boolean() *Scalar {
+func Boolean() Scalar {
 	return booleanTypeInstance
 }
 
@@ -758,47 +786,54 @@ func (coercer *idCoercer) CoerceArgumentValue(value ast.Value) (interface{}, err
 	return nil, coercer.RaiseInvalidArgumentTypeError(value)
 }
 
-// idTypeDefinition implements TypeDefinition for defining builtin ID type in GraphQL.
-type idTypeDefinition struct {
-	ThisIsScalarTypeDefinition
+// idType implements builtin ID type in GraphQL.
+type idType struct {
+	ThisIsScalarType
 	coercer idCoercer
 }
 
-var (
-	_ TypeDefinition       = (*idTypeDefinition)(nil)
-	_ ScalarTypeDefinition = (*idTypeDefinition)(nil)
-)
-
-// TypeData implements ScalarTypeDefinition.
-func (*idTypeDefinition) TypeData() ScalarTypeData {
-	return ScalarTypeData{
-		Name: "ID",
-		Description: "The `ID` scalar type represents a unique identifier, often used to " +
-			"refetch an object or as key for a cache. The ID type appears in a JSON " +
-			"response as a String; however, it is not intended to be human-readable. " +
-			"When expected as an input type, any string (such as `\"4\"`) or integer " +
-			"(such as `4`) input value will be accepted as an ID.",
-	}
+// Name implements TypeWithName.
+func (id *idType) Name() string {
+	return "ID"
 }
 
-// NewResultCoercer implments ScalarTypeDefinition.
-func (typeDef *idTypeDefinition) NewResultCoercer(scalar *Scalar) (ScalarResultCoercer, error) {
-	return &typeDef.coercer, nil
+// Description implements TypeWithDescription.
+func (id *idType) Description() string {
+	return "The `ID` scalar type represents a unique identifier, often used to " +
+		"refetch an object or as key for a cache. The ID type appears in a JSON " +
+		"response as a String; however, it is not intended to be human-readable. " +
+		"When expected as an input type, any string (such as `\"4\"`) or integer " +
+		"(such as `4`) input value will be accepted as an ID."
 }
 
-// NewInputCoercer implments ScalarTypeDefinition.
-func (typeDef *idTypeDefinition) NewInputCoercer(scalar *Scalar) (ScalarInputCoercer, error) {
-	return &typeDef.coercer, nil
+// String implements fmt.Stringer.
+func (id *idType) String() string {
+	return id.Name()
 }
 
-var idTypeInstance = func() *Scalar {
-	typeDef := &idTypeDefinition{}
+// CoerceResultValue implmenets LeafType.
+func (id *idType) CoerceResultValue(value interface{}) (interface{}, error) {
+	return id.coercer.CoerceResultValue(value)
+}
+
+// CoerceVariableValue implmenets Scalar.
+func (id *idType) CoerceVariableValue(value interface{}) (interface{}, error) {
+	return id.coercer.CoerceVariableValue(value)
+}
+
+// CoerceArgumentValue implmenets Scalar.
+func (id *idType) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+	return id.coercer.CoerceArgumentValue(value)
+}
+
+var idTypeInstance = func() Scalar {
+	id := &idType{}
 	// Initialize coercer.
-	typeDef.coercer.init()
-	return MustNewScalar(typeDef)
+	id.coercer.init()
+	return id
 }()
 
 // ID returns the GraphQL builtin ID type definition.
-func ID() *Scalar {
+func ID() Scalar {
 	return idTypeInstance
 }

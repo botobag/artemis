@@ -18,6 +18,8 @@ package graphql
 
 import (
 	"fmt"
+
+	"github.com/botobag/artemis/graphql/ast"
 )
 
 // Type interfaces provided by a GraphQL type.
@@ -93,7 +95,7 @@ func (d *Deprecation) Defined() bool {
 }
 
 //===----------------------------------------------------------------------------------------====//
-// Metafields that only available in certain types
+// Metafields that are only available in certain types
 //===----------------------------------------------------------------------------------------====//
 
 // TypeWithName is implemented by the type definition for named type.
@@ -107,6 +109,102 @@ type TypeWithDescription interface {
 	// Description provides documentation for the type.
 	Description() string
 }
+
+//===----------------------------------------------------------------------------------------====//
+// Scalar
+//===----------------------------------------------------------------------------------------====//
+
+// Scalar Type Definition
+//
+// The leaf values of any request and input values to arguments are Scalars (or Enums) and are
+// defined with a name and a series of functions used to parse input from ast or variables and to
+// ensure validity.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Scalars
+type Scalar interface {
+	LeafType
+
+	// CoerceVariableValue coerces values in input variables into eligible Go values for the scalar.
+	CoerceVariableValue(value interface{}) (interface{}, error)
+
+	// CoerceArgumentValue coerces values in field or directive argument into eligible Go values for
+	// the scalar.
+	CoerceArgumentValue(value ast.Value) (interface{}, error)
+
+	// graphqlScalarType puts a special mark for scalar type.
+	graphqlScalarType()
+}
+
+// ThisIsScalarType is required to be embedded in struct that intends to be a Scalar.
+type ThisIsScalarType struct{}
+
+// graphqlType implements Type.
+func (*ThisIsScalarType) graphqlType() {}
+
+// graphqlLeafType implements LeafType.
+func (*ThisIsScalarType) graphqlLeafType() {}
+
+// graphqlScalarType implements Scalar.
+func (*ThisIsScalarType) graphqlScalarType() {}
+
+// ScalarResultCoercer coerces result value into a value represented in the Scalar type. Please read
+// "Result Coercion" in [0] to provide appropriate implementation.
+//
+// [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars
+type ScalarResultCoercer interface {
+	// CoerceResultValue coerces the given value for the field to return. It is called in
+	// CompleteValue() [0] as per spec.
+	//
+	// [0]: https://facebook.github.io/graphql/June2018/#CompleteValue()
+	CoerceResultValue(value interface{}) (interface{}, error)
+}
+
+// CoerceScalarResultFunc is an adapter to allow the use of ordinary functions as
+// ScalarResultCoercer.
+type CoerceScalarResultFunc func(value interface{}) (interface{}, error)
+
+// CoerceResultValue calls f(value).
+func (f CoerceScalarResultFunc) CoerceResultValue(value interface{}) (interface{}, error) {
+	return f(value)
+}
+
+// CoerceScalarResultFunc implements ScalarResultCoercer.
+var _ ScalarResultCoercer = (CoerceScalarResultFunc)(nil)
+
+// ScalarInputCoercer coerces input values in the GraphQL requests into a value represented the
+// Scalar type. Please read "Input Coercion" in [0] to provide appropriate implementation.
+//
+// [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars
+type ScalarInputCoercer interface {
+	// CoerceVariableValue coerces a scalar value in input query variables [0].
+	//
+	// [0]: https://facebook.github.io/graphql/June2018/#CoerceVariableValues()
+	CoerceVariableValue(value interface{}) (interface{}, error)
+
+	// CoerceArgumentValue coerces a scalar value in input field arguments [0].
+	//
+	// [0]: https://facebook.github.io/graphql/June2018/#CoerceArgumentValues()
+	CoerceArgumentValue(value ast.Value) (interface{}, error)
+}
+
+// ScalarInputCoercerFuncs is an adapter to create a ScalarInputCoercer from function values.
+type ScalarInputCoercerFuncs struct {
+	CoerceVariableValueFunc func(value interface{}) (interface{}, error)
+	CoerceArgumentValueFunc func(value ast.Value) (interface{}, error)
+}
+
+// CoerceVariableValue calls f.CoerceVariableValueFunc(value).
+func (f ScalarInputCoercerFuncs) CoerceVariableValue(value interface{}) (interface{}, error) {
+	return f.CoerceVariableValueFunc(value)
+}
+
+// CoerceArgumentValue calls f.CoerceArgumentValueFunc(value).
+func (f ScalarInputCoercerFuncs) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+	return f.CoerceArgumentValueFunc(value)
+}
+
+// ScalarInputCoercerFuncs implements ScalarInputCoercer.
+var _ ScalarInputCoercer = ScalarInputCoercerFuncs{}
 
 //===------------------------------------------------------------------------------------------===//
 // Type Predication
@@ -151,7 +249,7 @@ func NullableTypeOf(t Type) Type {
 // Reference: https://facebook.github.io/graphql/June2018/#IsInputType()
 func IsInputType(t Type) bool {
 	switch NamedTypeOf(t).(type) {
-	case *Scalar, *Enum, *InputObject:
+	case Scalar, *Enum, *InputObject:
 		return true
 	default:
 		return false
@@ -163,7 +261,7 @@ func IsInputType(t Type) bool {
 // Reference: https://facebook.github.io/graphql/draft/#IsOutputType()
 func IsOutputType(t Type) bool {
 	switch NamedTypeOf(t).(type) {
-	case *Scalar, *Object, *Interface, *Union, *Enum:
+	case Scalar, *Object, *Interface, *Union, *Enum:
 		return true
 	default:
 		return false
@@ -216,7 +314,7 @@ func IsWrappingType(t Type) bool {
 
 // IsScalarType returns true if the given type is a Scalar type.
 func IsScalarType(t Type) bool {
-	_, ok := t.(*Scalar)
+	_, ok := t.(Scalar)
 	return ok
 }
 

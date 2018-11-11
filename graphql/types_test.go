@@ -352,7 +352,7 @@ var _ = Describe("Type", func() {
 	Describe("NamedTypeOf", func() {
 		It("returns nil for no type", func() {
 			Expect(graphql.NamedTypeOf(nil)).Should(BeNil())
-			Expect(graphql.NamedTypeOf((*graphql.Scalar)(nil))).Should(BeNil())
+			Expect(graphql.NamedTypeOf((graphql.Scalar)(nil))).Should(BeNil())
 			Expect(graphql.NamedTypeOf((*graphql.List)(nil))).Should(BeNil())
 		})
 

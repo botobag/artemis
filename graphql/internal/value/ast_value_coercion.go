@@ -149,7 +149,7 @@ func CoerceFromAST(value ast.Value, t graphql.Type, variables graphql.VariableVa
 		}
 		return coercedValues, nil
 
-	case *graphql.Scalar:
+	case graphql.Scalar:
 		return ttype.CoerceArgumentValue(value)
 
 	case *graphql.Enum:

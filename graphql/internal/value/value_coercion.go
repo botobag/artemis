@@ -95,7 +95,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 	}
 
 	switch t := t.(type) {
-	case *graphql.Scalar:
+	case graphql.Scalar:
 		// Scalars determine if a value is valid via CoerceVariableValue(), which returns error to
 		// indicate failure. If it returns the error, maintain a reference to the original error.
 		coerced, err := t.CoerceVariableValue(value)

@@ -64,7 +64,7 @@ func (typeMap TypeMap) add(t Type) error {
 
 		// Add types referenced by t to stack.
 		switch t := t.(type) {
-		case *Scalar:
+		case Scalar:
 			// Nothing to to.
 
 		case *Object:
