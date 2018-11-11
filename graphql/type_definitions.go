@@ -202,14 +202,14 @@ type EnumTypeData struct {
 type EnumResultCoercer interface {
 	// Given a result value of execution, it finds corresponding enum value from the given enum that
 	// represents it.
-	Coerce(value interface{}) (*EnumValue, error)
+	Coerce(value interface{}) (EnumValue, error)
 }
 
 // CoerceEnumResultFunc is an adapter to allow the use of ordinary functions as EnumResultCoercer.
-type CoerceEnumResultFunc func(value interface{}) (*EnumValue, error)
+type CoerceEnumResultFunc func(value interface{}) (EnumValue, error)
 
 // Coerce calls f(enum, value).
-func (f CoerceEnumResultFunc) Coerce(value interface{}) (*EnumValue, error) {
+func (f CoerceEnumResultFunc) Coerce(value interface{}) (EnumValue, error) {
 	return f(value)
 }
 
@@ -231,7 +231,7 @@ type EnumTypeDefinition interface {
 
 	// NewResultCoercer creates a EnumResultCoercer instance for the defining Enum type object during
 	// its initialization.
-	NewResultCoercer(enum *Enum) (EnumResultCoercer, error)
+	NewResultCoercer(enum Enum) (EnumResultCoercer, error)
 
 	// ThisIsGraphQLEnumTypeDefinition puts a special mark for a EnumTypeDefinition objects.
 	ThisIsGraphQLEnumTypeDefinition()

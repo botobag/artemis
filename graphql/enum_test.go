@@ -72,10 +72,9 @@ var _ = Describe("Enum", func() {
 		enumValues := enumTypeWithDeprecatedValue.Values()
 		Expect(len(enumValues)).Should(Equal(1))
 
-		enumValue := enumValues[0]
-		Expect(enumValue.Name()).Should(Equal("foo"))
+		enumValue := enumValues.Lookup("foo")
+		Expect(enumValue).ShouldNot(BeNil())
 		Expect(enumValue.Description()).Should(BeEmpty())
-		Expect(enumValue.IsDeprecated()).Should(BeTrue())
 		Expect(enumValue.Deprecation()).ShouldNot(BeNil())
 		Expect(enumValue.Deprecation().Reason).Should(Equal("Just because"))
 		Expect(enumValue.Value()).Should(Equal("foo"))
@@ -97,10 +96,9 @@ var _ = Describe("Enum", func() {
 		enumValues := enumTypeWithNullishValue.Values()
 		Expect(len(enumValues)).Should(Equal(1))
 
-		enumValue := enumValues[0]
-		Expect(enumValue.Name()).Should(Equal("NULL"))
+		enumValue := enumValues["NULL"]
+		Expect(enumValue).ShouldNot(BeNil())
 		Expect(enumValue.Description()).Should(BeEmpty())
-		Expect(enumValue.IsDeprecated()).Should(BeFalse())
 		Expect(enumValue.Deprecation()).Should(BeNil())
 		Expect(enumValue.Value()).Should(BeNil())
 	})
@@ -109,12 +107,12 @@ var _ = Describe("Enum", func() {
 	Describe("Type System: Enum Values", func() {
 		var (
 			schema           *graphql.Schema
-			colorType        *graphql.Enum
+			colorType        graphql.Enum
 			queryType        *graphql.Object
 			mutationType     *graphql.Object
 			subscriptionType *graphql.Object
 
-			complexEnum *graphql.Enum
+			complexEnum graphql.Enum
 		)
 
 		complex1 := &struct {
@@ -605,7 +603,7 @@ var _ = Describe("Enum", func() {
 		})
 
 		It("presents a Value() API for complex enums", func() {
-			oneValue := complexEnum.Value("ONE")
+			oneValue := complexEnum.Values().Lookup("ONE")
 			Expect(oneValue).ShouldNot(BeNil())
 			Expect(oneValue.Name()).Should(Equal("ONE"))
 			Expect(oneValue.Value()).Should(Equal(complex1))
@@ -647,7 +645,7 @@ var _ = Describe("Enum", func() {
 
 		Context("where enum value may be pointer", func() {
 			var (
-				colorType *graphql.Enum
+				colorType graphql.Enum
 				queryType *graphql.Object
 				schema    *graphql.Schema
 			)

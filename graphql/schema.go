@@ -97,7 +97,7 @@ func (typeMap TypeMap) add(t Type) error {
 				stack = append(stack, possibleType)
 			}
 
-		case *Enum:
+		case Enum:
 			// Nothing to to.
 
 		case *InputObject:

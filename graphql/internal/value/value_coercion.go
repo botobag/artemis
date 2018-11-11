@@ -116,14 +116,14 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 		}
 		return coerced, graphql.NoErrors()
 
-	case *graphql.Enum:
-		coerced, err := t.CoerceVariableValue(value)
+	case graphql.Enum:
+		coerced, err := coerceEnumVariableValue(t, value)
 		if err != nil {
-			enumValues := make([]string, len(t.Values()))
-			for i, enumValue := range t.Values() {
-				enumValues[i] = enumValue.Name()
+			enumNames := make([]string, 0, len(t.Values()))
+			for enumName := range t.Values() {
+				enumNames = append(enumNames, enumName)
 			}
-			suggestions := util.SuggestionList(fmt.Sprintf("%v", value), enumValues)
+			suggestions := util.SuggestionList(fmt.Sprintf("%v", value), enumNames)
 
 			var didYouMean string
 			if len(suggestions) > 0 {

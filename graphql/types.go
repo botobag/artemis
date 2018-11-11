@@ -206,6 +206,66 @@ func (f ScalarInputCoercerFuncs) CoerceArgumentValue(value ast.Value) (interface
 // ScalarInputCoercerFuncs implements ScalarInputCoercer.
 var _ ScalarInputCoercer = ScalarInputCoercerFuncs{}
 
+//===----------------------------------------------------------------------------------------====//
+// Enum
+//===----------------------------------------------------------------------------------------====//
+
+// EnumValueMap maps enum value names to their corresponding value definitions in an enum type.
+type EnumValueMap map[string]EnumValue
+
+// Lookup finds the enum value with given name or return nil if there's no such one.
+func (m EnumValueMap) Lookup(name string) EnumValue {
+	return m[name]
+}
+
+// Enum Type Definition
+//
+// Some leaf values of requests and input values are Enums. GraphQL serializes Enum values as
+// strings, however internally Enums can be represented by any kind of type, often integers.
+//
+// Note: If a value is not provided in a definition, the name of the enum value will be used as its
+//			 internal value.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Enums
+type Enum interface {
+	LeafType
+
+	// Values return all enum values defined in this Enum type.
+	Values() EnumValueMap
+
+	// graphqlEnumType puts a special mark for enum type.
+	graphqlEnumType()
+}
+
+// ThisIsEnumType is required to be embedded in struct that intends to be a Enum.
+type ThisIsEnumType struct{}
+
+// graphqlType implements Type.
+func (*ThisIsEnumType) graphqlType() {}
+
+// graphqlLeafType implements LeafType.
+func (*ThisIsEnumType) graphqlLeafType() {}
+
+// graphqlEnumType implements Enum.
+func (*ThisIsEnumType) graphqlEnumType() {}
+
+// EnumValue provides definition for a value in enum.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#EnumValue
+type EnumValue interface {
+	// Name of enum value.
+	Name() string
+
+	// Description of the enum value
+	Description() string
+
+	// Value returns the internal value to be used when the enum value is read from input.
+	Value() interface{}
+
+	// Deprecation is non-nil when the value is tagged as deprecated.
+	Deprecation() *Deprecation
+}
+
 //===------------------------------------------------------------------------------------------===//
 // Type Predication
 //===------------------------------------------------------------------------------------------===//
@@ -249,7 +309,7 @@ func NullableTypeOf(t Type) Type {
 // Reference: https://facebook.github.io/graphql/June2018/#IsInputType()
 func IsInputType(t Type) bool {
 	switch NamedTypeOf(t).(type) {
-	case Scalar, *Enum, *InputObject:
+	case Scalar, Enum, *InputObject:
 		return true
 	default:
 		return false
@@ -261,7 +321,7 @@ func IsInputType(t Type) bool {
 // Reference: https://facebook.github.io/graphql/draft/#IsOutputType()
 func IsOutputType(t Type) bool {
 	switch NamedTypeOf(t).(type) {
-	case Scalar, *Object, *Interface, *Union, *Enum:
+	case Scalar, *Object, *Interface, *Union, Enum:
 		return true
 	default:
 		return false
@@ -338,7 +398,7 @@ func IsUnionType(t Type) bool {
 
 // IsEnumType returns true if the given type is an Enum type.
 func IsEnumType(t Type) bool {
-	_, ok := t.(*Enum)
+	_, ok := t.(Enum)
 	return ok
 }
 
