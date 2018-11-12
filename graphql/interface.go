@@ -50,7 +50,7 @@ func (config *InterfaceConfig) TypeData() InterfaceTypeData {
 }
 
 // NewTypeResolver implments InterfaceTypeDefinition.
-func (config *InterfaceConfig) NewTypeResolver(iface *Interface) (TypeResolver, error) {
+func (config *InterfaceConfig) NewTypeResolver(iface Interface) (TypeResolver, error) {
 	return config.TypeResolver, nil
 }
 
@@ -79,14 +79,14 @@ func (creator *interfaceTypeCreator) LoadDataAndNew() (Type, error) {
 	}
 
 	// Create instance.
-	return &Interface{
+	return &iface{
 		data: data,
 	}, nil
 }
 
 // Finalize implements typeCreator.
 func (creator *interfaceTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionResolver) error {
-	iface := t.(*Interface)
+	iface := t.(*iface)
 
 	// Initialize type resolver for the Interface type.
 	typeResolver, err := creator.typeDef.NewTypeResolver(iface)
@@ -96,7 +96,7 @@ func (creator *interfaceTypeCreator) Finalize(t Type, typeDefResolver typeDefini
 	iface.typeResolver = typeResolver
 
 	// Build field map.
-	fieldMap, err := buildFieldMap(iface.data.Fields, typeDefResolver)
+	fieldMap, err := BuildFieldMap(iface.data.Fields, typeDefResolver)
 	if err != nil {
 		return err
 	}
@@ -105,40 +105,31 @@ func (creator *interfaceTypeCreator) Finalize(t Type, typeDefResolver typeDefini
 	return nil
 }
 
-// Interface Type Definition
-//
-// When a field can return one of a heterogeneous set of types, a Interface type is used to describe
-// what types are possible, what fields are in common across all types, as well as a function to
-// determine which type is actually used when the field is resolved.
-//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Interfaces
-type Interface struct {
+// iface is our built-in implementation for Interface. It is configured with and built from
+// InterfaceTypeDefinition.
+type iface struct {
+	ThisIsInterfaceType
 	data         InterfaceTypeData
 	typeResolver TypeResolver
 	fields       FieldMap
 }
 
-var (
-	_ Type                = (*Interface)(nil)
-	_ AbstractType        = (*Interface)(nil)
-	_ TypeWithName        = (*Interface)(nil)
-	_ TypeWithDescription = (*Interface)(nil)
-)
+var _ Interface = (*iface)(nil)
 
-// NewInterface initializes an instance of "Interface".
-func NewInterface(typeDef InterfaceTypeDefinition) (*Interface, error) {
+// NewInterface initializes an instance of "iface".
+func NewInterface(typeDef InterfaceTypeDefinition) (Interface, error) {
 	t, err := newTypeImpl(&interfaceTypeCreator{
 		typeDef: typeDef,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return t.(*Interface), nil
+	return t.(Interface), nil
 }
 
 // MustNewInterface is a convenience function equivalent to NewInterface but panics on failure instead of
 // returning an error.
-func MustNewInterface(typeDef InterfaceTypeDefinition) *Interface {
+func MustNewInterface(typeDef InterfaceTypeDefinition) Interface {
 	iface, err := NewInterface(typeDef)
 	if err != nil {
 		panic(err)
@@ -146,33 +137,27 @@ func MustNewInterface(typeDef InterfaceTypeDefinition) *Interface {
 	return iface
 }
 
-// graphqlType implements Type.
-func (*Interface) graphqlType() {}
-
-// graphqlAbstractType implements AbstractType.
-func (*Interface) graphqlAbstractType() {}
+// String implements fmt.Stringer.
+func (iface *iface) String() string {
+	return iface.Name()
+}
 
 // TypeResolver implements AbstractType.
-func (iface *Interface) TypeResolver() TypeResolver {
+func (iface *iface) TypeResolver() TypeResolver {
 	return iface.typeResolver
 }
 
 // Name implements TypeWithName.
-func (iface *Interface) Name() string {
+func (iface *iface) Name() string {
 	return iface.data.Name
 }
 
 // Description implements TypeWithDescription.
-func (iface *Interface) Description() string {
+func (iface *iface) Description() string {
 	return iface.data.Description
 }
 
-// String implements Type.
-func (iface *Interface) String() string {
-	return iface.Name()
-}
-
-// Fields returns set of fields that needs to be provided when implementing this interface.
-func (iface *Interface) Fields() FieldMap {
+// Fields implements Interface.
+func (iface *iface) Fields() FieldMap {
 	return iface.fields
 }

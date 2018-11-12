@@ -95,7 +95,7 @@ type ExecutionNode struct {
 	Definitions []*ast.Field
 
 	// The corresponding Field definition in the schema; This is nil for root node.
-	Field *graphql.Field
+	Field graphql.Field
 
 	// Arguments to this field; Note that the argument value is coerced unless it is a variable which
 	// will remain as an ast.Variable.
@@ -103,7 +103,7 @@ type ExecutionNode struct {
 
 	// The child nodes of this node; Note that this is a map where key is the concrete type of the
 	// node. Selection Sets in a field may vary subject to its runtime type.
-	Children map[*graphql.Object][]*ExecutionNode
+	Children map[graphql.Object][]*ExecutionNode
 }
 
 // IsRoot returns true if this node represents a root node.

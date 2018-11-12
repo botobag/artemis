@@ -108,9 +108,9 @@ var _ = Describe("Enum", func() {
 		var (
 			schema           *graphql.Schema
 			colorType        graphql.Enum
-			queryType        *graphql.Object
-			mutationType     *graphql.Object
-			subscriptionType *graphql.Object
+			queryType        graphql.Object
+			mutationType     graphql.Object
+			subscriptionType graphql.Object
 
 			complexEnum graphql.Enum
 		)
@@ -646,7 +646,7 @@ var _ = Describe("Enum", func() {
 		Context("where enum value may be pointer", func() {
 			var (
 				colorType graphql.Enum
-				queryType *graphql.Object
+				queryType graphql.Object
 				schema    *graphql.Schema
 			)
 

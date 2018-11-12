@@ -29,7 +29,7 @@ type ResolveInfo struct {
 	ExecutionContext *ExecutionContext
 	ExecutionNode    *ExecutionNode
 	ResultNode       *ResultNode
-	ParentType       *graphql.Object
+	ParentType       graphql.Object
 
 	// This is embedded in the struct to make pass the context to completeValue and variants
 	// (specifically for calling type resolvers in completeAbstractValue) without adding a parameter.
@@ -82,7 +82,7 @@ func (info *ResolveInfo) ParentFieldSelection() graphql.FieldSelectionInfo {
 }
 
 // Object implements graphql.ResolveInfo.
-func (info *ResolveInfo) Object() *graphql.Object {
+func (info *ResolveInfo) Object() graphql.Object {
 	return info.ParentType
 }
 
@@ -92,7 +92,7 @@ func (info *ResolveInfo) FieldDefinitions() []*ast.Field {
 }
 
 // Field implements graphql.ResolveInfo.
-func (info *ResolveInfo) Field() *graphql.Field {
+func (info *ResolveInfo) Field() graphql.Field {
 	return info.ExecutionNode.Field
 }
 
@@ -121,7 +121,7 @@ func (info fieldSelectionInfo) FieldDefinitions() []*ast.Field {
 }
 
 // Field implements graphql.FieldSelectionInfo.
-func (info fieldSelectionInfo) Field() *graphql.Field {
+func (info fieldSelectionInfo) Field() graphql.Field {
 	return info.node.Field
 }
 

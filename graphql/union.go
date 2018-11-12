@@ -96,13 +96,13 @@ func (creator *unionTypeCreator) Finalize(t Type, typeDefResolver typeDefinition
 	// Resolve possible object types.
 	numPossibleTypes := len(union.data.PossibleTypes)
 	if numPossibleTypes > 0 {
-		possibleTypes := make([]*Object, numPossibleTypes)
+		possibleTypes := make([]Object, numPossibleTypes)
 		for i, possibleTypeDef := range union.data.PossibleTypes {
 			possibleType, err := typeDefResolver(possibleTypeDef)
 			if err != nil {
 				return err
 			}
-			possibleTypes[i] = possibleType.(*Object)
+			possibleTypes[i] = possibleType.(Object)
 		}
 		union.possibleTypes = possibleTypes
 	}
@@ -119,7 +119,7 @@ func (creator *unionTypeCreator) Finalize(t Type, typeDefResolver typeDefinition
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Unions
 type Union struct {
 	data          UnionTypeData
-	possibleTypes []*Object
+	possibleTypes []Object
 	typeResolver  TypeResolver
 }
 
@@ -178,6 +178,6 @@ func (u *Union) String() string {
 }
 
 // PossibleTypes returns member of the union type.
-func (u *Union) PossibleTypes() []*Object {
+func (u *Union) PossibleTypes() []Object {
 	return u.possibleTypes
 }

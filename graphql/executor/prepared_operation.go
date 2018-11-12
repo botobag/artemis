@@ -49,7 +49,7 @@ type PreparedOperation struct {
 	definition *ast.OperationDefinition
 
 	// rootType extracts the root type corresponding to the operation in the schema.
-	rootType *graphql.Object
+	rootType graphql.Object
 
 	// FragmentMap maps name to the fragment definition in the document to speed up lookup when
 	// fragment spread during execution.
@@ -123,7 +123,7 @@ func Prepare(params PrepareParams) (*PreparedOperation, graphql.Errors) {
 	}
 
 	// Extract the root operation type.
-	var rootType *graphql.Object
+	var rootType graphql.Object
 	switch operation.OperationType() {
 	case ast.OperationTypeQuery:
 		rootType = schema.Query()
@@ -227,7 +227,7 @@ func (operation *PreparedOperation) Execute(ctx context.Context, params ExecuteP
 }
 
 // RootType returns operation.rootType.
-func (operation *PreparedOperation) RootType() *graphql.Object {
+func (operation *PreparedOperation) RootType() graphql.Object {
 	return operation.rootType
 }
 

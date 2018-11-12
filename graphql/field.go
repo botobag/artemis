@@ -72,10 +72,10 @@ type FieldConfig struct {
 }
 
 // FieldMap maps field name to the Field.
-type FieldMap map[string]*Field
+type FieldMap map[string]Field
 
-// buildFieldMap takes a Fields to build a FieldMap.
-func buildFieldMap(fieldConfigMap Fields, typeDefResolver typeDefinitionResolver) (FieldMap, error) {
+// BuildFieldMap builds a FieldMap from given Fields.
+func BuildFieldMap(fieldConfigMap Fields, typeDefResolver typeDefinitionResolver) (FieldMap, error) {
 	numFields := len(fieldConfigMap)
 	if numFields == 0 {
 		return nil, nil
@@ -95,7 +95,7 @@ func buildFieldMap(fieldConfigMap Fields, typeDefResolver typeDefinitionResolver
 			return nil, err
 		}
 
-		field := &Field{
+		field := &field{
 			config: fieldConfig,
 			name:   name,
 			ttype:  fieldType,
@@ -107,6 +107,71 @@ func buildFieldMap(fieldConfigMap Fields, typeDefResolver typeDefinitionResolver
 	}
 
 	return fieldMap, nil
+}
+
+// Field representing a field in an object or an interface. It yields a value of a specific type.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Objects
+type Field interface {
+	// Name of the field
+	Name() string
+
+	// Description of the field
+	Description() string
+
+	// Type of value yielded by the field
+	Type() Type
+
+	// Args specifies the definitions of arguments being taken when querying this field.
+	Args() []Argument
+
+	// Resolver determines the result value for the field from the value resolved by parent Object.
+	//
+	// Reference: https://facebook.github.io/graphql/June2018/#ResolveFieldValue()
+	Resolver() FieldResolver
+
+	// Deprecation is non-nil when the field is tagged as deprecated.
+	Deprecation() *Deprecation
+}
+
+// field is our built-in implementation for Field.
+type field struct {
+	config FieldConfig
+	name   string
+	ttype  Type
+	args   []Argument
+}
+
+var _ Field = (*field)(nil)
+
+// Name implements Field.
+func (f *field) Name() string {
+	return f.name
+}
+
+// Description implements Field.
+func (f *field) Description() string {
+	return f.config.Description
+}
+
+// Type implements Field.
+func (f *field) Type() Type {
+	return f.ttype
+}
+
+// Args implements Field.
+func (f *field) Args() []Argument {
+	return f.args
+}
+
+// Resolver implements Field.
+func (f *field) Resolver() FieldResolver {
+	return f.config.Resolver
+}
+
+// Deprecation implements Field.
+func (f *field) Deprecation() *Deprecation {
+	return f.config.Deprecation
 }
 
 // ArgumentConfigMap maps argument name to its definition.
@@ -213,46 +278,4 @@ func MockArgument(name string, description string, t Type, defaultValue interfac
 		ttype:        t,
 		defaultValue: defaultValue,
 	}
-}
-
-// Field representing a field in an object or an interface. It yields a value of a specific type.
-//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Objects
-type Field struct {
-	config FieldConfig
-	name   string
-	ttype  Type
-	args   []Argument
-}
-
-// Name of the field
-func (f *Field) Name() string {
-	return f.name
-}
-
-// Description of the field
-func (f *Field) Description() string {
-	return f.config.Description
-}
-
-// Type of value yielded by the field
-func (f *Field) Type() Type {
-	return f.ttype
-}
-
-// Args specifies the definitions of arguments being taken when querying this field.
-func (f *Field) Args() []Argument {
-	return f.args
-}
-
-// Resolver determines the result value for the field from the value resolved by parent Object.
-//
-// Reference: https://facebook.github.io/graphql/June2018/#ResolveFieldValue()
-func (f *Field) Resolver() FieldResolver {
-	return f.config.Resolver
-}
-
-// Deprecation is non-nil when the field is tagged as deprecated.
-func (f *Field) Deprecation() *Deprecation {
-	return f.config.Deprecation
 }

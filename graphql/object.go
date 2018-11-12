@@ -74,17 +74,17 @@ func (creator *objectTypeCreator) LoadDataAndNew() (Type, error) {
 	}
 
 	// Create instance.
-	return &Object{
+	return &object{
 		data: data,
 	}, nil
 }
 
 // Finalize implements typeCreator.
 func (*objectTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionResolver) error {
-	object := t.(*Object)
+	object := t.(*object)
 
 	// Build field map.
-	fieldMap, err := buildFieldMap(object.data.Fields, typeDefResolver)
+	fieldMap, err := BuildFieldMap(object.data.Fields, typeDefResolver)
 	if err != nil {
 		return err
 	}
@@ -93,13 +93,13 @@ func (*objectTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionResolve
 	// Resolve interface type.
 	numInterfaces := len(object.data.Interfaces)
 	if numInterfaces > 0 {
-		interfaces := make([]*Interface, numInterfaces)
+		interfaces := make([]Interface, numInterfaces)
 		for i, ifaceTypeDef := range object.data.Interfaces {
 			iface, err := typeDefResolver(ifaceTypeDef)
 			if err != nil {
 				return err
 			}
-			interfaces[i] = iface.(*Interface)
+			interfaces[i] = iface.(Interface)
 		}
 		object.interfaces = interfaces
 	}
@@ -107,33 +107,31 @@ func (*objectTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionResolve
 	return nil
 }
 
-// Object is an implementation of Object.
-type Object struct {
+// object is our built-in implementation for Object. It is configured with and built from
+// ObjectTypeDefinition.
+type object struct {
+	ThisIsObjectType
 	data       ObjectTypeData
 	fields     FieldMap
-	interfaces []*Interface
+	interfaces []Interface
 }
 
-var (
-	_ Type                = (*Object)(nil)
-	_ TypeWithName        = (*Object)(nil)
-	_ TypeWithDescription = (*Object)(nil)
-)
+var _ Object = (*object)(nil)
 
-// NewObject defines a Object type from a ObjectTypeDefinition.
-func NewObject(typeDef ObjectTypeDefinition) (*Object, error) {
+// NewObject defines an Object type from a ObjectTypeDefinition.
+func NewObject(typeDef ObjectTypeDefinition) (Object, error) {
 	t, err := newTypeImpl(&objectTypeCreator{
 		typeDef: typeDef,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return t.(*Object), nil
+	return t.(Object), nil
 }
 
 // MustNewObject is a convenience function equivalent to NewObject but panics on failure instead of
 // returning an error.
-func MustNewObject(typeDef ObjectTypeDefinition) *Object {
+func MustNewObject(typeDef ObjectTypeDefinition) Object {
 	o, err := NewObject(typeDef)
 	if err != nil {
 		panic(err)
@@ -141,30 +139,27 @@ func MustNewObject(typeDef ObjectTypeDefinition) *Object {
 	return o
 }
 
-// graphqlType implements Type.
-func (*Object) graphqlType() {}
-
-// Name implemennts TypeWithName.
-func (o *Object) Name() string {
-	return o.data.Name
-}
-
-// Description implemennts TypeWithDescription.
-func (o *Object) Description() string {
-	return o.data.Description
-}
-
-// Values implemennts Type.
-func (o *Object) String() string {
+// String implements fmt.Stringer.
+func (o *object) String() string {
 	return o.Name()
 }
 
-// Fields defined in the object
-func (o *Object) Fields() FieldMap {
+// Name implements TypeWithName.
+func (o *object) Name() string {
+	return o.data.Name
+}
+
+// Description implements TypeWithDescription.
+func (o *object) Description() string {
+	return o.data.Description
+}
+
+// Fields implements Object.
+func (o *object) Fields() FieldMap {
 	return o.fields
 }
 
-// Interfaces includes interfaces that implemented by the object.
-func (o *Object) Interfaces() []*Interface {
+// Interfaces implements Object.
+func (o *object) Interfaces() []Interface {
 	return o.interfaces
 }

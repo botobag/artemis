@@ -26,7 +26,7 @@ import (
 )
 
 var _ = Describe("Object", func() {
-	var InterfaceType *graphql.Interface
+	var InterfaceType graphql.Interface
 
 	BeforeEach(func() {
 		var err error
@@ -76,7 +76,7 @@ var _ = Describe("Object", func() {
 			})
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(objType.Interfaces()).Should(Equal([]*graphql.Interface{InterfaceType}))
+			Expect(objType.Interfaces()).Should(Equal([]graphql.Interface{InterfaceType}))
 		})
 
 		It("accepts empty interfaces", func() {

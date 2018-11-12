@@ -67,7 +67,7 @@ func (typeMap TypeMap) add(t Type) error {
 		case Scalar:
 			// Nothing to to.
 
-		case *Object:
+		case Object:
 			// Add interfaces.
 			for _, iface := range t.Interfaces() {
 				stack = append(stack, iface)
@@ -82,7 +82,7 @@ func (typeMap TypeMap) add(t Type) error {
 				}
 			}
 
-		case *Interface:
+		case Interface:
 			// Add field type and arg type.
 			for _, field := range t.Fields() {
 				stack = append(stack, field.Type())
@@ -142,9 +142,9 @@ func (directiveList DirectiveList) Lookup(name string) *Directive {
 // SchemaConfig contains configuration to define a GraphQL schema.
 type SchemaConfig struct {
 	// Query, Mutation and Subscription returns GraphQL Root Operation defined by the schema.
-	Query        *Object
-	Mutation     *Object
-	Subscription *Object
+	Query        Object
+	Mutation     Object
+	Subscription Object
 
 	// List of types that are declared in the schema.
 	Types []Type
@@ -172,9 +172,9 @@ type SchemaConfig struct {
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Schema
 type Schema struct {
 	// query, mutation and subscription are root operation objects.
-	query        *Object
-	mutation     *Object
-	subscription *Object
+	query        Object
+	mutation     Object
+	subscription Object
 
 	// typeMap contains all named type defined in the schema.
 	typeMap TypeMap
@@ -185,7 +185,7 @@ type Schema struct {
 	// implementations keeps track of all implementations by interface name.
 	//
 	// TODO: Improve map by using TypeKey as key. #26
-	implementations map[*Interface][]*Object
+	implementations map[Interface][]Object
 }
 
 // NewSchema initializes a Schema from the given config.
@@ -267,10 +267,10 @@ func NewSchema(config *SchemaConfig) (*Schema, error) {
 	schema.typeMap = typeMap
 
 	// Keep track of all implementations by interface name.
-	implementations := map[*Interface][]*Object{}
+	implementations := map[Interface][]Object{}
 	for _, t := range typeMap.types {
 		// Find all Object types.
-		if t, ok := t.(*Object); ok {
+		if t, ok := t.(Object); ok {
 			// Create a reverse link from the Interface to the Objects that implement it.
 			for _, iface := range t.Interfaces() {
 				implementations[iface] = append(implementations[iface], t)
@@ -294,31 +294,31 @@ func (schema *Schema) Directives() DirectiveList {
 // Query is one of the three GraphQL Root Operations.
 //
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
-func (schema *Schema) Query() *Object {
+func (schema *Schema) Query() Object {
 	return schema.query
 }
 
 // Mutation is one of the three GraphQL Root Operations.
 //
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
-func (schema *Schema) Mutation() *Object {
+func (schema *Schema) Mutation() Object {
 	return schema.mutation
 }
 
 // Subscription is one of the three GraphQL Root Operations.
 //
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
-func (schema *Schema) Subscription() *Object {
+func (schema *Schema) Subscription() Object {
 	return schema.subscription
 }
 
 // PossibleTypes returns concrete types for an abstract type in the schema. For Interface, this is
 // the list of Object type that implement it. For Union, this is the list of its member types.
-func (schema *Schema) PossibleTypes(t AbstractType) []*Object {
+func (schema *Schema) PossibleTypes(t AbstractType) []Object {
 	switch t := t.(type) {
 	case *Union:
 		return t.PossibleTypes()
-	case *Interface:
+	case Interface:
 		return schema.implementations[t]
 	default:
 		return nil

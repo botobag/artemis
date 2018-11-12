@@ -118,7 +118,7 @@ type FieldSelectionInfo interface {
 	FieldDefinitions() []*ast.Field
 
 	// The corresponding Field definition in Schema
-	Field() *Field
+	Field() Field
 
 	// Argument values that are given to the field
 	ArgumentValues() ArgumentValues
@@ -171,7 +171,7 @@ type ResolveInfo interface {
 	ParentFieldSelection() FieldSelectionInfo
 
 	// The Oject in which the Field belongs to
-	Object() *Object
+	Object() Object
 
 	// AST definitions of the field that is being requested; Note that it is an array of ast.Field
 	// because a field could e requested in a Selection Set multiple times (with the same
@@ -194,7 +194,7 @@ type ResolveInfo interface {
 	FieldDefinitions() []*ast.Field
 
 	// The corresponding Field definition in Schema
-	Field() *Field
+	Field() Field
 
 	// Path in the response to this field. This can be serialized to the "path" when there're errors
 	// occurred on field. Note that this is created on request by traversing ResultNode and could be

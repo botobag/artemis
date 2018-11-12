@@ -26,7 +26,7 @@ import (
 )
 
 var _ = Describe("Interface", func() {
-	var InterfaceType *graphql.Interface
+	var InterfaceType graphql.Interface
 
 	BeforeEach(func() {
 		var err error

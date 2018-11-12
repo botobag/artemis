@@ -90,7 +90,7 @@ func T(t Type) TypeDefinition {
 // implementing interfaces when defining Object (i.e., ObjectTypeData.Interfaces).
 type interfaceTypeWrapperTypeDefinition struct {
 	ThisIsInterfaceTypeDefinition
-	i *Interface
+	i Interface
 }
 
 // TypeData implements InterfaceTypeDefinition.
@@ -99,7 +99,7 @@ func (interfaceTypeWrapperTypeDefinition) TypeData() InterfaceTypeData {
 }
 
 // NewTypeResolver implements InterfaceTypeDefinition.
-func (interfaceTypeWrapperTypeDefinition) NewTypeResolver(iface *Interface) (TypeResolver, error) {
+func (interfaceTypeWrapperTypeDefinition) NewTypeResolver(iface Interface) (TypeResolver, error) {
 	panic("unreachable")
 }
 
@@ -111,7 +111,7 @@ func (typeDef interfaceTypeWrapperTypeDefinition) Type() Type {
 }
 
 // I is similar to T but convert an InterfaceType into InterfaceTypeDefinition.
-func I(i *Interface) InterfaceTypeDefinition {
+func I(i Interface) InterfaceTypeDefinition {
 	return interfaceTypeWrapperTypeDefinition{i: i}
 }
 
@@ -302,14 +302,14 @@ type TypeResolver interface {
 	// Info contains a collection of information about the current execution state.
 	//
 	// Reference: https://facebook.github.io/graphql/June2018/#ResolveAbstractType()
-	Resolve(ctx context.Context, value interface{}, info ResolveInfo) (*Object, error)
+	Resolve(ctx context.Context, value interface{}, info ResolveInfo) (Object, error)
 }
 
 // TypeResolverFunc is an adapter to allow the use of ordinary functions as TypeResolver.
-type TypeResolverFunc func(ctx context.Context, value interface{}, info ResolveInfo) (*Object, error)
+type TypeResolverFunc func(ctx context.Context, value interface{}, info ResolveInfo) (Object, error)
 
 // Resolve calls f(ctx, value, info).
-func (f TypeResolverFunc) Resolve(ctx context.Context, value interface{}, info ResolveInfo) (*Object, error) {
+func (f TypeResolverFunc) Resolve(ctx context.Context, value interface{}, info ResolveInfo) (Object, error) {
 	return f(ctx, value, info)
 }
 
@@ -348,7 +348,7 @@ type InterfaceTypeDefinition interface {
 
 	// NewTypeResolver creates a TypeResolver instance for the defining Interface during its
 	// initialization.
-	NewTypeResolver(iface *Interface) (TypeResolver, error)
+	NewTypeResolver(iface Interface) (TypeResolver, error)
 
 	// ThisIsGraphQLInterfaceTypeDefinition puts a special mark for a InterfaceTypeDefinition objects.
 	ThisIsGraphQLInterfaceTypeDefinition()

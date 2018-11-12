@@ -30,7 +30,7 @@ type DefinitionWithArguments interface {
 
 // Both graphql.Field and graphql.Directive have arguments.
 var (
-	_ DefinitionWithArguments = (*graphql.Field)(nil)
+	_ DefinitionWithArguments = (graphql.Field)(nil)
 	_                         = (*graphql.Directive)(nil)
 )
 

@@ -74,13 +74,13 @@ func (executor Common) BuildRootResultNode(context *ExecutionContext) (*ResultNo
 func (executor Common) collectFields(
 	context *ExecutionContext,
 	node *ExecutionNode,
-	runtimeType *graphql.Object) ([]*ExecutionNode, error) {
+	runtimeType graphql.Object) ([]*ExecutionNode, error) {
 	// Look up nodes for the Selection Set with the given runtime type in node's child nodes.
 	var childNodes []*ExecutionNode
 
 	if node.Children == nil {
 		// Initialize the children node map.
-		node.Children = map[*graphql.Object][]*ExecutionNode{}
+		node.Children = map[graphql.Object][]*ExecutionNode{}
 	} else {
 		// See whether we have built one before.
 		childNodes = node.Children[runtimeType]
@@ -105,7 +105,7 @@ func (executor Common) collectFields(
 func (executor Common) buildChildExecutionNodesForSelectionSet(
 	context *ExecutionContext,
 	parentNode *ExecutionNode,
-	runtimeType *graphql.Object) ([]*ExecutionNode, error) {
+	runtimeType graphql.Object) ([]*ExecutionNode, error) {
 	// Boolean set to prevent named fragment to be applied twice or more in a selection set.
 	visitedFragmentNames := map[string]bool{}
 
@@ -528,7 +528,7 @@ func (executor Common) completeNonWrappingValue(
 	case graphql.LeafType:
 		return executor.completeLeafValue(context, returnType, info, value)
 
-	case *graphql.Object:
+	case graphql.Object:
 		return executor.completeObjectValue(context, returnType, info, value)
 
 	// Union and Interface
@@ -566,7 +566,7 @@ func (executor Common) completeLeafValue(
 
 func (executor Common) completeObjectValue(
 	context *ExecutionContext,
-	returnType *graphql.Object,
+	returnType graphql.Object,
 	info *ResolveInfo,
 	value interface{}) error {
 
@@ -690,8 +690,8 @@ func (executor Common) shouldIncludeNode(context *ExecutionContext, node ast.Sel
 // definitions, which would cause issues.
 func (executor Common) findFieldDef(
 	schema *graphql.Schema,
-	parentType *graphql.Object,
-	fieldName string) *graphql.Field {
+	parentType graphql.Object,
+	fieldName string) graphql.Field {
 	// TODO: Deal with special introspection fields.
 	return parentType.Fields()[fieldName]
 }

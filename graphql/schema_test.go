@@ -26,7 +26,7 @@ import (
 var _ = Describe("Type System: Schema", func() {
 	// graphql-js/src/type/__tests__/schema-test.js
 	var (
-		InterfaceType             *graphql.Interface
+		InterfaceType             graphql.Interface
 		DirectiveInputType        *graphql.InputObject
 		WrappedDirectiveInputType *graphql.InputObject
 		Directive                 *graphql.Directive

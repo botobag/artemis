@@ -57,6 +57,8 @@ type LeafType interface {
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Types
 type AbstractType interface {
 	Type
+	TypeWithName
+	TypeWithDescription
 
 	// TypeResolver returns resolver that could determine the concrete Object type for the abstract
 	// type from resolved value.
@@ -207,6 +209,74 @@ func (f ScalarInputCoercerFuncs) CoerceArgumentValue(value ast.Value) (interface
 var _ ScalarInputCoercer = ScalarInputCoercerFuncs{}
 
 //===----------------------------------------------------------------------------------------====//
+// Object
+//===----------------------------------------------------------------------------------------====//
+
+// Object Type Definition
+//
+// GraphQL queries are hierarchical and composed, describing a tree of information. While Scalar
+// types describe the leaf values of these hierarchical queries, Objects describe the intermediate
+// levels.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Objects
+type Object interface {
+	Type
+	TypeWithName
+	TypeWithDescription
+
+	// Fields in the object
+	Fields() FieldMap
+
+	// Interfaces includes interfaces that implemented by the Object type.
+	Interfaces() []Interface
+
+	// graphqlObjectType puts a special mark for an Object type.
+	graphqlObjectType()
+}
+
+// ThisIsObjectType is required to be embedded in struct that intends to be an Object.
+type ThisIsObjectType struct{}
+
+// graphqlType implements Type.
+func (*ThisIsObjectType) graphqlType() {}
+
+// graphqlObjectType implements Object.
+func (*ThisIsObjectType) graphqlObjectType() {}
+
+//===----------------------------------------------------------------------------------------====//
+// Interface
+//===----------------------------------------------------------------------------------------====//
+
+// Interface Type Definition
+//
+// When a field can return one of a heterogeneous set of types, a Interface type is used to describe
+// what types are possible, what fields are in common across all types, as well as a function to
+// determine which type is actually used when the field is resolved.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Interfaces
+type Interface interface {
+	AbstractType
+
+	// Fields returns set of fields that needs to be provided when implementing this interface.
+	Fields() FieldMap
+
+	// graphqlInterfaceType puts a special mark for an Interface type.
+	graphqlInterfaceType()
+}
+
+// ThisIsInterfaceType is required to be embedded in struct that intends to be an Interface.
+type ThisIsInterfaceType struct{}
+
+// graphqlType implements Type.
+func (*ThisIsInterfaceType) graphqlType() {}
+
+// graphqlAbstractType implements AbstractType.
+func (*ThisIsInterfaceType) graphqlAbstractType() {}
+
+// graphqlInterfaceType implements Interface.
+func (*ThisIsInterfaceType) graphqlInterfaceType() {}
+
+//===----------------------------------------------------------------------------------------====//
 // Enum
 //===----------------------------------------------------------------------------------------====//
 
@@ -321,7 +391,7 @@ func IsInputType(t Type) bool {
 // Reference: https://facebook.github.io/graphql/draft/#IsOutputType()
 func IsOutputType(t Type) bool {
 	switch NamedTypeOf(t).(type) {
-	case Scalar, *Object, *Interface, *Union, Enum:
+	case Scalar, Object, Interface, *Union, Enum:
 		return true
 	default:
 		return false
@@ -331,7 +401,7 @@ func IsOutputType(t Type) bool {
 // IsCompositeType true if the given type is one of object, interface or union.
 func IsCompositeType(t Type) bool {
 	switch t.(type) {
-	case *Object, *Interface, *Union:
+	case Object, Interface, *Union:
 		return true
 	default:
 		return false
@@ -380,13 +450,13 @@ func IsScalarType(t Type) bool {
 
 // IsObjectType returns true if the given type is an Object type.
 func IsObjectType(t Type) bool {
-	_, ok := t.(*Object)
+	_, ok := t.(Object)
 	return ok
 }
 
 // IsInterfaceType returns true if the given type is an Interface type.
 func IsInterfaceType(t Type) bool {
-	_, ok := t.(*Interface)
+	_, ok := t.(Interface)
 	return ok
 }
 

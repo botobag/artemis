@@ -83,7 +83,7 @@ type UnresolvedResultValue struct {
 	ExecutionNode *ExecutionNode
 
 	// ParentType of which selection set that contains this field
-	ParentType *graphql.Object
+	ParentType graphql.Object
 
 	// The source value that supplied to the resolver
 	Source interface{}
