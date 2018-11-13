@@ -100,7 +100,7 @@ func (typeMap TypeMap) add(t Type) error {
 		case Enum:
 			// Nothing to to.
 
-		case *InputObject:
+		case InputObject:
 			// Add field type.
 			for _, field := range t.Fields() {
 				stack = append(stack, field.Type())

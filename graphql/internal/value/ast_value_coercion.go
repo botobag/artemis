@@ -115,7 +115,7 @@ func CoerceFromAST(value ast.Value, t graphql.Type, variables graphql.VariableVa
 		}
 		return []interface{}{coercedValue}, nil
 
-	case *graphql.InputObject:
+	case graphql.InputObject:
 		objectValue, isObjectValue := value.(ast.ObjectValue)
 		if !isObjectValue {
 			return nil, fmt.Errorf("expected an object value, but got: %T", value)

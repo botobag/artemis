@@ -43,8 +43,8 @@ type InputFieldDefinition struct {
 	DefaultValue interface{}
 }
 
-// buildInputFieldMap takes an InputFields to build an InputFieldMap.
-func buildInputFieldMap(inputFieldDefMap InputFields, typeDefResolver typeDefinitionResolver) (InputFieldMap, error) {
+// BuildInputFieldMap builds an InputFieldMap from given InputFields.
+func BuildInputFieldMap(inputFieldDefMap InputFields, typeDefResolver typeDefinitionResolver) (InputFieldMap, error) {
 	numFields := len(inputFieldDefMap)
 	if numFields == 0 {
 		return nil, nil
@@ -57,7 +57,7 @@ func buildInputFieldMap(inputFieldDefMap InputFields, typeDefResolver typeDefini
 			return nil, err
 		}
 
-		inputFieldMap[name] = InputField{
+		inputFieldMap[name] = &inputField{
 			name:         name,
 			description:  inputFieldDef.Description,
 			ttype:        inputFieldType,
@@ -68,40 +68,38 @@ func buildInputFieldMap(inputFieldDefMap InputFields, typeDefResolver typeDefini
 	return inputFieldMap, nil
 }
 
-// InputFieldMap maps field name to the field definition in an Input Object type.
-type InputFieldMap map[string]InputField
-
-// InputField defines a field in an InputObject. It is much simpler than Field because it doesn't
-// get value from resolver nor can it have arguments.
-type InputField struct {
+// inputField is our built-in implementation for InputField.
+type inputField struct {
 	name         string
 	description  string
 	ttype        Type
 	defaultValue interface{}
 }
 
-// Name of the field
-func (f *InputField) Name() string {
+var _ InputField = (*inputField)(nil)
+
+// Name implements InputField.
+func (f *inputField) Name() string {
 	return f.name
 }
 
-// Description of the field
-func (f *InputField) Description() string {
+// Description implements InputField.
+func (f *inputField) Description() string {
 	return f.description
 }
 
-// Type of value yielded by the field
-func (f *InputField) Type() Type {
+// Type implements InputField.
+func (f *inputField) Type() Type {
 	return f.ttype
 }
 
-// HasDefaultValue returns true if the argument has a default value.
-func (f *InputField) HasDefaultValue() bool {
+// HasDefaultValue implements InputField.
+func (f *inputField) HasDefaultValue() bool {
 	return f.defaultValue != nil
 }
 
-// DefaultValue specifies the value to be assigned to the argument when no value is provided.
-func (f *InputField) DefaultValue() interface{} {
+// DefaultValue implements InputField.
+func (f *inputField) DefaultValue() interface{} {
 	// Deal with NilInputFieldDefaultValue specially.
 	if _, ok := f.defaultValue.(inputFieldNilValueType); ok {
 		// We have default value which is "null".
@@ -164,17 +162,17 @@ func (creator *inputObjectTypeCreator) LoadDataAndNew() (Type, error) {
 	}
 
 	// Create instance.
-	return &InputObject{
+	return &inputObject{
 		data: data,
 	}, nil
 }
 
 // Finalize implements typeCreator.
 func (*inputObjectTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionResolver) error {
-	object := t.(*InputObject)
+	object := t.(*inputObject)
 
 	// Build field map.
-	fieldMap, err := buildInputFieldMap(object.data.Fields, typeDefResolver)
+	fieldMap, err := BuildInputFieldMap(object.data.Fields, typeDefResolver)
 	if err != nil {
 		return err
 	}
@@ -183,39 +181,30 @@ func (*inputObjectTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionRe
 	return nil
 }
 
-// InputObject Type Definition
-//
-// An input object defines a structured collection of fields which may be supplied to a field
-// argument. It is essentially an Object type but with some contraints on the fields so it can be
-// used as an input argument. More specifically, fields in an Input Object type cannot define
-// arguments or contain references to interfaces and unions.
-//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Input-Objects
-type InputObject struct {
+// inputObject is our built-in implementation for InputObject. It is configured with and built from
+// InputObjectTypeDefinition.
+type inputObject struct {
+	ThisIsInputObjectType
 	data   InputObjectTypeData
 	fields InputFieldMap
 }
 
-var (
-	_ Type                = (*InputObject)(nil)
-	_ TypeWithName        = (*InputObject)(nil)
-	_ TypeWithDescription = (*InputObject)(nil)
-)
+var _ InputObject = (*inputObject)(nil)
 
 // NewInputObject defines a InputObject type from a InputObjectTypeDefinition.
-func NewInputObject(typeDef InputObjectTypeDefinition) (*InputObject, error) {
+func NewInputObject(typeDef InputObjectTypeDefinition) (InputObject, error) {
 	t, err := newTypeImpl(&inputObjectTypeCreator{
 		typeDef: typeDef,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return t.(*InputObject), nil
+	return t.(InputObject), nil
 }
 
 // MustNewInputObject is a convenience function equivalent to NewInputObject but panics on failure
 // instead of returning an error.
-func MustNewInputObject(typeDef InputObjectTypeDefinition) *InputObject {
+func MustNewInputObject(typeDef InputObjectTypeDefinition) InputObject {
 	o, err := NewInputObject(typeDef)
 	if err != nil {
 		panic(err)
@@ -223,25 +212,22 @@ func MustNewInputObject(typeDef InputObjectTypeDefinition) *InputObject {
 	return o
 }
 
-// graphqlType implements Type.
-func (*InputObject) graphqlType() {}
+// String implemennts fmt.Stringer.
+func (o *inputObject) String() string {
+	return o.Name()
+}
 
 // Name implemennts TypeWithName.
-func (o *InputObject) Name() string {
+func (o *inputObject) Name() string {
 	return o.data.Name
 }
 
 // Description implemennts TypeWithDescription.
-func (o *InputObject) Description() string {
+func (o *inputObject) Description() string {
 	return o.data.Description
 }
 
-// String implemennts Type.
-func (o *InputObject) String() string {
-	return o.Name()
-}
-
-// Fields defined in the object
-func (o *InputObject) Fields() InputFieldMap {
+// Fields implements InputObject.
+func (o *inputObject) Fields() InputFieldMap {
 	return o.fields
 }

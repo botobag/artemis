@@ -370,6 +370,59 @@ type EnumValue interface {
 }
 
 //===------------------------------------------------------------------------------------------===//
+// InputObject
+//===------------------------------------------------------------------------------------------===//
+
+// InputFieldMap maps field name to the field definition in an Input Object type.
+type InputFieldMap map[string]InputField
+
+// InputObject Type Definition
+//
+// An input object defines a structured collection of fields which may be supplied to a field
+// argument. It is essentially an Object type but with some contraints on the fields so it can be
+// used as an input argument. More specifically, fields in an Input Object type cannot define
+// arguments or contain references to interfaces and unions.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Input-Objects
+type InputObject interface {
+	Type
+
+	Fields() InputFieldMap
+
+	// graphqlInputObjectType puts a special mark for an Input Object type.
+	graphqlInputObjectType()
+}
+
+// ThisIsInputObjectType is required to be embedded in struct that intends to be a InputObject.
+type ThisIsInputObjectType struct{}
+
+// graphqlType implements Type.
+func (*ThisIsInputObjectType) graphqlType() {}
+
+// graphqlInputObjectType implements InputObject.
+func (*ThisIsInputObjectType) graphqlInputObjectType() {}
+
+// InputField defines a field in an InputObject. It is much simpler than Field because it doesn't
+// resolve value nor can have arguments.
+type InputField interface {
+	// Name of the field
+	Name() string
+
+	// Description of the field
+	Description() string
+
+	// Type of value yielded by the field
+	Type() Type
+
+	// HasDefaultValue returns true if the input field has a default value. Calling DefaultValue when
+	// this returns false results an undefined behavior.
+	HasDefaultValue() bool
+
+	// DefaultValue specified the value to be assigned to the field when no input is provided.
+	DefaultValue() interface{}
+}
+
+//===------------------------------------------------------------------------------------------===//
 // Type Predication
 //===------------------------------------------------------------------------------------------===//
 
@@ -412,7 +465,7 @@ func NullableTypeOf(t Type) Type {
 // Reference: https://facebook.github.io/graphql/June2018/#IsInputType()
 func IsInputType(t Type) bool {
 	switch NamedTypeOf(t).(type) {
-	case Scalar, Enum, *InputObject:
+	case Scalar, Enum, InputObject:
 		return true
 	default:
 		return false
@@ -507,7 +560,7 @@ func IsEnumType(t Type) bool {
 
 // IsInputObjectType returns true if the given type is an Input Object type.
 func IsInputObjectType(t Type) bool {
-	_, ok := t.(*InputObject)
+	_, ok := t.(InputObject)
 	return ok
 }
 

@@ -181,7 +181,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 		}
 		return []interface{}{coercedValue}, graphql.NoErrors()
 
-	case *graphql.InputObject:
+	case graphql.InputObject:
 		// Currently we only accept map[string]interface{}. See #52.
 		objectValue, isObjectValue := value.(map[string]interface{})
 		if !isObjectValue {
