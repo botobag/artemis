@@ -388,7 +388,7 @@ type UnionTypeDefinition interface {
 
 	// NewTypeResolver creates a TypeResolver instance for the defining Union during its
 	// initialization.
-	NewTypeResolver(union *Union) (TypeResolver, error)
+	NewTypeResolver(union Union) (TypeResolver, error)
 
 	// ThisIsGraphQLUnionTypeDefinition puts a special mark for a UnionTypeDefinition objects.
 	ThisIsGraphQLUnionTypeDefinition()

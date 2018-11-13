@@ -92,7 +92,7 @@ func (typeMap TypeMap) add(t Type) error {
 				}
 			}
 
-		case *Union:
+		case Union:
 			for _, possibleType := range t.PossibleTypes() {
 				stack = append(stack, possibleType)
 			}
@@ -316,7 +316,7 @@ func (schema *Schema) Subscription() Object {
 // the list of Object type that implement it. For Union, this is the list of its member types.
 func (schema *Schema) PossibleTypes(t AbstractType) []Object {
 	switch t := t.(type) {
-	case *Union:
+	case Union:
 		return t.PossibleTypes()
 	case Interface:
 		return schema.implementations[t]

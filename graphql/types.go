@@ -277,6 +277,39 @@ func (*ThisIsInterfaceType) graphqlAbstractType() {}
 func (*ThisIsInterfaceType) graphqlInterfaceType() {}
 
 //===----------------------------------------------------------------------------------------====//
+// Union
+//===----------------------------------------------------------------------------------------====//
+
+// Union Type Definition
+//
+// When a field can return one of a heterogeneous set of types, a Union type is used to describe
+// what types are possible as well as providing a function to determine which type is actually used
+// when the field is resolved.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Unions
+type Union interface {
+	AbstractType
+
+	// Types returns member of the union type.
+	PossibleTypes() []Object
+
+	// graphqlUnionType puts a special mark for an Union type.
+	graphqlUnionType()
+}
+
+// ThisIsUnionType is required to be embedded in struct that intends to be an Union.
+type ThisIsUnionType struct{}
+
+// graphqlType implements Type.
+func (*ThisIsUnionType) graphqlType() {}
+
+// graphqlAbstractType implements AbstractType.
+func (*ThisIsUnionType) graphqlAbstractType() {}
+
+// graphqlUnionType implements Union.
+func (*ThisIsUnionType) graphqlUnionType() {}
+
+//===----------------------------------------------------------------------------------------====//
 // Enum
 //===----------------------------------------------------------------------------------------====//
 
@@ -391,7 +424,7 @@ func IsInputType(t Type) bool {
 // Reference: https://facebook.github.io/graphql/draft/#IsOutputType()
 func IsOutputType(t Type) bool {
 	switch NamedTypeOf(t).(type) {
-	case Scalar, Object, Interface, *Union, Enum:
+	case Scalar, Object, Interface, Union, Enum:
 		return true
 	default:
 		return false
@@ -401,7 +434,7 @@ func IsOutputType(t Type) bool {
 // IsCompositeType true if the given type is one of object, interface or union.
 func IsCompositeType(t Type) bool {
 	switch t.(type) {
-	case Object, Interface, *Union:
+	case Object, Interface, Union:
 		return true
 	default:
 		return false
@@ -462,7 +495,7 @@ func IsInterfaceType(t Type) bool {
 
 // IsUnionType returns true if the given type is an Union type.
 func IsUnionType(t Type) bool {
-	_, ok := t.(*Union)
+	_, ok := t.(Union)
 	return ok
 }
 

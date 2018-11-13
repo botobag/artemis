@@ -50,7 +50,7 @@ func (config *UnionConfig) TypeData() UnionTypeData {
 }
 
 // NewTypeResolver implments UnionTypeDefinition.
-func (config *UnionConfig) NewTypeResolver(union *Union) (TypeResolver, error) {
+func (config *UnionConfig) NewTypeResolver(union Union) (TypeResolver, error) {
 	return config.TypeResolver, nil
 }
 
@@ -77,14 +77,14 @@ func (creator *unionTypeCreator) LoadDataAndNew() (Type, error) {
 		return nil, NewError("Must provide name for Union.")
 	}
 
-	return &Union{
+	return &union{
 		data: data,
 	}, nil
 }
 
 // Finalize implements typeCreator.
 func (creator *unionTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionResolver) error {
-	union := t.(*Union)
+	union := t.(*union)
 
 	// Initialize type resolver for the Interface type.
 	typeResolver, err := creator.typeDef.NewTypeResolver(union)
@@ -110,40 +110,31 @@ func (creator *unionTypeCreator) Finalize(t Type, typeDefResolver typeDefinition
 	return nil
 }
 
-// Union Type Definition
-//
-// When a field can return one of a heterogeneous set of types, a Union type is used to describe
-// what types are possible as well as providing a function to determine which type is actually used
-// when the field is resolved.
-//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Unions
-type Union struct {
+// union is our built-in implementation for Union. It is configured with and built from
+// UnionTypeDefinition.
+type union struct {
+	ThisIsUnionType
 	data          UnionTypeData
 	possibleTypes []Object
 	typeResolver  TypeResolver
 }
 
-var (
-	_ Type                = (*Union)(nil)
-	_ AbstractType        = (*Union)(nil)
-	_ TypeWithName        = (*Union)(nil)
-	_ TypeWithDescription = (*Union)(nil)
-)
+var _ Union = (*union)(nil)
 
 // NewUnion initializes an instance of "union".
-func NewUnion(typeDef UnionTypeDefinition) (*Union, error) {
+func NewUnion(typeDef UnionTypeDefinition) (Union, error) {
 	t, err := newTypeImpl(&unionTypeCreator{
 		typeDef: typeDef,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return t.(*Union), nil
+	return t.(Union), nil
 }
 
 // MustNewUnion is a convenience function equivalent to NewUnion but panics on failure instead of
 // returning an error.
-func MustNewUnion(typeDef UnionTypeDefinition) *Union {
+func MustNewUnion(typeDef UnionTypeDefinition) Union {
 	u, err := NewUnion(typeDef)
 	if err != nil {
 		panic(err)
@@ -151,33 +142,27 @@ func MustNewUnion(typeDef UnionTypeDefinition) *Union {
 	return u
 }
 
-// graphqlType implements Type.
-func (*Union) graphqlType() {}
-
-// graphqlAbstractType implements AbstractType.
-func (*Union) graphqlAbstractType() {}
-
-// TypeResolver implements AbstractType.
-func (u *Union) TypeResolver() TypeResolver {
-	return u.typeResolver
-}
-
-// Name implemennts TypeWithName.
-func (u *Union) Name() string {
-	return u.data.Name
-}
-
-// Description implemennts TypeWithDescription.
-func (u *Union) Description() string {
-	return u.data.Description
-}
-
-// Values implemennts Type.
-func (u *Union) String() string {
+// String implements fmt.Stringer.
+func (u *union) String() string {
 	return u.Name()
 }
 
-// PossibleTypes returns member of the union type.
-func (u *Union) PossibleTypes() []Object {
+// TypeResolver implements AbstractType.
+func (u *union) TypeResolver() TypeResolver {
+	return u.typeResolver
+}
+
+// Name implements TypeWithName.
+func (u *union) Name() string {
+	return u.data.Name
+}
+
+// Description implements TypeWithDescription.
+func (u *union) Description() string {
+	return u.data.Description
+}
+
+// PossibleTypes implements Union.
+func (u *union) PossibleTypes() []Object {
 	return u.possibleTypes
 }
