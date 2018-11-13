@@ -35,7 +35,7 @@ func (creator *nonNullTypeCreator) TypeDefinition() TypeDefinition {
 
 // LoadDataAndNew implements typeCreator.
 func (creator *nonNullTypeCreator) LoadDataAndNew() (Type, error) {
-	return &NonNull{}, nil
+	return &nonNull{}, nil
 }
 
 // Finalize implements typeCreator.
@@ -50,7 +50,7 @@ func (creator *nonNullTypeCreator) Finalize(t Type, typeDefResolver typeDefiniti
 		return NewError(fmt.Sprintf("Expected a nullable type for NonNull but got an %s.", elementType.String()))
 	}
 
-	nonNull := t.(*NonNull)
+	nonNull := t.(*nonNull)
 	nonNull.elementType = elementType
 	nonNull.notation = fmt.Sprintf("%s!", elementType.String())
 	return nil
@@ -98,61 +98,51 @@ func NonNullOfType(elementType Type) NonNullTypeDefinition {
 	}
 }
 
-// NonNull Type Modifier
-//
-// A non-null is a wrapping type which points to another type. Non-null types enforce that their
-// values are never null and can ensure an error is raised if this ever occurs during a request. It
-// is useful for fields which you can make a strong guarantee on non-nullability, for example
-// usually the id field of a database row will never be null.
-//
-// Note: the enforcement of non-nullability occurs within the executor.
-//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.Non-Null
-type NonNull struct {
+// nonNull is our built-in implementation for NonNull. It is configured with and built from
+// NonNullTypeDefinition.
+type nonNull struct {
+	ThisIsNonNullType
 	elementType Type
 	// notation is cached value for returning from String() and is initialized in constructor.
 	notation string
 }
 
-var (
-	_ Type         = (*NonNull)(nil)
-	_ WrappingType = (*NonNull)(nil)
-)
+var _ NonNull = (*nonNull)(nil)
 
 // NewNonNullOfType defines a NonNull type from a given Type of element type.
-func NewNonNullOfType(elementType Type) (*NonNull, error) {
+func NewNonNullOfType(elementType Type) (NonNull, error) {
 	return NewNonNull(NonNullOfType(elementType))
 }
 
 // MustNewNonNullOfType is a panic-on-fail version of NewNonNullOfType.
-func MustNewNonNullOfType(elementType Type) *NonNull {
+func MustNewNonNullOfType(elementType Type) NonNull {
 	return MustNewNonNull(NonNullOfType(elementType))
 }
 
 // NewNonNullOf defines a NonNull type from a given TypeDefinition of element type.
-func NewNonNullOf(elementTypeDef TypeDefinition) (*NonNull, error) {
+func NewNonNullOf(elementTypeDef TypeDefinition) (NonNull, error) {
 	return NewNonNull(NonNullOf(elementTypeDef))
 }
 
 // MustNewNonNullOf is a panic-on-fail version of NewNonNullOf.
-func MustNewNonNullOf(elementTypeDef TypeDefinition) *NonNull {
+func MustNewNonNullOf(elementTypeDef TypeDefinition) NonNull {
 	return MustNewNonNull(NonNullOf(elementTypeDef))
 }
 
 // NewNonNull defines a NonNull type from a NonNullTypeDefinition.
-func NewNonNull(typeDef NonNullTypeDefinition) (*NonNull, error) {
+func NewNonNull(typeDef NonNullTypeDefinition) (NonNull, error) {
 	t, err := newTypeImpl(&nonNullTypeCreator{
 		typeDef: typeDef,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return t.(*NonNull), nil
+	return t.(*nonNull), nil
 }
 
 // MustNewNonNull is a convenience function equivalent to NewNonNull but panics on failure instead of
 // returning an error.
-func MustNewNonNull(typeDef NonNullTypeDefinition) *NonNull {
+func MustNewNonNull(typeDef NonNullTypeDefinition) NonNull {
 	n, err := NewNonNull(typeDef)
 	if err != nil {
 		panic(err)
@@ -160,23 +150,17 @@ func MustNewNonNull(typeDef NonNullTypeDefinition) *NonNull {
 	return n
 }
 
-// graphqlType implements Type.
-func (*NonNull) graphqlType() {}
-
-// graphqlWrappingType implements WrappingType.
-func (*NonNull) graphqlWrappingType() {}
-
-// Values implemennts Type.
-func (n *NonNull) String() string {
+// String implemennts fmt.Stringer.
+func (n *nonNull) String() string {
 	return n.notation
 }
 
 // UnwrappedType implements WrappingType.
-func (n *NonNull) UnwrappedType() Type {
+func (n *nonNull) UnwrappedType() Type {
 	return n.InnerType()
 }
 
-// InnerType indicates the type of the element wrapped in this non-null type.
-func (n *NonNull) InnerType() Type {
+// InnerType implements NonNull.
+func (n *nonNull) InnerType() Type {
 	return n.elementType
 }

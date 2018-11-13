@@ -50,7 +50,7 @@ func CoerceFromAST(value ast.Value, t graphql.Type, variables graphql.VariableVa
 	}
 
 	_, isNullValue := value.(ast.NullValue)
-	if t, isNonNullType := t.(*graphql.NonNull); isNonNullType {
+	if t, isNonNullType := t.(graphql.NonNull); isNonNullType {
 		if isNullValue {
 			return nil, errAssignNullToNonNull
 		}
@@ -81,7 +81,7 @@ func CoerceFromAST(value ast.Value, t graphql.Type, variables graphql.VariableVa
 	}
 
 	switch ttype := t.(type) {
-	case *graphql.List:
+	case graphql.List:
 		elementType := ttype.ElementType()
 		isNonNullElementType := graphql.IsNonNullType(elementType)
 

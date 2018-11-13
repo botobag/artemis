@@ -323,8 +323,8 @@ var _ = Describe("Type", func() {
 	Describe("NullableTypeOf", func() {
 		It("returns nil for no type", func() {
 			Expect(graphql.NullableTypeOf(nil)).Should(BeNil())
-			Expect(graphql.NullableTypeOf((*graphql.List)(nil))).Should(BeNil())
-			Expect(graphql.NullableTypeOf((*graphql.NonNull)(nil))).Should(BeNil())
+			Expect(graphql.NullableTypeOf((graphql.List)(nil))).Should(BeNil())
+			Expect(graphql.NullableTypeOf((graphql.NonNull)(nil))).Should(BeNil())
 		})
 
 		It("returns self for a nullable type", func() {
@@ -353,7 +353,7 @@ var _ = Describe("Type", func() {
 		It("returns nil for no type", func() {
 			Expect(graphql.NamedTypeOf(nil)).Should(BeNil())
 			Expect(graphql.NamedTypeOf((graphql.Scalar)(nil))).Should(BeNil())
-			Expect(graphql.NamedTypeOf((*graphql.List)(nil))).Should(BeNil())
+			Expect(graphql.NamedTypeOf((graphql.List)(nil))).Should(BeNil())
 		})
 
 		It("returns self for a unwrapped type", func() {

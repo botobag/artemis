@@ -106,9 +106,9 @@ func (typeMap TypeMap) add(t Type) error {
 				stack = append(stack, field.Type())
 			}
 
-		case *List:
+		case List:
 			stack = append(stack, t.ElementType())
-		case *NonNull:
+		case NonNull:
 			stack = append(stack, t.InnerType())
 
 		case nil:

@@ -423,6 +423,74 @@ type InputField interface {
 }
 
 //===------------------------------------------------------------------------------------------===//
+// List
+//===------------------------------------------------------------------------------------------===//
+
+// List Type Modifier
+//
+// A list is a wrapping type which points to another type. Lists are often created within the
+// context of defining the fields of an object type.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.List
+type List interface {
+	WrappingType
+
+	// ElementType indicates the the type of the elements in the list.
+	ElementType() Type
+
+	// graphqlListType puts a special mark for a List type.
+	graphqlListType()
+}
+
+// ThisIsListType is required to be embedded in struct that intends to be a List.
+type ThisIsListType struct{}
+
+// graphqlType implements Type.
+func (*ThisIsListType) graphqlType() {}
+
+// graphqlWrappingType implements WrappingType.
+func (*ThisIsListType) graphqlWrappingType() {}
+
+// graphqlListType implements List.
+func (*ThisIsListType) graphqlListType() {}
+
+//===------------------------------------------------------------------------------------------===//
+// NonNull
+//===------------------------------------------------------------------------------------------===//
+
+// NonNull Type Modifier
+//
+// A non-null is a wrapping type which points to another type. Non-null types enforce that their
+// values are never null and can ensure an error is raised if this ever occurs during a request. It
+// is useful for fields which you can make a strong guarantee on non-nullability, for example
+// usually the id field of a database row will never be null.
+//
+// Note: the enforcement of non-nullability occurs within the executor.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.Non-Null
+type NonNull interface {
+	WrappingType
+
+	// InnerType indicates the type of the element wrapped in this non-null type.
+	InnerType() Type
+
+	// graphqlNonNullType puts a special mark for an NonNull type.
+	graphqlNonNullType()
+}
+
+// ThisIsNonNullType is required to be embedded in struct that intends to be a NonNull.
+type ThisIsNonNullType struct{}
+
+// graphqlType implements Type.
+func (*ThisIsNonNullType) graphqlType() {}
+
+// graphqlWrappingType implements WrappingType.
+func (*ThisIsNonNullType) graphqlWrappingType() {}
+
+// graphqlNonNullType implements NonNull.
+func (*ThisIsNonNullType) graphqlNonNullType() {}
+
+//===------------------------------------------------------------------------------------------===//
 // Type Predication
 //===------------------------------------------------------------------------------------------===//
 
@@ -433,13 +501,13 @@ type InputField interface {
 func NamedTypeOf(t Type) Type {
 	for {
 		switch ttype := t.(type) {
-		case *List:
+		case List:
 			if ttype == nil {
 				return nil
 			}
 			t = ttype.ElementType()
 
-		case *NonNull:
+		case NonNull:
 			if ttype == nil {
 				return nil
 			}
@@ -454,7 +522,7 @@ func NamedTypeOf(t Type) Type {
 // NullableTypeOf return the given type if it is not a non-null type. Otherwise, return the inner
 // type of the non-null type.
 func NullableTypeOf(t Type) Type {
-	if t, ok := t.(*NonNull); ok && t != nil {
+	if t, ok := t.(NonNull); ok && t != nil {
 		return t.InnerType()
 	}
 	return t
@@ -496,7 +564,7 @@ func IsCompositeType(t Type) bool {
 
 // IsNullableType returns true if the type accepts null value.
 func IsNullableType(t Type) bool {
-	_, ok := t.(*NonNull)
+	_, ok := t.(NonNull)
 	return !ok
 }
 
@@ -566,12 +634,12 @@ func IsInputObjectType(t Type) bool {
 
 // IsListType returns true if the given type is a List type.
 func IsListType(t Type) bool {
-	_, ok := t.(*List)
+	_, ok := t.(List)
 	return ok
 }
 
 // IsNonNullType returns true if the given type is a NonNull type.
 func IsNonNullType(t Type) bool {
-	_, ok := t.(*NonNull)
+	_, ok := t.(NonNull)
 	return ok
 }

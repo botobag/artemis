@@ -75,7 +75,7 @@ func CoerceValue(value interface{}, t graphql.Type, blameNode ast.Node) (interfa
 
 func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path *valuePath) (interface{}, graphql.Errors) {
 	// A value must be provided if the type is non-null.
-	if nonNullType, isNonNullType := t.(*graphql.NonNull); isNonNullType {
+	if nonNullType, isNonNullType := t.(graphql.NonNull); isNonNullType {
 		if value == nil {
 			return nil, graphql.ErrorsOf(
 				newCoercionError(
@@ -141,7 +141,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 		}
 		return coerced, graphql.NoErrors()
 
-	case *graphql.List:
+	case graphql.List:
 		elementType := t.ElementType()
 		reflectValue := reflect.ValueOf(value)
 		if reflectValue.Kind() == reflect.Slice || reflectValue.Kind() == reflect.Array {

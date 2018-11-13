@@ -405,7 +405,7 @@ func (executor Common) completeWrappingValue(
 		}
 
 		// Handle non-null.
-		nonNullType, isNonNullType := returnType.(*graphql.NonNull)
+		nonNullType, isNonNullType := returnType.(graphql.NonNull)
 
 		if isNonNullType {
 			// For non-null type, continue on its unwrapped type.
@@ -431,7 +431,7 @@ func (executor Common) completeWrappingValue(
 			continue
 		} // if values.IsNullish(value)
 
-		listType, isListType := returnType.(*graphql.List)
+		listType, isListType := returnType.(graphql.List)
 		if !isListType {
 			info.ResultNode = result
 			err := executor.completeNonWrappingValue(context, returnType, info, value)

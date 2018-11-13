@@ -35,7 +35,7 @@ func (creator *listTypeCreator) TypeDefinition() TypeDefinition {
 
 // LoadDataAndNew implements typeCreator.
 func (creator *listTypeCreator) LoadDataAndNew() (Type, error) {
-	return &List{}, nil
+	return &list{}, nil
 }
 
 // Finalize implements typeCreator.
@@ -48,7 +48,7 @@ func (creator *listTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionR
 		return NewError("Must provide an non-nil element type for List.")
 	}
 
-	list := t.(*List)
+	list := t.(*list)
 	list.elementType = elementType
 	list.notation = fmt.Sprintf("[%s]", elementType.String())
 	return nil
@@ -96,57 +96,51 @@ func ListOfType(elementType Type) ListTypeDefinition {
 	}
 }
 
-// List Type Modifier
-//
-// A list is a wrapping type which points to another type. Lists are often created within the
-// context of defining the fields of an object type.
-//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.List
-type List struct {
+// list is our built-in implementation for List. It is configured with and built from
+// ListTypeDefinition.
+type list struct {
+	ThisIsListType
 	elementType Type
 	// notation is cached value for returning from String() and is initialized in constructor.
 	notation string
 }
 
-var (
-	_ Type         = (*List)(nil)
-	_ WrappingType = (*List)(nil)
-)
+var _ List = (*list)(nil)
 
 // NewListOfType defines a List type from a given Type of element type.
-func NewListOfType(elementType Type) (*List, error) {
+func NewListOfType(elementType Type) (List, error) {
 	return NewList(ListOfType(elementType))
 }
 
 // MustNewListOfType is a panic-on-fail version of NewListOfType.
-func MustNewListOfType(elementType Type) *List {
+func MustNewListOfType(elementType Type) List {
 	return MustNewList(ListOfType(elementType))
 }
 
 // NewListOf defines a List type from a given TypeDefinition of element type.
-func NewListOf(elementTypeDef TypeDefinition) (*List, error) {
+func NewListOf(elementTypeDef TypeDefinition) (List, error) {
 	return NewList(ListOf(elementTypeDef))
 }
 
 // MustNewListOf is a panic-on-fail version of NewListOf.
-func MustNewListOf(elementTypeDef TypeDefinition) *List {
+func MustNewListOf(elementTypeDef TypeDefinition) List {
 	return MustNewList(ListOf(elementTypeDef))
 }
 
 // NewList defines a List type from a ListTypeDefinition.
-func NewList(typeDef ListTypeDefinition) (*List, error) {
+func NewList(typeDef ListTypeDefinition) (List, error) {
 	t, err := newTypeImpl(&listTypeCreator{
 		typeDef: typeDef,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return t.(*List), nil
+	return t.(List), nil
 }
 
 // MustNewList is a convenience function equivalent to NewList but panics on failure instead of
 // returning an error.
-func MustNewList(typeDef ListTypeDefinition) *List {
+func MustNewList(typeDef ListTypeDefinition) List {
 	n, err := NewList(typeDef)
 	if err != nil {
 		panic(err)
@@ -154,23 +148,17 @@ func MustNewList(typeDef ListTypeDefinition) *List {
 	return n
 }
 
-// graphqlType implements Type.
-func (*List) graphqlType() {}
-
-// graphqlWrappingType implements WrappingType.
-func (*List) graphqlWrappingType() {}
-
-// Values implements Type.
-func (n *List) String() string {
+// String implements fmt.Stringer.
+func (n *list) String() string {
 	return n.notation
 }
 
 // UnwrappedType implements WrappingType.
-func (n *List) UnwrappedType() Type {
+func (n *list) UnwrappedType() Type {
 	return n.ElementType()
 }
 
-// ElementType indicates the type of the element wrapped in this non-null type.
-func (n *List) ElementType() Type {
+// ElementType implements List.
+func (n *list) ElementType() Type {
 	return n.elementType
 }
