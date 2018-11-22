@@ -74,31 +74,42 @@ var (
 //
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Document
 
+// Definitions represents a list of GraphQL definitions.
+type Definitions []Definition
+
+var _ Node = Definitions{}
+
+// TokenRange implements Node.
+func (nodes Definitions) TokenRange() token.Range {
+	if len(nodes) == 0 {
+		return token.Range{
+			First: nil,
+			Last:  nil,
+		}
+	}
+
+	return token.Range{
+		First: nodes[0].TokenRange().First.Prev,
+		Last:  nodes[len(nodes)-1].TokenRange().Last.Next,
+	}
+}
+
 // Document represents a GraphQL Document.
 //
 // Reference: https://facebook.github.io/graphql/June2018/#Document
 type Document struct {
 	// Definitions defined in the document.
-	Definitions []Definition
+	Definitions Definitions
 }
 
 var _ Node = Document{}
 
 // TokenRange implements Node.
 func (node Document) TokenRange() token.Range {
-	if len(node.Definitions) == 0 {
-		return token.Range{
-			First: nil,
-			Last:  nil,
-		}
-	}
 	// Note that the first token of a valid Document is always SOF and the last token is EOF for now.
 	// The location of SOF is NoSourceLocation which should use with caution (e.g., it may cause crash
 	// in source.PosFromLocation). (And the location of EOF is the document size.)
-	return token.Range{
-		First: node.Definitions[0].TokenRange().First.Prev,
-		Last:  node.Definitions[len(node.Definitions)-1].TokenRange().Last.Next,
-	}
+	return node.Definitions.TokenRange()
 }
 
 // Definition represents a GraphQL Definition.
@@ -169,6 +180,39 @@ const (
 	OperationTypeSubscription               = "subscription"
 )
 
+// VariableDefinitions represents a list of VariableDefinition's.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#VariableDefinitions
+type VariableDefinitions []*VariableDefinition
+
+var _ Node = VariableDefinitions{}
+
+// FirstToken returns the first token in the sequence of argument.
+func (nodes VariableDefinitions) FirstToken() *token.Token {
+	if len(nodes) == 0 {
+		return nil
+	}
+	// Find left paren "(" token before the first variable.
+	return nodes[0].TokenRange().First.Prev
+}
+
+// LastToken returns the last token in the sequence of argument.
+func (nodes VariableDefinitions) LastToken() *token.Token {
+	if len(nodes) == 0 {
+		return nil
+	}
+	// Find right paren ")" token which is next to the token of the last variable.
+	return nodes[len(nodes)-1].TokenRange().Last.Next
+}
+
+// TokenRange implements Node.
+func (nodes VariableDefinitions) TokenRange() token.Range {
+	return token.Range{
+		First: nodes.FirstToken(),
+		Last:  nodes.LastToken(),
+	}
+}
+
 // OperationDefinition represents a GraphQL operation.
 //
 // Reference: https://facebook.github.io/graphql/June2018/#OperationDefinition
@@ -182,7 +226,7 @@ type OperationDefinition struct {
 	Name Name
 
 	// VariableDefinitions contains variables given to the operation
-	VariableDefinitions []*VariableDefinition
+	VariableDefinitions VariableDefinitions
 
 	// SelectionSet specifies the sets of fields to fetch.
 	SelectionSet SelectionSet
@@ -371,8 +415,12 @@ func (node *Field) ResponseKey() string {
 //
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Arguments
 
-// Arguments specifies a list of Arguments
+// Arguments specifies a list of Arguments.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#Arguments
 type Arguments []*Argument
+
+var _ Node = Arguments{}
 
 // FirstToken returns the first token in the sequence of argument.
 func (nodes Arguments) FirstToken() *token.Token {
@@ -390,6 +438,14 @@ func (nodes Arguments) LastToken() *token.Token {
 	}
 	// Find right paren ")" token which is next to the token of the last value.
 	return nodes[len(nodes)-1].Value.TokenRange().Last.Next
+}
+
+// TokenRange implements Node.
+func (nodes Arguments) TokenRange() token.Range {
+	return token.Range{
+		First: nodes.FirstToken(),
+		Last:  nodes.LastToken(),
+	}
 }
 
 // An Argument is an argument taken by a field.
@@ -432,7 +488,7 @@ type FragmentDefinition struct {
 
 	// VariableDefinitions contains variables given to the fragment; This is an experimental feature
 	// and may be subject to change. See RFC in https://github.com/facebook/graphql/issues/204.
-	VariableDefinitions []*VariableDefinition
+	VariableDefinitions VariableDefinitions
 
 	// TypeCondition specifies the type this fragment applies to.
 	TypeCondition NamedType
@@ -1153,8 +1209,12 @@ func (NonNullType) typeNode() {}
 //
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Directives
 
-// Directives specifies a list of directives
+// Directives specifies a list of directives.
+//
+// Reference: https://facebook.github.io/graphql/June2018/#Directives
 type Directives []*Directive
+
+var _ Node = Directives{}
 
 // FirstToken returns the first token in the sequence of argument.
 func (nodes Directives) FirstToken() *token.Token {
@@ -1170,6 +1230,14 @@ func (nodes Directives) LastToken() *token.Token {
 		return nil
 	}
 	return nodes[len(nodes)-1].LastToken()
+}
+
+// TokenRange implements Node.
+func (nodes Directives) TokenRange() token.Range {
+	return token.Range{
+		First: nodes.FirstToken(),
+		Last:  nodes.LastToken(),
+	}
 }
 
 // Directive applies a GraphQL directive.
