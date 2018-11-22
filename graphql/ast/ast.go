@@ -928,6 +928,16 @@ type ObjectField struct {
 	Value Value
 }
 
+var _ Node = (*ObjectField)(nil)
+
+// TokenRange implements Node.
+func (node *ObjectField) TokenRange() token.Range {
+	return token.Range{
+		First: node.Name.Token,
+		Last:  node.Value.TokenRange().Last,
+	}
+}
+
 //===----------------------------------------------------------------------------------------====//
 // 2.10 Variables
 //===----------------------------------------------------------------------------------------====//
