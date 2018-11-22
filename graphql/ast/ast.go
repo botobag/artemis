@@ -23,6 +23,10 @@ import (
 	"github.com/botobag/artemis/graphql/token"
 )
 
+// Note that optional fields in AST node type is tagged with `ast:"optional"` tag. The visitor
+// generator will recognize the tag and generates code that performs nil check before visiting the
+// field.
+
 // Node represents a node in an AST tree from parsing GraphQL language.
 type Node interface {
 	// TokenRange indicates the region of the Node in the source.
@@ -208,13 +212,13 @@ type OperationDefinition struct {
 	Type *token.Token
 
 	// Name of the operation
-	Name Name
+	Name Name `ast:"optional"`
 
 	// VariableDefinitions contains variables given to the operation
-	VariableDefinitions VariableDefinitions
+	VariableDefinitions VariableDefinitions `ast:"optional"`
 
 	// Directives that are applied to the definition
-	Directives Directives
+	Directives Directives `ast:"optional"`
 
 	// SelectionSet specifies the sets of fields to fetch.
 	SelectionSet SelectionSet
@@ -341,19 +345,19 @@ type Field struct {
 	// field value.
 	//
 	// Reference: https://facebook.github.io/graphql/June2018/#sec-Field-Alias
-	Alias Name
+	Alias Name `ast:"optional"`
 
 	// Name of the field
 	Name Name
 
 	// Arguments taken by the field
-	Arguments Arguments
+	Arguments Arguments `ast:"optional"`
 
 	// Directives applied to the field
-	Directives Directives
+	Directives Directives `ast:"optional"`
 
 	// Set of information to be fetched that is nested in the field.
-	SelectionSet SelectionSet
+	SelectionSet SelectionSet `ast:"optional"`
 }
 
 // TokenRange implements Node.
@@ -479,13 +483,13 @@ type FragmentDefinition struct {
 
 	// VariableDefinitions contains variables given to the fragment; This is an experimental feature
 	// and may be subject to change. See RFC in https://github.com/facebook/graphql/issues/204.
-	VariableDefinitions VariableDefinitions
+	VariableDefinitions VariableDefinitions `ast:"optional"`
 
 	// TypeCondition specifies the type this fragment applies to.
 	TypeCondition NamedType
 
 	// Directives that are applied to the definition
-	Directives Directives
+	Directives Directives `ast:"optional"`
 
 	// SelectionSet describes set of fields to be requested by the fragment
 	SelectionSet SelectionSet
@@ -518,7 +522,7 @@ type FragmentSpread struct {
 	Name Name
 
 	// Directives applied to the fragment
-	Directives Directives
+	Directives Directives `ast:"optional"`
 }
 
 // TokenRange implements Node.
@@ -549,10 +553,10 @@ func (node *FragmentSpread) GetDirectives() Directives {
 // ReF: https://facebook.github.io/graphql/June2018/#sec-Inline-Fragments
 type InlineFragment struct {
 	// TypeCondition specifies the type this inline fragment applies to.
-	TypeCondition NamedType
+	TypeCondition NamedType `ast:"optional"`
 
 	// Directives applied to the inline fragment
-	Directives Directives
+	Directives Directives `ast:"optional"`
 
 	// SelectionSet describes the set of fields to be added into current selection set
 	SelectionSet SelectionSet
@@ -1043,10 +1047,10 @@ type VariableDefinition struct {
 	Type Type
 
 	// DefaultValue describes the value to be used when no input value is supplied to the variable.
-	DefaultValue Value
+	DefaultValue Value `ast:"optional"`
 
 	// Directives applied to to the variable
-	Directives Directives
+	Directives Directives `ast:"optional"`
 }
 
 // TokenRange implements Node.
@@ -1245,7 +1249,7 @@ type Directive struct {
 	Name Name
 
 	// Arguments taken by the directive
-	Arguments Arguments
+	Arguments Arguments `ast:"optional"`
 }
 
 var _ Node = (*Directive)(nil)
