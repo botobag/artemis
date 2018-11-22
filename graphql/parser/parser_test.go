@@ -335,12 +335,10 @@ var _ = Describe("Parser", func() {
 
 		Expect(result).Should(MatchAllFields(Fields{
 			"Definitions": ConsistOf(PointTo(MatchAllFields(Fields{
-				"DefinitionBase": MatchAllFields(Fields{
-					"Directives": BeEmpty(),
-				}),
 				"Type":                BeNil(),
 				"Name":                Equal(ast.Name{}),
 				"VariableDefinitions": BeEmpty(),
+				"Directives":          BeEmpty(),
 				"SelectionSet": ConsistOf(
 					MatchFieldNode(FieldNodeFields{
 						Alias: Equal(ast.Name{}),
@@ -411,9 +409,6 @@ var _ = Describe("Parser", func() {
 
 		Expect(result).Should(MatchAllFields(Fields{
 			"Definitions": ConsistOf(PointTo(MatchAllFields(Fields{
-				"DefinitionBase": MatchAllFields(Fields{
-					"Directives": BeEmpty(),
-				}),
 				"Type": MatchToken(TokenFields{
 					Kind:     token.KindName,
 					Location: 8,
@@ -422,6 +417,7 @@ var _ = Describe("Parser", func() {
 				}),
 				"Name":                Equal(ast.Name{}),
 				"VariableDefinitions": BeEmpty(),
+				"Directives":          BeEmpty(),
 				"SelectionSet": ConsistOf(
 					MatchFieldNode(FieldNodeFields{
 						Alias: Equal(ast.Name{}),

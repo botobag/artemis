@@ -121,25 +121,7 @@ type Definition interface {
 	// Directives applied to the definition to provide alternate runtime and validation behaviors.
 	// (Prepend "Get" to avoid name collision with the fields in derived class.)
 	GetDirectives() Directives
-
-	// definitionNode is a special mark to indicate a Definition node. It makes sure that only
-	// definition node can be assigned to Definition.
-	definitionNode()
 }
-
-// DefinitionBase is a common base that is embedded in Definition implementation.
-type DefinitionBase struct {
-	// Directives that are applied to the definition
-	Directives Directives
-}
-
-// GetDirectives provides implementation for Definition.GetDefinition.
-func (base DefinitionBase) GetDirectives() Directives {
-	return base.Directives
-}
-
-// definitionNode marks the embedding node as a Definition.
-func (DefinitionBase) definitionNode() {}
 
 // ExecutableDefinition represents an executable definition.
 //
@@ -217,8 +199,6 @@ func (nodes VariableDefinitions) TokenRange() token.Range {
 //
 // Reference: https://facebook.github.io/graphql/June2018/#OperationDefinition
 type OperationDefinition struct {
-	DefinitionBase
-
 	// Type is a Name token that contains operation type.
 	Type *token.Token
 
@@ -227,6 +207,9 @@ type OperationDefinition struct {
 
 	// VariableDefinitions contains variables given to the operation
 	VariableDefinitions VariableDefinitions
+
+	// Directives that are applied to the definition
+	Directives Directives
 
 	// SelectionSet specifies the sets of fields to fetch.
 	SelectionSet SelectionSet
@@ -244,6 +227,11 @@ func (definition *OperationDefinition) TokenRange() token.Range {
 		First: definition.Type,
 		Last:  definition.SelectionSet.LastToken(),
 	}
+}
+
+// GetDirectives implements Definition.
+func (definition *OperationDefinition) GetDirectives() Directives {
+	return definition.Directives
 }
 
 // GetSelectionSet implements ExecutableDefinition.
@@ -481,8 +469,6 @@ func (node *Argument) TokenRange() token.Range {
 //
 // Reference: https://facebook.github.io/graphql/June2018/#FragmentDefinition
 type FragmentDefinition struct {
-	DefinitionBase
-
 	// Name of the fragment
 	Name Name
 
@@ -492,6 +478,9 @@ type FragmentDefinition struct {
 
 	// TypeCondition specifies the type this fragment applies to.
 	TypeCondition NamedType
+
+	// Directives that are applied to the definition
+	Directives Directives
 
 	// SelectionSet describes set of fields to be requested by the fragment
 	SelectionSet SelectionSet
@@ -503,6 +492,11 @@ func (definition *FragmentDefinition) TokenRange() token.Range {
 		First: definition.Name.Token.Prev, // "fragment" keyword
 		Last:  definition.SelectionSet.LastToken(),
 	}
+}
+
+// GetDirectives implements Definition.
+func (definition *FragmentDefinition) GetDirectives() Directives {
+	return definition.Directives
 }
 
 // GetSelectionSet implements ExecutableDefinition.

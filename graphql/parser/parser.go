@@ -337,12 +337,10 @@ func (p *parser) parseOperationDefinition() (*ast.OperationDefinition, error) {
 	}
 
 	return &ast.OperationDefinition{
-		DefinitionBase: ast.DefinitionBase{
-			Directives: directives,
-		},
 		Type:                operationType,
 		Name:                name,
 		VariableDefinitions: variableDefinitions,
+		Directives:          directives,
 		SelectionSet:        selectionSet,
 	}, nil
 }
@@ -551,12 +549,10 @@ func (p *parser) parseFragmentDefinition() (*ast.FragmentDefinition, error) {
 	}
 
 	return &ast.FragmentDefinition{
-		DefinitionBase: ast.DefinitionBase{
-			Directives: directives,
-		},
 		Name:                name,
 		VariableDefinitions: variableDefinitions,
 		TypeCondition:       typeCondition,
+		Directives:          directives,
 		SelectionSet:        selectionSet,
 	}, nil
 }
