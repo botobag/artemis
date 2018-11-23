@@ -40,6 +40,11 @@ type Name struct {
 
 var _ Node = Name{}
 
+// IsNil returns true if the name is undefined.
+func (node Name) IsNil() bool {
+	return node.Token == nil
+}
+
 // Value returns the name in string.
 func (node Name) Value() string {
 	return node.Token.Value
@@ -572,7 +577,7 @@ func (node *InlineFragment) TokenRange() token.Range {
 // HasTypeCondition returns true if the inline fragment specifies a type condition.
 func (node *InlineFragment) HasTypeCondition() bool {
 	// Check the existence of name token.
-	return node.TypeCondition.Name.Token == nil
+	return !node.TypeCondition.Name.IsNil()
 }
 
 // selectionNode implements Selection.
