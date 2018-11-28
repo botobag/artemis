@@ -111,7 +111,7 @@ func (f *inputField) DefaultValue() interface{} {
 // InputObjectConfig provides specification to define a InputObject type. It is served as a
 // convenient way to create a InputObjectTypeDefinition for creating an input object type.
 type InputObjectConfig struct {
-	ThisIsInputObjectTypeDefinition
+	ThisIsTypeDefinition
 
 	// Name of the defining InputObject
 	Name string

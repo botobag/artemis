@@ -89,7 +89,7 @@ func T(t Type) TypeDefinition {
 // InterfaceTypeDefinition interfaces. This allows InterfaceType being able to use in specifying
 // implementing interfaces when defining Object (i.e., ObjectTypeData.Interfaces).
 type interfaceTypeWrapperTypeDefinition struct {
-	ThisIsInterfaceTypeDefinition
+	ThisIsTypeDefinition
 	i Interface
 }
 
@@ -128,15 +128,6 @@ type ScalarTypeData struct {
 	Description string
 }
 
-// ThisIsScalarTypeDefinition is a marker struct intended to be embedded in every
-// ScalarTypeDefinition implementation.
-type ThisIsScalarTypeDefinition struct {
-	ThisIsTypeDefinition
-}
-
-// ThisIsGraphQLScalarTypeDefinition implements ThisIsGraphQLScalarTypeDefinition.
-func (ThisIsScalarTypeDefinition) ThisIsGraphQLScalarTypeDefinition() {}
-
 // ScalarTypeDefinition provides data accessors that are required for defining a Scalar.
 type ScalarTypeDefinition interface {
 	TypeDefinition
@@ -151,9 +142,6 @@ type ScalarTypeDefinition interface {
 	// NewInputCoercer creates an ScalarInputCoercer instance for the defining Scalar type object
 	// during its initialization.
 	NewInputCoercer(scalar Scalar) (ScalarInputCoercer, error)
-
-	// ThisIsGraphQLScalarTypeDefinition puts a special mark for a ScalarTypeDefinition objects.
-	ThisIsGraphQLScalarTypeDefinition()
 }
 
 //===-----------------------------------------------------------------------------------------====//
@@ -213,15 +201,6 @@ func (f CoerceEnumResultFunc) Coerce(value interface{}) (EnumValue, error) {
 	return f(value)
 }
 
-// ThisIsEnumTypeDefinition is a marker struct intended to be embedded in every EnumTypeDefinition
-// implementation.
-type ThisIsEnumTypeDefinition struct {
-	ThisIsTypeDefinition
-}
-
-// ThisIsGraphQLEnumTypeDefinition implements ThisIsGraphQLEnumTypeDefinition.
-func (ThisIsEnumTypeDefinition) ThisIsGraphQLEnumTypeDefinition() {}
-
 // EnumTypeDefinition provides data accessors that are required for defining a Enum.
 type EnumTypeDefinition interface {
 	TypeDefinition
@@ -232,9 +211,6 @@ type EnumTypeDefinition interface {
 	// NewResultCoercer creates a EnumResultCoercer instance for the defining Enum type object during
 	// its initialization.
 	NewResultCoercer(enum Enum) (EnumResultCoercer, error)
-
-	// ThisIsGraphQLEnumTypeDefinition puts a special mark for a EnumTypeDefinition objects.
-	ThisIsGraphQLEnumTypeDefinition()
 }
 
 //===-----------------------------------------------------------------------------------------====//
@@ -256,24 +232,12 @@ type ObjectTypeData struct {
 	Fields Fields
 }
 
-// ThisIsObjectTypeDefinition is a marker struct intended to be embedded in every
-// ObjectTypeDefinition implementation.
-type ThisIsObjectTypeDefinition struct {
-	ThisIsTypeDefinition
-}
-
-// ThisIsGraphQLObjectTypeDefinition implements ThisIsGraphQLObjectTypeDefinition.
-func (ThisIsObjectTypeDefinition) ThisIsGraphQLObjectTypeDefinition() {}
-
 // ObjectTypeDefinition provides data accessors that are required for defining a Object.
 type ObjectTypeDefinition interface {
 	TypeDefinition
 
 	// TypeData reads data from the definition for the defining enum.
 	TypeData() ObjectTypeData
-
-	// ThisIsGraphQLObjectTypeDefinition puts a special mark for a ObjectTypeDefinition objects.
-	ThisIsGraphQLObjectTypeDefinition()
 }
 
 //===-----------------------------------------------------------------------------------------====//
@@ -330,15 +294,6 @@ type ResolveTypeParams struct {
 	Context context.Context
 }
 
-// ThisIsInterfaceTypeDefinition is a marker struct intended to be embedded in every
-// InterfaceTypeDefinition implementation.
-type ThisIsInterfaceTypeDefinition struct {
-	ThisIsTypeDefinition
-}
-
-// ThisIsGraphQLInterfaceTypeDefinition implements ThisIsGraphQLInterfaceTypeDefinition.
-func (ThisIsInterfaceTypeDefinition) ThisIsGraphQLInterfaceTypeDefinition() {}
-
 // InterfaceTypeDefinition provides data accessors that are required for defining a Interface.
 type InterfaceTypeDefinition interface {
 	TypeDefinition
@@ -349,9 +304,6 @@ type InterfaceTypeDefinition interface {
 	// NewTypeResolver creates a TypeResolver instance for the defining Interface during its
 	// initialization.
 	NewTypeResolver(iface Interface) (TypeResolver, error)
-
-	// ThisIsGraphQLInterfaceTypeDefinition puts a special mark for a InterfaceTypeDefinition objects.
-	ThisIsGraphQLInterfaceTypeDefinition()
 }
 
 //===-----------------------------------------------------------------------------------------====//
@@ -370,15 +322,6 @@ type UnionTypeData struct {
 	PossibleTypes []ObjectTypeDefinition
 }
 
-// ThisIsUnionTypeDefinition is a marker struct intended to be embedded in every UnionTypeDefinition
-// implementation.
-type ThisIsUnionTypeDefinition struct {
-	ThisIsTypeDefinition
-}
-
-// ThisIsGraphQLUnionTypeDefinition implements ThisIsGraphQLUnionTypeDefinition.
-func (ThisIsUnionTypeDefinition) ThisIsGraphQLUnionTypeDefinition() {}
-
 // UnionTypeDefinition provides data accessors that are required for defining a Union.
 type UnionTypeDefinition interface {
 	TypeDefinition
@@ -389,9 +332,6 @@ type UnionTypeDefinition interface {
 	// NewTypeResolver creates a TypeResolver instance for the defining Union during its
 	// initialization.
 	NewTypeResolver(union Union) (TypeResolver, error)
-
-	// ThisIsGraphQLUnionTypeDefinition puts a special mark for a UnionTypeDefinition objects.
-	ThisIsGraphQLUnionTypeDefinition()
 }
 
 //===-----------------------------------------------------------------------------------------====//
@@ -410,39 +350,17 @@ type InputObjectTypeData struct {
 	Fields InputFields
 }
 
-// ThisIsInputObjectTypeDefinition is a marker struct intended to be embedded in every
-// InputObjectTypeDefinition implementation.
-type ThisIsInputObjectTypeDefinition struct {
-	ThisIsTypeDefinition
-}
-
-// ThisIsGraphQLInputObjectTypeDefinition implements ThisIsGraphQLInputObjectTypeDefinition.
-func (ThisIsInputObjectTypeDefinition) ThisIsGraphQLInputObjectTypeDefinition() {}
-
 // InputObjectTypeDefinition provides data accessors that are required for defining a InputObject.
 type InputObjectTypeDefinition interface {
 	TypeDefinition
 
 	// TypeData reads data from the definition for the defining enum.
 	TypeData() InputObjectTypeData
-
-	// ThisIsGraphQLInputObjectTypeDefinition puts a special mark for a InputObjectTypeDefinition
-	// objects.
-	ThisIsGraphQLInputObjectTypeDefinition()
 }
 
 //===-----------------------------------------------------------------------------------------====//
 // List Type Definition
 //===-----------------------------------------------------------------------------------------====//
-
-// ThisIsListTypeDefinition is a marker struct intended to be embedded in every
-// ListTypeDefinition implementation.
-type ThisIsListTypeDefinition struct {
-	ThisIsTypeDefinition
-}
-
-// ThisIsGraphQLListTypeDefinition implements ThisIsGraphQLListTypeDefinition.
-func (ThisIsListTypeDefinition) ThisIsGraphQLListTypeDefinition() {}
 
 // ListTypeDefinition provides data accessors that are required for defining a List.
 type ListTypeDefinition interface {
@@ -450,33 +368,16 @@ type ListTypeDefinition interface {
 
 	// ElementType specifies the type being wrapped in the List type.
 	ElementType() TypeDefinition
-
-	// ThisIsGraphQLListTypeDefinition puts a special mark for a ListTypeDefinition
-	// objects.
-	ThisIsGraphQLListTypeDefinition()
 }
 
 //===-----------------------------------------------------------------------------------------====//
 // NonNull Type Definition
 //===-----------------------------------------------------------------------------------------====//
 
-// ThisIsNonNullTypeDefinition is a marker struct intended to be embedded in every
-// NonNullTypeDefinition implementation.
-type ThisIsNonNullTypeDefinition struct {
-	ThisIsTypeDefinition
-}
-
-// ThisIsGraphQLNonNullTypeDefinition implements ThisIsGraphQLNonNullTypeDefinition.
-func (ThisIsNonNullTypeDefinition) ThisIsGraphQLNonNullTypeDefinition() {}
-
 // NonNullTypeDefinition provides data accessors that are required for defining a NonNull.
 type NonNullTypeDefinition interface {
 	TypeDefinition
 
-	// ElementType specifies the type being wrapped in the NonNull type.
-	ElementType() TypeDefinition
-
-	// ThisIsGraphQLNonNullTypeDefinition puts a special mark for a NonNullTypeDefinition
-	// objects.
-	ThisIsGraphQLNonNullTypeDefinition()
+	// InnerType specifies the type being wrapped in the NonNull type.
+	InnerType() TypeDefinition
 }

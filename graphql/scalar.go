@@ -40,7 +40,7 @@ func (coercer *defaultScalarInputCoercer) CoerceArgumentValue(value ast.Value) (
 // ScalarConfig provides specification to define a scalar type. It is served as a convenient way to
 // create a ScalarTypeDefinition for creating a scalar type.
 type ScalarConfig struct {
-	ThisIsScalarTypeDefinition
+	ThisIsTypeDefinition
 
 	// Name of the scalar type
 	Name string

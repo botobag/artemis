@@ -57,7 +57,7 @@ func (creator *listTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionR
 // listTypeDefinitionOf wraps a TypeDefinition of the element type and implements
 // ListTypeDefinition.
 type listTypeDefinitionOf struct {
-	ThisIsListTypeDefinition
+	ThisIsTypeDefinition
 	elementTypeDef TypeDefinition
 }
 
@@ -78,7 +78,7 @@ func ListOf(elementTypeDef TypeDefinition) ListTypeDefinition {
 // listTypeDefinitionOfType wraps a Type of the element type and implements
 // ListTypeDefinition.
 type listTypeDefinitionOfType struct {
-	ThisIsListTypeDefinition
+	ThisIsTypeDefinition
 	elementType Type
 }
 

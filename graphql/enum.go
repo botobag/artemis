@@ -179,7 +179,7 @@ func DefaultEnumResultCoercerFactory(lookupStrategy DefaultEnumResultCoercerLook
 // EnumConfig provides specification to define an Enum type. It is served as a convenient way to
 // create an EnumTypeDefinition for creating an enum type.
 type EnumConfig struct {
-	ThisIsEnumTypeDefinition
+	ThisIsTypeDefinition
 
 	// Name of the enum type
 	Name string

@@ -19,7 +19,7 @@ package graphql
 // UnionConfig provides specification to define a Union type. It is served as a convenient way to
 // create a UnionTypeDefinition for creating a union type.
 type UnionConfig struct {
-	ThisIsUnionTypeDefinition
+	ThisIsTypeDefinition
 
 	// Name of the defining Union
 	Name string

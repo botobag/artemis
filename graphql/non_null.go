@@ -41,7 +41,7 @@ func (creator *nonNullTypeCreator) LoadDataAndNew() (Type, error) {
 // Finalize implements typeCreator.
 func (creator *nonNullTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionResolver) error {
 	// Resolve element type.
-	elementType, err := typeDefResolver(creator.typeDef.ElementType())
+	elementType, err := typeDefResolver(creator.typeDef.InnerType())
 	if err != nil {
 		return err
 	} else if elementType == nil {
@@ -59,14 +59,14 @@ func (creator *nonNullTypeCreator) Finalize(t Type, typeDefResolver typeDefiniti
 // nonNullTypeDefinitionOf wraps a TypeDefinition of the element type and implements
 // NonNullTypeDefinition.
 type nonNullTypeDefinitionOf struct {
-	ThisIsNonNullTypeDefinition
+	ThisIsTypeDefinition
 	elementTypeDef TypeDefinition
 }
 
 var _ NonNullTypeDefinition = nonNullTypeDefinitionOf{}
 
-// ElementType implements NonNullTypeDefinition.
-func (typeDef nonNullTypeDefinitionOf) ElementType() TypeDefinition {
+// InnerType implements NonNullTypeDefinition.
+func (typeDef nonNullTypeDefinitionOf) InnerType() TypeDefinition {
 	return typeDef.elementTypeDef
 }
 
@@ -80,14 +80,14 @@ func NonNullOf(elementTypeDef TypeDefinition) NonNullTypeDefinition {
 // nonNullTypeDefinitionOfType wraps a Type of the element type and implements
 // NonNullTypeDefinition.
 type nonNullTypeDefinitionOfType struct {
-	ThisIsNonNullTypeDefinition
+	ThisIsTypeDefinition
 	elementType Type
 }
 
 var _ NonNullTypeDefinition = nonNullTypeDefinitionOfType{}
 
-// ElementType implements NonNullTypeDefinition.
-func (typeDef nonNullTypeDefinitionOfType) ElementType() TypeDefinition {
+// InnerType implements NonNullTypeDefinition.
+func (typeDef nonNullTypeDefinitionOfType) InnerType() TypeDefinition {
 	return T(typeDef.elementType)
 }
 

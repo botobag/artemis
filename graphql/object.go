@@ -19,7 +19,7 @@ package graphql
 // ObjectConfig provides specification to define a Object type. It is served as a convenient way to
 // create a ObjectTypeDefinition for creating an object type.
 type ObjectConfig struct {
-	ThisIsObjectTypeDefinition
+	ThisIsTypeDefinition
 
 	// Name of the defining Object
 	Name string

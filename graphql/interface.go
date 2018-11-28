@@ -19,7 +19,7 @@ package graphql
 // InterfaceConfig provides specification to define a Interface type. It is served as a convenient way to
 // create a InterfaceTypeDefinition for creating an interface type.
 type InterfaceConfig struct {
-	ThisIsInterfaceTypeDefinition
+	ThisIsTypeDefinition
 
 	// Name of the defining Interface
 	Name string
