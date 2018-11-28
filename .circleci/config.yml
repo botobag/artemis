@@ -46,10 +46,6 @@ defaults: &defaults
   <<: *test_go_latest
 
 jobs:
-  Go 1.8:
-    docker: [{ image: 'circleci/golang:1.8' }]
-    <<: *test_pre_go_1_10
-
   Go 1.9:
     docker: [{ image: 'circleci/golang:1.9' }]
     <<: *test_pre_go_1_10
@@ -89,7 +85,6 @@ workflows:
   version: 2
   build:
     jobs:
-      - Go 1.8
       - Go 1.9
       - Go 1.10
       - Go 1.11
