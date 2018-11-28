@@ -191,7 +191,8 @@ type EnumConfig struct {
 	Values EnumValueDefinitionMap
 
 	// ResultCoercerFactory creates an EnumResultCoercer to coerce an internal value into enum value
-	// into. If not provided, DefaultEnumResultCoercer will be used.
+	// into. If not provided, DefaultEnumResultCoercerFactory(DefaultEnumResultCoercerLookupByName)
+	// will be used.
 	ResultCoercerFactory EnumResultCoercerFactory
 }
 
