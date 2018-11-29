@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/onsi/gomega/format"
 	"github.com/onsi/gomega/types"
 )
 
@@ -65,19 +66,16 @@ func (matcher serializeToJSONAsMatcher) Match(actual interface{}) (success bool,
 		return false, fmt.Errorf("SerializeToJSONAs matcher cannot re-encode expected value from JSON into type %T: %s", decodedExpected, err)
 	}
 
-	//fmt.Printf("actual: %#v\n", decodedActual)
-	//fmt.Printf("expected: %#v\n", decodedExpected)
-
 	// Compare!
 	return reflect.DeepEqual(decodedActual, decodedExpected), nil
 }
 
 // FailureMessage implements types.GomegaMatcher.
 func (matcher serializeToJSONAsMatcher) FailureMessage(actual interface{}) (message string) {
-	return fmt.Sprintf("Expected\n\t%#v\nto serialize to JSON value as\n\t%#v", actual, matcher.expected)
+	return format.Message(actual, "to serialize to JSON value as", matcher.expected)
 }
 
 // NegatedFailureMessage implements types.GomegaMatcher.
 func (matcher serializeToJSONAsMatcher) NegatedFailureMessage(actual interface{}) (message string) {
-	return fmt.Sprintf("Expected\n\t%#v\nnot to serialize to JSON value as\n\t%#v", actual, matcher.expected)
+	return format.Message(actual, "not to serialize to JSON value as", matcher.expected)
 }
