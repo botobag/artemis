@@ -21,35 +21,11 @@ import (
 	"fmt"
 
 	"github.com/botobag/artemis/graphql"
-	"github.com/botobag/artemis/graphql/executor"
-	"github.com/botobag/artemis/graphql/parser"
-	"github.com/botobag/artemis/graphql/token"
 	"github.com/botobag/artemis/internal/testutil"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
-
-func executeQueryWithParams(schema *graphql.Schema, query string, params map[string]interface{}) executor.ExecutionResult {
-	document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-		Body: token.SourceBody([]byte(query)),
-	}), parser.ParseOptions{})
-	Expect(err).ShouldNot(HaveOccurred())
-
-	operation, errs := executor.Prepare(executor.PrepareParams{
-		Schema:   schema,
-		Document: document,
-	})
-	Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-	return operation.Execute(context.Background(), executor.ExecuteParams{
-		VariableValues: params,
-	})
-}
-
-func executeQuery(schema *graphql.Schema, query string) executor.ExecutionResult {
-	return executeQueryWithParams(schema, query, nil)
-}
 
 var _ = Describe("Enum", func() {
 

@@ -118,6 +118,8 @@ func newCreatorFor(typeDef TypeDefinition) typeCreator {
 	switch typeDef := typeDef.(type) {
 	case ScalarTypeDefinition:
 		return &scalarTypeCreator{typeDef}
+	case ScalarAliasTypeDefinition:
+		return &scalarAliasTypeCreator{typeDef}
 	case EnumTypeDefinition:
 		return &enumTypeCreator{typeDef}
 	case ObjectTypeDefinition:

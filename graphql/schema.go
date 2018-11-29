@@ -45,6 +45,11 @@ func (typeMap TypeMap) add(t Type) error {
 			continue
 		}
 
+		// For ScalarAlias, we want to add its aliasing Scalar and skip the ScalarAlias.
+		if alias, ok := t.(ScalarAlias); ok {
+			t = alias.AliasFor()
+		}
+
 		// Map type name to corresponding Type.
 		if namedType, ok := t.(TypeWithName); ok {
 			name := namedType.Name()

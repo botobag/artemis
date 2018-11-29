@@ -145,6 +145,33 @@ type ScalarTypeDefinition interface {
 }
 
 //===-----------------------------------------------------------------------------------------====//
+// ScalarAlias Type Definition
+//===-----------------------------------------------------------------------------------------====//
+
+// ScalarAliasTypeData contains type data for ScalarAlias.
+type ScalarAliasTypeData struct {
+	// The Scalar type being aliased to. Note that we take Scalar instead of ScalarTypeDefinition here
+	// for convenience.
+	AliasFor Scalar
+}
+
+// ScalarAliasTypeDefinition provides data accessors that are required for defining a ScalarAlias.
+type ScalarAliasTypeDefinition interface {
+	TypeDefinition
+
+	// TypeData reads data from the definition for the defining scalar type alias.
+	TypeData() ScalarAliasTypeData
+
+	// NewResultCoercer creates a ScalarAliasResultCoercer instance for the defining ScalarAlias type
+	// object during its initialization.
+	NewResultCoercer(scalar ScalarAlias) (ScalarResultCoercer, error)
+
+	// NewInputCoercer creates an ScalarAliasInputCoercer instance for the defining ScalarAlias type
+	// object during its initialization.
+	NewInputCoercer(scalar ScalarAlias) (ScalarInputCoercer, error)
+}
+
+//===-----------------------------------------------------------------------------------------====//
 // Enum Type Definition
 //===-----------------------------------------------------------------------------------------====//
 

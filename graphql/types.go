@@ -209,6 +209,32 @@ func (f ScalarInputCoercerFuncs) CoerceArgumentValue(value ast.Value) (interface
 var _ ScalarInputCoercer = ScalarInputCoercerFuncs{}
 
 //===----------------------------------------------------------------------------------------====//
+// Scalar Alias
+//===----------------------------------------------------------------------------------------====//
+
+// ScalarAlias builds a custom coercion on top of a Scalar type. It looks and works like an ordinary
+// Scalar type. In schema, the type is still represented by the aliasing Scalar but behind the
+// scenes values to these types are coerced in the ways defined by the ScalarAlias types. Typical
+// use cases for ScalarAlias include:
+//
+//  1. Add a validation on top of a Scalar, such as constrain an Int to be positive;
+//
+//  2. Transform into different type of internal value, for example, to use a custom UUID type in Go
+//     for values represented by the built-in ID.
+//
+// The brilliant idea is borrowed from Scalar Type Alias [0] in Sangria [1].
+//
+// [0]: https://sangria-graphql.org/learn/#scalar-type-alias
+// [1]: https://github.com/sangria-graphql/sangria
+type ScalarAlias interface {
+	// A ScalarAlias behaves like the Scalar being aliased to.
+	Scalar
+
+	// AliasFor describes the Scalar that is aliased by this type.
+	AliasFor() Scalar
+}
+
+//===----------------------------------------------------------------------------------------====//
 // Object
 //===----------------------------------------------------------------------------------------====//
 
