@@ -37,7 +37,7 @@ import (
 // [2]: https://facebook.github.io/graphql/draft/#sec-Language.Document
 type PreparedOperation struct {
 	// Executor for executing the operation
-	executor Executor
+	executor *Executor
 
 	// Schema of the type system that is currently executing
 	schema *graphql.Schema
@@ -61,10 +61,6 @@ type PreparedOperation struct {
 
 // PrepareParams specifies parameters to Prepare. All data are required except DefaultFieldResolver.
 type PrepareParams struct {
-	// Executor that will be used to run the operation; If omitted, used the
-	// one returned by SelectDefaultExecutor.
-	Executor Executor
-
 	// Schema of the type system that this operation is executing on
 	Schema *graphql.Schema
 
@@ -155,10 +151,7 @@ func Prepare(params PrepareParams) (*PreparedOperation, graphql.Errors) {
 			[]graphql.ErrorLocation{graphql.ErrorLocationOfASTNode(operation)})
 	}
 
-	executor := params.Executor
-	if executor == nil {
-		executor = SelectDefaultExecutor(operation.OperationType())
-	}
+	executor := &Executor{}
 
 	defaultFieldResolver := params.DefaultFieldResolver
 	if defaultFieldResolver == nil {
