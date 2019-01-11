@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, The Artemis Authors.
+ * Copyright (c) 2019, The Artemis Authors.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,373 +17,29 @@
 package executor
 
 import (
-	goctx "context"
-	"fmt"
-	"reflect"
+	"sync"
+	"sync/atomic"
 
+	"github.com/botobag/artemis/concurrent"
 	"github.com/botobag/artemis/graphql"
-	"github.com/botobag/artemis/graphql/ast"
-	values "github.com/botobag/artemis/graphql/internal/value"
 )
 
-// An Executor executes a prepared operation.
-type Executor struct{}
+type executor interface {
+	// Dispatch dispatches and schedules ExecuteNodeTask for running with executor.
+	Dispatch(task *ExecuteNodeTask)
 
-// ExecutionResult contains result from running an Executor.
-type ExecutionResult struct {
-	Data   *ResultNode
-	Errors graphql.Errors
-}
+	// Run starts the runner and returns the channel that passing execution result.
+	Run(ctx *ExecutionContext) <-chan ExecutionResult
 
-type serialExecutionQueue []*ResultNode
-
-// Push implements ExecutionQueue.
-func (queue *serialExecutionQueue) Push(node *ResultNode) {
-	*queue = append(*queue, node)
-}
-
-// Execute runs an execution provided a context.
-func (executor *Executor) Execute(ctx goctx.Context, executionCtx *ExecutionContext) ExecutionResult {
-	return executor.executeSerially(ctx, executionCtx)
-}
-
-// executeSerially runs an execution executes fields in a selection set "serially". That is,
-// fields are executed one by one in the order provided in the selection set. This is used in
-// mutation to ensure that side effects are applied appropriately.
-func (executor *Executor) executeSerially(ctx goctx.Context, executionCtx *ExecutionContext) ExecutionResult {
-	// Build root node.
-	rootNode, err := executor.buildRootResultNode(executionCtx)
-	if err != nil {
-		return ExecutionResult{
-			Errors: graphql.ErrorsOf(err.(*graphql.Error)),
-		}
-	}
-
-	// Allocate top-level result data.
-	result := ExecutionResult{
-		Data: rootNode,
-	}
-
-	// Queue tracks result nodes that need to be fulfilled. Initialize with unresolved child nodes in
-	// rootNode.
-	var queue serialExecutionQueue
-	executor.enqueueChildNodes(&queue, rootNode)
-
-	for len(queue) > 0 {
-		// Pop one node from back.
-		var resultNode *ResultNode
-		resultNode, queue = queue[len(queue)-1], queue[:len(queue)-1]
-
-		// Execute the node with source value.
-		errs := executor.executeNode(ctx, executionCtx, resultNode)
-		if errs.HaveOccurred() {
-			result.Errors.AppendErrors(errs)
-			continue
-		}
-
-		// Enqueue any unresolved child nodes to queue.
-		executor.enqueueChildNodes(&queue, resultNode)
-	}
-
-	return result
-}
-
-// buildRootResultNode returns a node to start execution of an operation.
-func (executor *Executor) buildRootResultNode(context *ExecutionContext) (*ResultNode, error) {
-	rootType := context.Operation().RootType()
-	// Root node is a special node which behaves like a field with nil parent and definition.
-	rootNode := &ExecutionNode{}
-	rootResult := &ResultNode{
-		Kind: ResultKindUnresolved,
-		Value: &UnresolvedResultValue{
-			ExecutionNode: rootNode,
-			ParentType:    rootType,
-			Source:        context.RootValue(),
-		},
-	}
-
-	// Collect fields in the selection set. We need to call this before completeObjectValue because
-	// if there's any error occurred, we return the error instead of calling handleFieldError.
+	// AppendError adds an error to the error list of the given result node to indicate a failed field
+	// execution. It implements error handling described in "Errors and Non-Nullability" [0] which
+	// propagate the field error until a nullable field was encountered.
 	//
-	// FIXME: Need further refactoring.
-	if _, err := executor.collectFields(context, rootNode, rootType); err != nil {
-		return nil, err
-	}
-
-	err := executor.completeObjectValue(context, rootType, &ResolveInfo{
-		ExecutionContext: context,
-		ExecutionNode:    rootNode,
-		ResultNode:       rootResult,
-		ParentType:       rootType,
-		ctx:              goctx.Background(),
-	}, context.RootValue())
-	if err != nil {
-		return nil, err
-	}
-
-	return rootResult, nil
+	// [0]: https://facebook.github.io/graphql/June2018/#sec-Errors-and-Non-Nullability
+	AppendError(err *graphql.Error, result *ResultNode)
 }
 
-// Given a selectionSet, adds all of the fields in that selection to the passed in map of fields,
-// and returns it at the end.
-//
-// CollectFields requires the "runtime type" of an object. For a field which returns an Interface or
-// Union type, the "runtime type" will be the actual Object type returned by that field.
-func (executor *Executor) collectFields(
-	context *ExecutionContext,
-	node *ExecutionNode,
-	runtimeType graphql.Object) ([]*ExecutionNode, error) {
-	// Look up nodes for the Selection Set with the given runtime type in node's child nodes.
-	var childNodes []*ExecutionNode
-
-	if node.Children == nil {
-		// Initialize the children node map.
-		node.Children = map[graphql.Object][]*ExecutionNode{}
-	} else {
-		// See whether we have built one before.
-		childNodes = node.Children[runtimeType]
-	}
-
-	if childNodes == nil {
-		// Load selection set into ExecutionNode's.
-		var err error
-		childNodes, err = executor.buildChildExecutionNodesForSelectionSet(context, node, runtimeType)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Store the result before return.
-	node.Children[runtimeType] = childNodes
-
-	return childNodes, nil
-}
-
-// Build ExecutionNode's for the selection set of given node.
-func (executor *Executor) buildChildExecutionNodesForSelectionSet(
-	context *ExecutionContext,
-	parentNode *ExecutionNode,
-	runtimeType graphql.Object) ([]*ExecutionNode, error) {
-	// Boolean set to prevent named fragment to be applied twice or more in a selection set.
-	visitedFragmentNames := map[string]bool{}
-
-	// Map field response key to its corresponding node; This is used to group field definitions when
-	// two fields corresponding to the same response key was requested in the selection set.
-	fields := map[string]*ExecutionNode{}
-
-	// The result nodes
-	childNodes := []*ExecutionNode{}
-
-	type taskData struct {
-		// The Selection Set that is being processed into childNodes
-		selectionSet ast.SelectionSet
-
-		// The index of Selection to be resumed when restarting the task.
-		selectionIndex int
-	}
-
-	// Stack contains task to be processed.
-	var stack []taskData
-
-	// Initialize the stack. Find the selection sets in parentNode to processed.
-	if parentNode.IsRoot() {
-		stack = []taskData{
-			{context.Operation().Definition().SelectionSet, 0},
-		}
-	} else {
-		definitions := parentNode.Definitions
-		numDefinitions := len(definitions)
-		stack = make([]taskData, numDefinitions)
-		// stack is LIFO so place the selection sets in reverse order.
-		for i, definition := range definitions {
-			stack[numDefinitions-i-1].selectionSet = definition.SelectionSet
-		}
-	}
-
-	for len(stack) > 0 {
-		task := &stack[len(stack)-1]
-
-		selectionSet := task.selectionSet
-		numSelections := len(selectionSet)
-		interrupted := false
-
-		for task.selectionIndex < numSelections && !interrupted {
-			selection := selectionSet[task.selectionIndex]
-			task.selectionIndex++
-			if task.selectionIndex >= numSelections {
-				// No more selections in the selection set. Pop it from the stack.
-				stack = stack[:len(stack)-1]
-			}
-
-			// Check @skip and @include.
-			shouldInclude, err := executor.shouldIncludeNode(context, selection)
-			if err != nil {
-				return nil, err
-			} else if !shouldInclude {
-				continue
-			}
-
-			switch selection := selection.(type) {
-			case *ast.Field:
-				// Find existing fields.
-				name := selection.ResponseKey()
-				field := fields[name]
-				if field != nil {
-					// The field with the same name has been added to the selection set before. Append the
-					// definition to the same node to coalesce their selection sets.
-					field.Definitions = append(field.Definitions, selection)
-				} else {
-					// Find corresponding runtime Field definition in current schema.
-					fieldDef := executor.findFieldDef(
-						context.Operation().Schema(),
-						runtimeType,
-						selection.Name.Value())
-					if fieldDef == nil {
-						// Schema doesn't contains the field. Note that we should skip the field without an
-						// error as per specification.
-						//
-						// Reference: 3.c. in https://facebook.github.io/graphql/June2018/#ExecuteSelectionSet().
-						break
-					}
-
-					// Get argument values.
-					arguments, err := values.ArgumentValues(fieldDef, selection, context.VariableValues())
-					if err != nil {
-						return nil, err
-					}
-
-					// Build a node.
-					field = &ExecutionNode{
-						Parent:         parentNode,
-						Definitions:    []*ast.Field{selection},
-						Field:          fieldDef,
-						ArgumentValues: arguments,
-					}
-
-					// Add to result.
-					childNodes = append(childNodes, field)
-
-					// Insert a map entry.
-					fields[name] = field
-				}
-
-			case *ast.InlineFragment:
-				// Apply fragment only if the runtime type satisfied the type condition.
-				if selection.HasTypeCondition() {
-					if !executor.doesTypeConditionSatisfy(context, selection.TypeCondition, runtimeType) {
-						break
-					}
-				}
-
-				// Push a task to process selection set in the fragment.
-				stack = append(stack, taskData{
-					selectionSet: selection.SelectionSet,
-				})
-
-				// Interrupt current loop to start processing the selection set in the fragment.
-				// Specification requires fields to be sorted in DFS order.
-				interrupted = true
-
-			case *ast.FragmentSpread:
-				fragmentName := selection.Name.Value()
-				if visited := visitedFragmentNames[fragmentName]; visited {
-					break
-				}
-				visitedFragmentNames[fragmentName] = true
-
-				// Find fragment definition to get type condition and selection set.
-				fragmentDef := context.Operation().FragmentDef(fragmentName)
-				if fragmentDef == nil {
-					break
-				}
-
-				if !executor.doesTypeConditionSatisfy(context, fragmentDef.TypeCondition, runtimeType) {
-					break
-				}
-
-				// Push a task to process selection set in the fragment.
-				stack = append(stack, taskData{
-					selectionSet: fragmentDef.SelectionSet,
-				})
-
-				interrupted = true
-			}
-		}
-	} // for len(stack) > 0 {
-
-	return childNodes, nil
-}
-
-// executeNode implements "Executing Fields" [0]. It resolves the field on the given source object.
-// In particular, this figures out the value that the field returns by calling its resolve function,
-// then calls completeValue to complete promises, serialize scalars, or execute the
-// sub-selection-set for objects.
-//
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Executing-Fields
-func (executor *Executor) executeNode(
-	ctx goctx.Context,
-	context *ExecutionContext,
-	result *ResultNode) graphql.Errors {
-
-	unresolvedValue := result.UnresolvedValue()
-	node := unresolvedValue.ExecutionNode
-	parentType := unresolvedValue.ParentType
-	source := unresolvedValue.Source
-
-	// If parent becomes a "Invalid Nil" result, one of our sibling or decensant nodes came before us
-	// and failed the execution. No need to proceed with execution for this node because the result
-	// will always discarded.
-	if result.Parent != nil && result.Parent.IsNil() {
-		return graphql.NoErrors()
-	}
-
-	info := &ResolveInfo{
-		ExecutionContext: context,
-		ExecutionNode:    node,
-		ResultNode:       result,
-		ParentType:       parentType,
-		ctx:              ctx,
-	}
-
-	// Get the field resolver.
-	field := node.Field
-	resolver := field.Resolver()
-	if resolver == nil {
-		resolver = context.Operation().DefaultFieldResolver()
-	}
-
-	// Call resolver to resolve the field value.
-	value, err := resolver.Resolve(ctx, source, info)
-	if err != nil {
-		return graphql.ErrorsOf(executor.handleFieldError(err, result, node))
-	}
-
-	return executor.completeValue(context, field.Type(), info, value)
-}
-
-func (executor *Executor) handleFieldError(err error, result *ResultNode, node *ExecutionNode) error {
-	// Attach location info.
-	locations := make([]graphql.ErrorLocation, len(node.Definitions))
-	for i := range node.Definitions {
-		locations[i] = graphql.ErrorLocationOfASTNode(node.Definitions[i])
-	}
-
-	// Compute response path.
-	path := result.Path()
-
-	// Wrap it as a graphql.Error to ensure a consistent Error interface.
-	e, ok := err.(*graphql.Error)
-	if !ok {
-		e = graphql.NewError(err.Error(), locations, path).(*graphql.Error)
-	} else {
-		e.Locations = locations
-		e.Path = path
-	}
-
-	// Set result value to a nil value.
-	result.Kind = ResultKindNil
-	result.Value = nil
-
+func propagateExecutionError(result *ResultNode) {
 	// Impelement "Errors and Non-Nullability". Propagate the field error until a nullable field was
 	// encountered.
 	//
@@ -393,386 +49,256 @@ func (executor *Executor) handleFieldError(err error, result *ResultNode, node *
 		result.Kind = ResultKindNil
 		result.Value = nil
 	}
+}
 
+//===----------------------------------------------------------------------------------------====//
+// blockingExecutor
+//===----------------------------------------------------------------------------------------====//
+
+type blockingExecutor struct {
+	// Errors that occurred during the execution
+	errs graphql.Errors
+}
+
+func newBlockingExecutor() executor {
+	return &blockingExecutor{}
+}
+
+// Dispatch implements executor.
+func (e *blockingExecutor) Dispatch(task *ExecuteNodeTask) {
+	// Run the task.
+	task.Run()
+}
+
+// Run implements executor.
+func (e *blockingExecutor) Run(ctx *ExecutionContext) <-chan ExecutionResult {
+	resultChan := make(chan ExecutionResult, 1)
+
+	// Start execution by dispatch root tasks.
+	result, err := collectAndDispatchRootTasks(ctx, e)
+	if err != nil {
+		resultChan <- ExecutionResult{
+			Errors: graphql.ErrorsOf(err.(*graphql.Error)),
+		}
+	} else {
+		resultChan <- ExecutionResult{
+			Data:   result,
+			Errors: e.errs,
+		}
+	}
+
+	return resultChan
+}
+
+func (e *blockingExecutor) AppendError(err *graphql.Error, result *ResultNode) {
+	// Check parent result node to see whether the field is erroneous. If so, discard the error as per
+	// spec.
+	result = result.Parent
+	if !result.IsNil() {
+		e.errs.Append(err)
+		propagateExecutionError(result)
+	}
+}
+
+//===----------------------------------------------------------------------------------------====//
+// concurrentExecutor
+//===----------------------------------------------------------------------------------------====//
+
+// concurrentExecutor executes fields concurrently using concurrent.Executor. It serves as a
+// based for serialExecutor and parallelExecutor.
+type concurrentExecutor struct {
+	runner concurrent.Executor
+
+	result     chan *ResultNode
+	resultChan chan ExecutionResult
+
+	// taskCounter is a
+	taskCounter int64
+
+	// Errors that occurred during the execution
+	errs graphql.Errors
+	// Mutex that guards writes to errs
+	errsMutex sync.Mutex
+}
+
+func (e *concurrentExecutor) Init(runner concurrent.Executor) {
+	e.result = make(chan *ResultNode, 1)
+	e.resultChan = make(chan ExecutionResult, 1)
+	e.runner = runner
+}
+
+func (e *concurrentExecutor) IncTaskCount() (remainingTasks int64) {
+	return atomic.AddInt64(&e.taskCounter, 1)
+}
+
+func (e *concurrentExecutor) DecTaskCount() (remainingTasks int64) {
+	return atomic.AddInt64(&e.taskCounter, -1)
+}
+
+// AppendError implements executor.AppendError.
+func (e *concurrentExecutor) AppendError(err *graphql.Error, result *ResultNode) {
+	// Lock is required to append and to propagate the error. Firstly, multiple nodes may generate
+	// errors at the same time. Secondly, according to specification, we can add most one error to the
+	// error list per field [0].
+	mutex := &e.errsMutex
+	mutex.Lock()
+
+	// Check parent result node to see whether the field is erroneous. If so, discard the error as per
+	// spec.
+	result = result.Parent
+	if !result.IsNil() {
+		e.errs.Append(err)
+		propagateExecutionError(result)
+	}
+
+	mutex.Unlock()
+}
+
+func (e *concurrentExecutor) SendResult() {
+	e.resultChan <- ExecutionResult{
+		Data:   <-e.result,
+		Errors: e.errs,
+	}
+}
+
+//===----------------------------------------------------------------------------------------====//
+// serialExecutor
+//===----------------------------------------------------------------------------------------====//
+
+// serialExecutor executes top-level fields one by one.
+type serialExecutor struct {
+	concurrentExecutor
+	rootTasks []*ExecuteNodeTask
+}
+
+func newSerialExecutor(runner concurrent.Executor) executor {
+	e := &serialExecutor{}
+	e.Init(runner)
 	return e
 }
 
-// completeValue implements "Value Completion" [0]. It ensures the value resolved from the field
-// resolver adheres to the expected return type.
-//
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Value-Completion
-func (executor *Executor) completeValue(
-	context *ExecutionContext,
-	returnType graphql.Type,
-	info *ResolveInfo,
-	value interface{}) graphql.Errors {
-
-	if wrappingType, isWrappingType := returnType.(graphql.WrappingType); isWrappingType {
-		return executor.completeWrappingValue(context, wrappingType, info, value)
+// Dispatch implements executor.
+func (e *serialExecutor) Dispatch(task *ExecuteNodeTask) {
+	isTopLevelNode := task.node.Parent.IsRoot()
+	if isTopLevelNode {
+		// Top-level fields are executed serially [0].
+		//
+		// [0]: https://facebook.github.io/graphql/June2018/#sec-Mutation
+		e.rootTasks = append(e.rootTasks, task)
+	} else {
+		e.IncTaskCount()
+		// TODO: Error handling
+		e.runner.Submit(e.taskFunc(task))
 	}
+}
 
-	err := executor.completeNonWrappingValue(context, returnType, info, value)
+// Run implements executor.
+func (e *serialExecutor) Run(ctx *ExecutionContext) <-chan ExecutionResult {
+	// Collect root tasks with rootTasksDispatcher.
+	result, err := collectAndDispatchRootTasks(ctx, e)
 	if err != nil {
-		return graphql.ErrorsOf(err)
+		e.resultChan <- ExecutionResult{
+			Errors: graphql.ErrorsOf(err.(*graphql.Error)),
+		}
+		return e.resultChan
 	}
 
-	return graphql.NoErrors()
+	e.result <- result
+
+	// Run the first root task.
+	e.runOneRootTask()
+
+	return e.resultChan
 }
 
-// completeWrappingValue completes value for NonNull and List type.
-func (executor *Executor) completeWrappingValue(
-	context *ExecutionContext,
-	returnType graphql.WrappingType,
-	info *ResolveInfo,
-	value interface{}) graphql.Errors {
-	var errs graphql.Errors
+func (e *serialExecutor) runOneRootTask() {
+	// Note that this method assumes that it is called without other tasks being executed at the time.
+	rootTasks := e.rootTasks
 
-	// Resolvers can return error to signify failure. See https://github.com/graphql/graphql-js/commit/f62c0a25.
-	if err, ok := value.(*graphql.Error); ok && err != nil {
-		return graphql.ErrorsOf(
-			executor.handleFieldError(err, info.ResultNode, info.ExecutionNode))
+	if len(rootTasks) == 0 {
+		e.SendResult()
+	} else {
+		e.rootTasks = rootTasks[1:]
+		e.IncTaskCount()
+		// Submit the first root task.
+		//
+		// TODO: Error handling
+		e.runner.Submit(e.taskFunc(rootTasks[0]))
 	}
-
-	type taskData struct {
-		returnType graphql.WrappingType
-		result     *ResultNode
-		value      interface{}
-	}
-	queue := []taskData{
-		{
-			returnType: returnType,
-			result:     info.ResultNode,
-			value:      value,
-		},
-	}
-	node := info.ExecutionNode
-	field := node.Field
-
-	for len(queue) > 0 {
-		var task *taskData
-		// Pop one task from queue.
-		task, queue = &queue[0], queue[1:]
-
-		var returnType graphql.Type = task.returnType
-		result := task.result
-		value := task.value
-
-		// If the parent was resolved to nil, stop processing this node.
-		if result.Parent.IsNil() {
-			continue
-		}
-
-		// Handle non-null.
-		nonNullType, isNonNullType := returnType.(graphql.NonNull)
-
-		if isNonNullType {
-			// For non-null type, continue on its unwrapped type.
-			returnType = nonNullType.InnerType()
-		}
-
-		// Handle nil value.
-		if values.IsNullish(value) {
-			// Check for non-nullability.
-			if isNonNullType {
-				err := executor.handleFieldError(
-					graphql.NewError(fmt.Sprintf("Cannot return null for non-nullable field %v.%s.",
-						info.ParentType.Name(), node.Field.Name())),
-					result, node)
-				errs.Append(err)
-			} else {
-				// Resolve the value to nil without error.
-				result.Kind = ResultKindNil
-				result.Value = nil
-			}
-
-			// Continue to the next value.
-			continue
-		} // if values.IsNullish(value)
-
-		listType, isListType := returnType.(graphql.List)
-		if !isListType {
-			info.ResultNode = result
-			err := executor.completeNonWrappingValue(context, returnType, info, value)
-			if err != nil {
-				errs.Append(err)
-			}
-			continue
-		}
-
-		// Complete a list value by completing each item in the list with the inner type.
-		v := reflect.ValueOf(value)
-		if v.Kind() == reflect.Ptr {
-			v = v.Elem()
-		}
-
-		if v.Kind() != reflect.Array && v.Kind() != reflect.Slice {
-			err := executor.handleFieldError(
-				graphql.NewError(
-					fmt.Sprintf("Expected Iterable, but did not find one for field %s.%s.",
-						info.ParentType.Name(), field.Name())),
-				result, node)
-			errs.Append(err)
-			continue
-		}
-
-		elementType := listType.ElementType()
-		elementWrappingType, isWrappingElementType := elementType.(graphql.WrappingType)
-
-		// Setup result nodes for elements.
-		numElements := v.Len()
-		resultNodes := make([]ResultNode, numElements)
-
-		// Set child results to reject nil value if it is unwrapped from a non-null type.
-		if isNonNullType {
-			for i := range resultNodes {
-				resultNodes[i].SetIsNonNull()
-			}
-		}
-
-		// Complete result.
-		result.Kind = ResultKindList
-		result.Value = resultNodes
-
-		if isWrappingElementType {
-			for i := range resultNodes {
-				resultNode := &resultNodes[i]
-				resultNode.Parent = result
-				queue = append(queue, taskData{
-					returnType: elementWrappingType,
-					result:     resultNode,
-					value:      v.Index(i).Interface(),
-				})
-			}
-		} else {
-			for i := range resultNodes {
-				resultNode := &resultNodes[i]
-				resultNode.Parent = result
-				info.ResultNode = resultNode
-				value := v.Index(i).Interface()
-				err := executor.completeNonWrappingValue(context, elementType, info, value)
-				if err != nil {
-					errs.Append(err)
-				}
-			}
-		}
-	}
-
-	return errs
 }
 
-func (executor *Executor) completeNonWrappingValue(
-	context *ExecutionContext,
-	returnType graphql.Type,
-	info *ResolveInfo,
-	value interface{}) error {
+func (e *serialExecutor) taskFunc(task *ExecuteNodeTask) concurrent.Task {
+	return concurrent.TaskFunc(func() (interface{}, error) {
+		// Run the task.
+		task.Run()
 
-	// Non-null and List type should already be handled in completeWrappingValue.
-	result := info.ResultNode
+		// Decrement task counter and check the count.
+		if e.DecTaskCount() == 0 {
+			// One root task has been completed. Execute the next one or write the result.
+			e.runOneRootTask()
+		}
 
-	// Check for nullish.
-	if values.IsNullish(value) {
-		result.Value = nil
-		result.Kind = ResultKindNil
-		return nil
-	}
-
-	// Resolvers can return error to signify failure. See https://github.com/graphql/graphql-js/commit/f62c0a25.
-	if err, ok := value.(*graphql.Error); ok {
-		return executor.handleFieldError(err, result, info.ExecutionNode)
-	}
-
-	switch returnType := returnType.(type) {
-	// Scalar and Enum.
-	case graphql.LeafType:
-		return executor.completeLeafValue(context, returnType, info, value)
-
-	case graphql.Object:
-		return executor.completeObjectValue(context, returnType, info, value)
-
-	// Union and Interface
-	case graphql.AbstractType:
-		return executor.completeAbstractValue(context, returnType, info, value)
-	}
-
-	return executor.handleFieldError(
-		graphql.NewError(fmt.Sprintf(`Cannot complete value of unexpected type "%v".`, returnType)),
-		result, info.ExecutionNode)
+		return nil, nil
+	})
 }
 
-func (executor *Executor) completeLeafValue(
-	context *ExecutionContext,
-	returnType graphql.LeafType,
-	info *ResolveInfo,
-	value interface{}) error {
+//===----------------------------------------------------------------------------------------====//
+// parallelExecutor
+//===----------------------------------------------------------------------------------------====//
 
-	result := info.ResultNode
-	coercedValue, err := returnType.CoerceResultValue(value)
+type parallelExecutor struct {
+	concurrentExecutor
+
+	// hasTasks is set once Dispatch is called. This is used by Run to deal with the case where
+	// there's no any fields to execute we should immediately send an empty result. The only valid
+	// transition is from 0 to 1. It is accessed with atomic memory primitives.
+	hasTasks int32
+}
+
+func newParallelExecutor(runner concurrent.Executor) executor {
+	e := &parallelExecutor{}
+	e.Init(runner)
+	return e
+}
+
+// Dispatch implements executor.
+func (e *parallelExecutor) Dispatch(task *ExecuteNodeTask) {
+	atomic.StoreInt32(&e.hasTasks, 1)
+	e.IncTaskCount()
+	// TODO: Error handling
+	e.runner.Submit(e.taskFunc(task))
+}
+
+// Run implements executor.
+func (e *parallelExecutor) Run(ctx *ExecutionContext) <-chan ExecutionResult {
+	// Start execution by dispatch root tasks.
+	result, err := collectAndDispatchRootTasks(ctx, e)
 	if err != nil {
-		// See comments in graphql.NewCoercionError for the rules of handling error.
-		if e, ok := err.(*graphql.Error); !ok || e.Kind != graphql.ErrKindCoercion {
-			// Wrap the error in our own.
-			err = graphql.NewDefaultResultCoercionError(returnType.Name(), value, err)
+		e.resultChan <- ExecutionResult{
+			Errors: graphql.ErrorsOf(err.(*graphql.Error)),
 		}
-		return executor.handleFieldError(err, result, info.ExecutionNode)
-	}
-
-	// Setup result and return.
-	result.Kind = ResultKindLeaf
-	result.Value = coercedValue
-	return nil
-}
-
-func (executor *Executor) completeObjectValue(
-	context *ExecutionContext,
-	returnType graphql.Object,
-	info *ResolveInfo,
-	value interface{}) error {
-
-	node := info.ExecutionNode
-	result := info.ResultNode
-
-	// Collect fields in the selection set.
-	childNodes, err := executor.collectFields(context, node, returnType)
-	if err != nil {
-		return executor.handleFieldError(err, result, node)
-	}
-
-	// Setup an unresolved ResultNode for each child ExecutionNode.
-	numChildNodes := len(childNodes)
-	fieldResults := make([]ResultNode, numChildNodes)
-	for i := 0; i < numChildNodes; i++ {
-		fieldResult := &fieldResults[i]
-		childNode := childNodes[i]
-		fieldResult.Parent = result
-		fieldResult.Kind = ResultKindUnresolved
-		fieldResult.Value = &UnresolvedResultValue{
-			ExecutionNode: childNode,
-			ParentType:    info.ParentType,
-			Source:        value,
-		}
-		// Set the flag so field can reject nil value on error.
-		if graphql.IsNonNullType(childNode.Field.Type()) {
-			fieldResult.SetIsNonNull()
+	} else {
+		e.result <- result
+		if atomic.LoadInt32(&e.hasTasks) == 0 {
+			// No any fields to execute
+			e.SendResult()
 		}
 	}
 
-	// Setup result.
-	result.Kind = ResultKindObject
-	result.Value = &ObjectResultValue{
-		ExecutionNodes: childNodes,
-		FieldValues:    fieldResults,
-	}
-
-	return nil
+	return e.resultChan
 }
 
-func (executor *Executor) completeAbstractValue(
-	context *ExecutionContext,
-	returnType graphql.AbstractType,
-	info *ResolveInfo,
-	value interface{}) error {
-	panic("unimplemented")
-}
+func (e *parallelExecutor) taskFunc(task *ExecuteNodeTask) concurrent.Task {
+	return concurrent.TaskFunc(func() (interface{}, error) {
+		// Run the task.
+		task.Run()
 
-// ExecutionQueue manages ExecutionNode's that are waiting for processing.
-type ExecutionQueue interface {
-	// Push adds a ResultNode to the queue for processing. The given node must be an unresolved result
-	// (i.e., node.IsUnresolved() returns true.)
-	Push(node *ResultNode)
-}
-
-// enqueueChildNodes finds any unresolved child nodes of the given node and adds them to queue.
-func (executor *Executor) enqueueChildNodes(queue ExecutionQueue, node *ResultNode) {
-	stack := []*ResultNode{node}
-	for len(stack) > 0 {
-		node, stack = stack[len(stack)-1], stack[:len(stack)-1]
-
-		var childNodes []ResultNode
-		if node.IsUnresolved() {
-			queue.Push(node)
-		} else if node.IsList() {
-			childNodes = node.ListValue()
-		} else if node.IsObject() {
-			childNodes = node.ObjectValue().FieldValues
+		// Decrement task counter.
+		if e.DecTaskCount() == 0 {
+			// No further tasks for running. Write the result.
+			e.SendResult()
 		}
 
-		for i := len(childNodes) - 1; i >= 0; i-- {
-			node := &childNodes[i]
-			if node.IsUnresolved() {
-				queue.Push(node)
-			} else if node.IsList() || node.IsObject() {
-				stack = append(stack, node)
-			}
-			// Skip nodes with other kinds. They don't have child nodes.
-		}
-	}
-}
-
-// Determines if a field should be included based on the @include and @skip directives, where @skip
-// has higher precedence than @include.
-//
-// Reference: https://facebook.github.io/graphql/June2018/#sec--include
-func (executor *Executor) shouldIncludeNode(context *ExecutionContext, node ast.Selection) (bool, error) {
-	// Neither @skip nor @include has precedence over the other. In the case that both the @skip and
-	// @include directives are provided in on the same the field or fragment, it must be queried only
-	// if the @skip condition is false and the @include condition is true. Stated conversely, the
-	// field or fragment must not be queried if either the @skip condition is true or the @include
-	// condition is false.
-	skip, err := values.DirectiveValues(
-		graphql.SkipDirective(), node.GetDirectives(), context.VariableValues())
-	if err != nil {
-		return false, err
-	}
-	shouldSkip := skip.Get("if")
-	if shouldSkip != nil && shouldSkip.(bool) {
-		return false, nil
-	}
-
-	include, err := values.DirectiveValues(
-		graphql.IncludeDirective(), node.GetDirectives(), context.VariableValues())
-	if err != nil {
-		return false, err
-	}
-	shouldInclude := include.Get("if")
-	if shouldInclude != nil && !shouldInclude.(bool) {
-		return false, nil
-	}
-
-	return true, nil
-}
-
-// This method looks up the field on the given type definition. It has special casing for the two
-// introspection fields, __schema and __typename. __typename is special because it can always be
-// queried as a field, even in situations where no other fields are allowed, like on a Union.
-// __schema could get automatically added to the query type, but that would require mutating type
-// definitions, which would cause issues.
-func (executor *Executor) findFieldDef(
-	schema *graphql.Schema,
-	parentType graphql.Object,
-	fieldName string) graphql.Field {
-	// TODO: Deal with special introspection fields.
-	return parentType.Fields()[fieldName]
-}
-
-// Determines if a type condition is satisfied with the given type.
-func (executor *Executor) doesTypeConditionSatisfy(
-	context *ExecutionContext,
-	typeCondition ast.NamedType,
-	t graphql.Type) bool {
-	schema := context.Operation().Schema()
-
-	conditionalType := schema.TypeFromAST(typeCondition)
-	if conditionalType == t {
-		return true
-	}
-
-	if abstractType, ok := t.(graphql.AbstractType); ok {
-		for _, possibleType := range schema.PossibleTypes(abstractType) {
-			if possibleType == t {
-				return true
-			}
-		}
-	}
-
-	return false
+		return nil, nil
+	})
 }

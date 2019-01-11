@@ -17,8 +17,6 @@
 package executor
 
 import (
-	"context"
-
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 )
@@ -29,11 +27,6 @@ type ResolveInfo struct {
 	ExecutionContext *ExecutionContext
 	ExecutionNode    *ExecutionNode
 	ResultNode       *ResultNode
-	ParentType       graphql.Object
-
-	// This is embedded in the struct to make pass the context to completeValue and variants
-	// (specifically for calling type resolvers in completeAbstractValue) without adding a parameter.
-	ctx context.Context
 }
 
 // fieldSelectionInfo is an adapter which implements graphql.FieldSelection for ExecutionNode.
@@ -81,9 +74,31 @@ func (info *ResolveInfo) ParentFieldSelection() graphql.FieldSelectionInfo {
 	return fieldSelectionInfo{info.ExecutionNode.Parent}
 }
 
+func parentFieldType(ctx *ExecutionContext, node *ExecutionNode) graphql.Object {
+	parent := node.Parent.Field
+	if parent != nil {
+		return graphql.NamedTypeOf(parent.Type()).(graphql.Object)
+	}
+
+	var (
+		operation = ctx.Operation()
+		schema    = operation.Schema()
+	)
+	switch operation.Type() {
+	case ast.OperationTypeQuery:
+		return schema.Query()
+	case ast.OperationTypeMutation:
+		return schema.Mutation()
+	case ast.OperationTypeSubscription:
+		return schema.Subscription()
+	}
+
+	panic("unknown object type")
+}
+
 // Object implements graphql.ResolveInfo.
 func (info *ResolveInfo) Object() graphql.Object {
-	return info.ParentType
+	return parentFieldType(info.ExecutionContext, info.ExecutionNode)
 }
 
 // FieldDefinitions implements graphql.ResolveInfo.

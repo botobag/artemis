@@ -108,9 +108,9 @@ func consume(queue *workerPoolTaskQueue, n int, numRemovers int, tasks []Task, w
 				// Remove.
 				err := queue.Remove(task)
 				if !exists {
-					Expect(err).Should(Equal(ErrElementNotFound))
+					Expect(err).Should(MatchError(ErrElementNotFound))
 				} else {
-					Expect(err).Should(Or(BeNil(), Equal(ErrElementNotFound)))
+					Expect(err).Should(Or(BeNil(), MatchError(ErrElementNotFound)))
 
 					if err == nil {
 						// Successfully removed. Update taskMap.

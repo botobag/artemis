@@ -581,8 +581,7 @@ func (executor *WorkerPoolExecutor) Shutdown() (terminated <-chan bool, err erro
 	executor.tryTerminate()
 
 	// Setup return values.
-	terminated = termination
-	return
+	return termination, nil
 }
 
 // loadState loads current state. See comment for the Load method in workerPoolExecutorState.

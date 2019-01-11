@@ -17,6 +17,8 @@
 package executor
 
 import (
+	"context"
+
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/internal/value"
 )
@@ -25,6 +27,9 @@ import (
 // exeuction. The context includes the operation to execute, variables supplied and request-specific
 // values, etc..
 type ExecutionContext struct {
+	// Context for the execution
+	ctx context.Context
+
 	// operation being executed.
 	operation *PreparedOperation
 
@@ -41,7 +46,7 @@ type ExecutionContext struct {
 
 // newExecutionContext initializes an ExecutionContext given the operation to execute and the
 // request data.
-func newExecutionContext(operation *PreparedOperation, params *ExecuteParams) (*ExecutionContext, graphql.Errors) {
+func newExecutionContext(ctx context.Context, operation *PreparedOperation, params *ExecuteParams) (*ExecutionContext, graphql.Errors) {
 	// Run input coercion on variable values.
 	variableValues, errs := value.CoerceVariableValues(
 		operation.Schema(),
@@ -52,6 +57,7 @@ func newExecutionContext(operation *PreparedOperation, params *ExecuteParams) (*
 	}
 
 	return &ExecutionContext{
+		ctx:            ctx,
 		operation:      operation,
 		rootValue:      params.RootValue,
 		appContext:     params.AppContext,

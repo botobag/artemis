@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/botobag/artemis/concurrent"
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 )
@@ -36,9 +37,6 @@ import (
 // [1]: https://facebook.github.io/graphql/draft/#ExecutableDefinition
 // [2]: https://facebook.github.io/graphql/draft/#sec-Language.Document
 type PreparedOperation struct {
-	// Executor for executing the operation
-	executor *Executor
-
 	// Schema of the type system that is currently executing
 	schema *graphql.Schema
 
@@ -151,8 +149,6 @@ func Prepare(params PrepareParams) (*PreparedOperation, graphql.Errors) {
 			[]graphql.ErrorLocation{graphql.ErrorLocationOfASTNode(operation)})
 	}
 
-	executor := &Executor{}
-
 	defaultFieldResolver := params.DefaultFieldResolver
 	if defaultFieldResolver == nil {
 		defaultFieldResolver = &DefaultFieldResolver{
@@ -164,7 +160,6 @@ func Prepare(params PrepareParams) (*PreparedOperation, graphql.Errors) {
 	}
 
 	return &PreparedOperation{
-		executor:             executor,
 		schema:               schema,
 		document:             document,
 		definition:           operation,
@@ -192,6 +187,10 @@ func (operation *PreparedOperation) VariableDefinitions() []*ast.VariableDefinit
 
 // ExecuteParams specifies parameter to execute a prepared operation.
 type ExecuteParams struct {
+	// Runner specifies executor to run the execution. If it is not provided, Execute blocks the
+	// calling goroutine to complete the execution.
+	Runner concurrent.Executor
+
 	// RootValue is an initial value corresponding to the root type being executed. Conceptually, an
 	// initial value represents the “universe” of data available via a GraphQL Service. It is common
 	// for a GraphQL Service to always use the same initial value for every request.
@@ -206,17 +205,30 @@ type ExecuteParams struct {
 
 // Execute executes the given operation.  ctx specifies deadline and/or cancellation for
 // executor, etc..
-func (operation *PreparedOperation) Execute(ctx context.Context, params ExecuteParams) ExecutionResult {
-	// Initialize an ExecutionContext.
-	executionCtx, errs := newExecutionContext(operation, &params)
+func (operation *PreparedOperation) Execute(c context.Context, params ExecuteParams) <-chan ExecutionResult {
+	// Initialize an ExecutionContext for executing operation.
+	ctx, errs := newExecutionContext(c, operation, &params)
 	if errs.HaveOccurred() {
-		return ExecutionResult{
+		// Create a channel to return the error.
+		result := make(chan ExecutionResult, 1)
+		result <- ExecutionResult{
 			Errors: errs,
 		}
+		return result
+	}
+
+	// Create executor.
+	var e executor
+	if params.Runner == nil {
+		e = newBlockingExecutor()
+	} else if operation.Type() == ast.OperationTypeMutation {
+		e = newSerialExecutor(params.Runner)
+	} else {
+		e = newParallelExecutor(params.Runner)
 	}
 
 	// Run the execution.
-	return operation.executor.Execute(ctx, executionCtx)
+	return e.Run(ctx)
 }
 
 // RootType returns operation.rootType.
@@ -227,6 +239,11 @@ func (operation *PreparedOperation) RootType() graphql.Object {
 // Definition returns operation.definition.
 func (operation *PreparedOperation) Definition() *ast.OperationDefinition {
 	return operation.definition
+}
+
+// Type returns operation.definition.OperationType().
+func (operation *PreparedOperation) Type() ast.OperationType {
+	return operation.definition.OperationType()
 }
 
 // FragmentDef finds the fragment definition for given name.

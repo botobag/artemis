@@ -28,12 +28,9 @@ type ResultKind uint16
 
 // Enumeration of ResultKind
 const (
-	// ResultNode was not resolved. The Value contains an UnresolvedResultValue.
-	ResultKindUnresolved ResultKind = iota
-
 	// ResultNode was resolved to a nil value (either because the field resolve to a nil value
 	// or because an error occurred.) The Value contains an nil interface.
-	ResultKindNil
+	ResultKindNil ResultKind = iota
 
 	// ResultNode was resolved to a List value. The value contains will be an []ResultNode.
 	ResultKindList
@@ -77,18 +74,6 @@ type ResultNode struct {
 
 const sizeOfResultNode = unsafe.Sizeof(ResultNode{})
 
-// UnresolvedResultValue provides values for resolving a field to get the result.
-type UnresolvedResultValue struct {
-	// The ExecutionNode of the resolving field
-	ExecutionNode *ExecutionNode
-
-	// ParentType of which selection set that contains this field
-	ParentType graphql.Object
-
-	// The source value that supplied to the resolver
-	Source interface{}
-}
-
 // ObjectResultValue stores result from executing an Object field.
 type ObjectResultValue struct {
 	// The ExecutionNode's of Select Set that resolved FieldValues
@@ -97,11 +82,6 @@ type ObjectResultValue struct {
 	// An array of ResultNode's each of which stores the result from executing the corresponding
 	// ExecutionNode in ExecutionNode.
 	FieldValues []ResultNode
-}
-
-// IsUnresolved describes the result has not been resolved from its source value yet.
-func (node *ResultNode) IsUnresolved() bool {
-	return node.Kind == ResultKindUnresolved
 }
 
 // IsNil returns true if the node holds nil value (either because the field resolve to a nil value
@@ -134,12 +114,6 @@ func (node *ResultNode) SetIsNonNull() {
 // IsNonNull describes the result should not be nil.
 func (node *ResultNode) IsNonNull() bool {
 	return (node.Flags & uint16(ResultFlagNonNull)) != 0
-}
-
-// UnresolvedValue returns a value describing an unresolved field. It would panic if this is not an
-// unresolved result (i.e., IsUnresolved returns false).
-func (node *ResultNode) UnresolvedValue() *UnresolvedResultValue {
-	return node.Value.(*UnresolvedResultValue)
 }
 
 // ListValue returns a value that is held by this node for a List field. It would panic if this is

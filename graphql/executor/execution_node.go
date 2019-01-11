@@ -85,13 +85,13 @@ import (
 //
 // [0]: https://facebook.github.io/graphql/June2018/#CollectFields()
 type ExecutionNode struct {
-	// Parent of this node in the graph; This is nil for node.
+	// Parent of this node in the graph; This is nil for root node.
 	Parent *ExecutionNode
 
 	// Field definitions for this node; Note that this is an array because a field could be requested
 	// multiple times in the documents. Validator already ensures that they don't have conflict
-	// definitions (e.g., fields different argument values). Their results are merged into one field
-	// in the response. This is nil for root node.
+	// definitions (e.g., fields with different argument values). Their results
+	// are merged into one field in the response. This is nil for root node.
 	Definitions []*ast.Field
 
 	// The corresponding Field definition in the schema; This is nil for root node.
