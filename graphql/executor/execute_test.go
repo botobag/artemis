@@ -76,9 +76,9 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 			// TODO: #71
 		})
 
-		It("accepts an object with named properties as arguments", func() {
+		It("accepts positional arguments", func() {
 			document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-				Body: token.SourceBody([]byte("query Example { a }")),
+				Body: token.SourceBody([]byte("{ a }")),
 			}), parser.ParseOptions{})
 			Expect(err).ShouldNot(HaveOccurred())
 
@@ -193,7 +193,7 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 
 			document, err := parser.Parse(token.NewSource(&token.SourceConfig{
 				Body: token.SourceBody([]byte(`
-      query Example($size: Int) {
+      query ($size: Int) {
         a,
         b,
         x: c
@@ -292,9 +292,8 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 			Expect(err).ShouldNot(HaveOccurred())
 
 			operation, errs := executor.Prepare(executor.PrepareParams{
-				Schema:        schema,
-				Document:      document,
-				OperationName: "Example",
+				Schema:   schema,
+				Document: document,
 			})
 			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
@@ -430,15 +429,15 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 				Body: token.SourceBody([]byte(`query ($var: String) { result: test }`))}), parser.ParseOptions{})
 			Expect(err).ShouldNot(HaveOccurred())
 
-			var info graphql.ResolveInfo
+			var resolvedInfo graphql.ResolveInfo
 
 			queryType, err := graphql.NewObject(&graphql.ObjectConfig{
 				Name: "Test",
 				Fields: graphql.Fields{
 					"test": {
 						Type: graphql.T(graphql.String()),
-						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, _info graphql.ResolveInfo) (interface{}, error) {
-							info = _info
+						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+							resolvedInfo = info
 							return nil, nil
 						}),
 					},
@@ -471,19 +470,19 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 				"Errors": Equal(graphql.NoErrors()),
 			})))
 
-			Expect(info.Field().Name()).Should(Equal("test"))
-			Expect(len(info.FieldDefinitions())).Should(Equal(1))
-			Expect(info.FieldDefinitions()[0]).Should(Equal(
+			Expect(resolvedInfo.Field().Name()).Should(Equal("test"))
+			Expect(len(resolvedInfo.FieldDefinitions())).Should(Equal(1))
+			Expect(resolvedInfo.FieldDefinitions()[0]).Should(Equal(
 				document.Definitions[0].(*ast.OperationDefinition).SelectionSet[0]))
-			Expect(info.FieldDefinitions()[0]).Should(Equal(
+			Expect(resolvedInfo.FieldDefinitions()[0]).Should(Equal(
 				document.Definitions[0].(*ast.OperationDefinition).SelectionSet[0]))
-			Expect(info.Field().Type()).Should(Equal(graphql.String()))
-			Expect(info.Object()).Should(Equal(schema.Query()))
-			Expect(info.Path().String()).Should(Equal(`result`))
-			Expect(info.Schema()).Should(Equal(schema))
-			Expect(info.RootValue()).Should(Equal(rootValue))
-			Expect(info.Operation()).Should(Equal(document.Definitions[0]))
-			Expect(info.VariableValues()).Should(
+			Expect(resolvedInfo.Field().Type()).Should(Equal(graphql.String()))
+			Expect(resolvedInfo.Object()).Should(Equal(schema.Query()))
+			Expect(resolvedInfo.Path().String()).Should(Equal(`result`))
+			Expect(resolvedInfo.Schema()).Should(Equal(schema))
+			Expect(resolvedInfo.RootValue()).Should(Equal(rootValue))
+			Expect(resolvedInfo.Operation()).Should(Equal(document.Definitions[0]))
+			Expect(resolvedInfo.VariableValues()).Should(
 				Equal(graphql.NewVariableValues(map[string]interface{}{"var": "abc"})))
 		})
 
@@ -1173,7 +1172,7 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 		It("avoids recursion", func() {
 			document, err := parser.Parse(token.NewSource(&token.SourceConfig{
 				Body: token.SourceBody([]byte(`
-      query Q {
+      {
         a
         ...Frag
         ...Frag
@@ -1204,9 +1203,8 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 			Expect(err).ShouldNot(HaveOccurred())
 
 			operation, errs := executor.Prepare(executor.PrepareParams{
-				Schema:        schema,
-				Document:      document,
-				OperationName: "Q",
+				Schema:   schema,
+				Document: document,
 			})
 			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
@@ -1219,9 +1217,8 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 
 		It("does not include illegal fields in output", func() {
 			document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-				Body: token.SourceBody([]byte(`mutation M {
-      thisIsIllegalDoNotIncludeMe
-    }`))}), parser.ParseOptions{})
+				Body: token.SourceBody([]byte(`{ thisIsIllegalDoNotIncludeMe }`))}),
+				parser.ParseOptions{})
 			Expect(err).ShouldNot(HaveOccurred())
 
 			queryType, err := graphql.NewObject(&graphql.ObjectConfig{
@@ -1348,14 +1345,14 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 			Expect(err).ShouldNot(HaveOccurred())
 
 			// For the purposes of test, just return the name of the field!
-			customResolver := graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+			fieldResolver := graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
 				return info.Field().Name(), nil
 			})
 
 			operation, errs := executor.Prepare(executor.PrepareParams{
 				Schema:               schema,
 				Document:             document,
-				DefaultFieldResolver: customResolver,
+				DefaultFieldResolver: fieldResolver,
 			})
 			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
