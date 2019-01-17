@@ -21,6 +21,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/types"
 )
 
 var _ = Describe("Type", func() {
@@ -194,53 +195,77 @@ var _ = Describe("Type", func() {
 	})
 
 	Describe("IsInputType", func() {
+		BeInputType := func() types.GomegaMatcher {
+			return WithTransform(graphql.IsInputType, BeTrue())
+		}
+
 		It("returns true for an input type", func() {
-			Expect(graphql.IsInputType(InputObjectType)).Should(BeTrue())
-			Expect(graphql.IsInputType(graphql.Int())).Should(BeTrue())
+			Expect(graphql.String()).Should(BeInputType())
+			Expect(EnumType).Should(BeInputType())
+			Expect(InputObjectType).Should(BeInputType())
 		})
 
 		It("returns true for a wrapped input type", func() {
-			inputObjectListType, err := graphql.NewListOfType(InputObjectType)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(graphql.IsInputType(inputObjectListType)).Should(BeTrue())
+			Expect(graphql.NewListOfType(graphql.String())).Should(BeInputType())
+			Expect(graphql.NewListOfType(InputObjectType)).Should(BeInputType())
+			Expect(graphql.NewListOfType(EnumType)).Should(BeInputType())
 
-			nonNullInputObjectType, err := graphql.NewNonNullOfType(InputObjectType)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(graphql.IsInputType(nonNullInputObjectType)).Should(BeTrue())
+			Expect(graphql.NewNonNullOfType(graphql.String())).Should(BeInputType())
+			Expect(graphql.NewNonNullOfType(InputObjectType)).Should(BeInputType())
+			Expect(graphql.NewNonNullOfType(EnumType)).Should(BeInputType())
 		})
 
 		It("returns false for an output type", func() {
-			Expect(graphql.IsInputType(ObjectType)).Should(BeFalse())
+			Expect(ObjectType).ShouldNot(BeInputType())
+			Expect(InterfaceType).ShouldNot(BeInputType())
+			Expect(UnionType).ShouldNot(BeInputType())
 		})
 
 		It("returns false for a wrapped output type", func() {
-			objectListType, err := graphql.NewListOfType(ObjectType)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(graphql.IsInputType(objectListType)).Should(BeFalse())
+			Expect(graphql.NewListOfType(ObjectType)).ShouldNot(BeInputType())
+			Expect(graphql.NewListOfType(InterfaceType)).ShouldNot(BeInputType())
+			Expect(graphql.NewListOfType(UnionType)).ShouldNot(BeInputType())
 
-			nonNullObjectType, err := graphql.NewNonNullOfType(ObjectType)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(graphql.IsInputType(nonNullObjectType)).Should(BeFalse())
+			Expect(graphql.NewNonNullOfType(ObjectType)).ShouldNot(BeInputType())
+			Expect(graphql.NewNonNullOfType(InterfaceType)).ShouldNot(BeInputType())
+			Expect(graphql.NewNonNullOfType(UnionType)).ShouldNot(BeInputType())
 		})
 	})
 
 	Describe("IsOutputType", func() {
+		BeOutputType := func() types.GomegaMatcher {
+			return WithTransform(graphql.IsOutputType, BeTrue())
+		}
+
 		It("returns true for an output type", func() {
-			Expect(graphql.IsOutputType(ObjectType)).Should(BeTrue())
+			Expect(graphql.String()).Should(BeOutputType())
+			Expect(ObjectType).Should(BeOutputType())
+			Expect(InterfaceType).Should(BeOutputType())
+			Expect(UnionType).Should(BeOutputType())
+			Expect(EnumType).Should(BeOutputType())
 		})
 
 		It("returns true for a wrapped output type", func() {
-			Expect(graphql.IsOutputType(graphql.MustNewListOfType(ObjectType))).Should(BeTrue())
-			Expect(graphql.IsOutputType(graphql.MustNewNonNullOfType(ObjectType))).Should(BeTrue())
+			Expect(graphql.NewListOfType(graphql.String())).Should(BeOutputType())
+			Expect(graphql.NewListOfType(ObjectType)).Should(BeOutputType())
+			Expect(graphql.NewListOfType(InterfaceType)).Should(BeOutputType())
+			Expect(graphql.NewListOfType(UnionType)).Should(BeOutputType())
+			Expect(graphql.NewListOfType(EnumType)).Should(BeOutputType())
+
+			Expect(graphql.NewNonNullOfType(graphql.String())).Should(BeOutputType())
+			Expect(graphql.NewNonNullOfType(ObjectType)).Should(BeOutputType())
+			Expect(graphql.NewNonNullOfType(InterfaceType)).Should(BeOutputType())
+			Expect(graphql.NewNonNullOfType(UnionType)).Should(BeOutputType())
+			Expect(graphql.NewNonNullOfType(EnumType)).Should(BeOutputType())
 		})
 
 		It("returns false for an input type", func() {
-			Expect(graphql.IsOutputType(InputObjectType)).Should(BeFalse())
+			Expect(InputObjectType).ShouldNot(BeOutputType())
 		})
 
 		It("returns false for a wrapped input type", func() {
-			Expect(graphql.IsOutputType(graphql.MustNewListOfType(InputObjectType))).Should(BeFalse())
-			Expect(graphql.IsOutputType(graphql.MustNewNonNullOfType(InputObjectType))).Should(BeFalse())
+			Expect(graphql.MustNewListOfType(InputObjectType)).ShouldNot(BeOutputType())
+			Expect(graphql.MustNewNonNullOfType(InputObjectType)).ShouldNot(BeOutputType())
 		})
 	})
 
