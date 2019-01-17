@@ -17,6 +17,8 @@
 package lexer_test
 
 import (
+	"strings"
+
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/lexer"
 	"github.com/botobag/artemis/graphql/token"
@@ -32,6 +34,15 @@ func lexOne(str string) (*token.Token, error) {
 	lexer := lexer.New(token.NewSource(&token.SourceConfig{
 		Body: token.SourceBody(str),
 	}))
+	return lexer.Advance()
+}
+
+func lexSecond(str string) (*token.Token, error) {
+	lexer := lexer.New(token.NewSource(&token.SourceConfig{
+		Body: token.SourceBody(str),
+	}))
+	_, err := lexer.Advance()
+	Expect(err).ShouldNot(HaveOccurred())
 	return lexer.Advance()
 }
 
@@ -60,7 +71,7 @@ var _ = Describe("Lexer", func() {
 	It("disallows uncommon control characters", func() {
 		expectSyntaxError(
 			"\u0007",
-			`Cannot contain the invalid character "\u0007"`,
+			`Cannot contain the invalid character "\u0007".`,
 			graphql.ErrorLocation{
 				Line:   1,
 				Column: 1,
@@ -199,12 +210,12 @@ var _ = Describe("Lexer", func() {
 			},
 		)
 
-		expectSyntaxError("\"multi\nLine\"", "Unterminated string", graphql.ErrorLocation{
+		expectSyntaxError("\"multi\nLine\"", "Unterminated string.", graphql.ErrorLocation{
 			Line:   1,
 			Column: 7,
 		})
 
-		expectSyntaxError("\"multi\rLine\"", "Unterminated string", graphql.ErrorLocation{
+		expectSyntaxError("\"multi\rLine\"", "Unterminated string.", graphql.ErrorLocation{
 			Line:   1,
 			Column: 7,
 		})
@@ -341,6 +352,34 @@ var _ = Describe("Lexer", func() {
 			Location: token.SourceLocation(1),
 			Length:   68,
 			Value:    "spans\n  multiple\n    lines",
+		}))
+	})
+
+	It("advance line after lexing multiline block string", func() {
+		Expect(lexSecond(`"""
+
+        spans
+          multiple
+            lines
+
+        ` + "\n \"\"\" second_token")).Should(MatchToken(&token.Token{
+			Kind:     token.KindName,
+			Location: token.SourceLocation(72),
+			Length:   12,
+			Value:    "second_token",
+		}))
+
+		Expect(lexSecond(strings.Join([]string{
+			"\"\"\" \n",
+			"spans \r\n",
+			"multiple \n\r",
+			"lines \n\n",
+			"\"\"\"\n second_token",
+		}, ""))).Should(MatchToken(&token.Token{
+			Kind:     token.KindName,
+			Location: token.SourceLocation(38),
+			Length:   12,
+			Value:    "second_token",
 		}))
 	})
 
@@ -541,17 +580,22 @@ var _ = Describe("Lexer", func() {
 			tokens = append(tokens, token)
 		}
 
-		expectedTokens := []string{
-			"<SOF>",
-			"{",
-			"Comment",
-			`Name "field"`,
-			"}",
-			"<EOF>",
+		expectedTokens := []struct {
+			Kind        token.Kind
+			Description string
+		}{
+			{token.KindSOF, "<SOF>"},
+			{token.KindLeftBrace, "{"},
+			{token.KindComment, "Comment"},
+			{token.KindName, `Name "field"`},
+			{token.KindRightBrace, "}"},
+			{token.KindEOF, "<EOF>"},
 		}
 		Expect(len(tokens)).Should(Equal(len(expectedTokens)))
 		for i, expectedToken := range expectedTokens {
-			Expect(tokens[i].Description()).Should(Equal(expectedToken))
+			token := tokens[i]
+			Expect(token.Kind).Should(Equal(expectedToken.Kind))
+			Expect(token.Description()).Should(Equal(expectedToken.Description))
 		}
 	})
 

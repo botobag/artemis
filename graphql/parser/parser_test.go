@@ -123,7 +123,7 @@ func MatchNameNode(fields TokenFields) types.GomegaMatcher {
 
 var _ = Describe("Parser", func() {
 	// graphql-js/src/language/__tests__/parser-test.js
-	It("asserts that a source to parse was provided", func() {
+	It("asserts that an invalid source to parse was provided", func() {
 		_, err := parser.Parse(nil, parser.ParseOptions{})
 		Expect(err).Should(MatchError("Must provide Source. Received: nil"))
 
