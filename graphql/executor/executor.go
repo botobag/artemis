@@ -24,9 +24,16 @@ import (
 	"github.com/botobag/artemis/graphql"
 )
 
+// Task defines a task to be executed by an executor. Currently, this is an internal interface and
+// only this package (executor package) can provide implementations.
+type Task interface {
+	// run defines operations performed by the task.
+	run()
+}
+
 type executor interface {
-	// Dispatch dispatches and schedules ExecuteNodeTask for running with executor.
-	Dispatch(task *ExecuteNodeTask)
+	// Dispatch dispatches and schedules Task for running with executor.
+	Dispatch(task Task)
 
 	// Run starts the runner and returns the channel that passing execution result.
 	Run(ctx *ExecutionContext) <-chan ExecutionResult
@@ -65,9 +72,9 @@ func newBlockingExecutor() executor {
 }
 
 // Dispatch implements executor.
-func (e *blockingExecutor) Dispatch(task *ExecuteNodeTask) {
+func (e *blockingExecutor) Dispatch(task Task) {
 	// Run the task.
-	task.Run()
+	task.run()
 }
 
 // Run implements executor.
@@ -168,7 +175,7 @@ func (e *concurrentExecutor) SendResult() {
 // serialExecutor executes top-level fields one by one.
 type serialExecutor struct {
 	concurrentExecutor
-	rootTasks []*ExecuteNodeTask
+	rootTasks []Task
 }
 
 func newSerialExecutor(runner concurrent.Executor) executor {
@@ -178,8 +185,8 @@ func newSerialExecutor(runner concurrent.Executor) executor {
 }
 
 // Dispatch implements executor.
-func (e *serialExecutor) Dispatch(task *ExecuteNodeTask) {
-	isTopLevelNode := task.node.Parent.IsRoot()
+func (e *serialExecutor) Dispatch(task Task) {
+	isTopLevelNode := task.(*ExecuteNodeTask).node.Parent.IsRoot()
 	if isTopLevelNode {
 		// Top-level fields are executed serially [0].
 		//
@@ -227,10 +234,10 @@ func (e *serialExecutor) runOneRootTask() {
 	}
 }
 
-func (e *serialExecutor) taskFunc(task *ExecuteNodeTask) concurrent.Task {
+func (e *serialExecutor) taskFunc(task Task) concurrent.Task {
 	return concurrent.TaskFunc(func() (interface{}, error) {
 		// Run the task.
-		task.Run()
+		task.run()
 
 		// Decrement task counter and check the count.
 		if e.DecTaskCount() == 0 {
@@ -262,7 +269,7 @@ func newParallelExecutor(runner concurrent.Executor) executor {
 }
 
 // Dispatch implements executor.
-func (e *parallelExecutor) Dispatch(task *ExecuteNodeTask) {
+func (e *parallelExecutor) Dispatch(task Task) {
 	atomic.StoreInt32(&e.hasTasks, 1)
 	e.IncTaskCount()
 	// TODO: Error handling
@@ -288,10 +295,10 @@ func (e *parallelExecutor) Run(ctx *ExecutionContext) <-chan ExecutionResult {
 	return e.resultChan
 }
 
-func (e *parallelExecutor) taskFunc(task *ExecuteNodeTask) concurrent.Task {
+func (e *parallelExecutor) taskFunc(task Task) concurrent.Task {
 	return concurrent.TaskFunc(func() (interface{}, error) {
 		// Run the task.
-		task.Run()
+		task.run()
 
 		// Decrement task counter.
 		if e.DecTaskCount() == 0 {

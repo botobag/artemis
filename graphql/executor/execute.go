@@ -386,10 +386,10 @@ type ExecuteNodeTask struct {
 	source interface{}
 }
 
-// Run executes the task to value for the field corresponding to the ExecutionNode. The execution
-// result is written to the task.result and errors are added to ctx with ctx.AppendErrors so nothing
-// is returned from this method.
-func (task *ExecuteNodeTask) Run() {
+// run implements Task. It executes the task to value for the field corresponding to the
+// ExecutionNode. The execution result is written to the task.result and errors are added to ctx
+// with ctx.AppendErrors so nothing is returned from this method.
+func (task *ExecuteNodeTask) run() {
 	var (
 		ctx    = task.ctx
 		node   = task.node
