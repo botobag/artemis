@@ -14,16 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package concurrent_test
+package future
 
-import (
-	"testing"
+// A Waker is a handle to "wake up" a Future that was previously polled to a pending. Practically,
+// it notifies executor to place the Future back on the queue of ready tasks.
+type Waker interface {
+	// Wake indicates the associated task is ready to make progress and should be polled again.
+	//
+	// Executors generally maintain a queue of "ready" tasks; and Wake should place the associated
+	// task onto this queue.
+	Wake() error
+}
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-)
+// The WakerFunc type is an adapter to allow the use of ordinary functions as Waker.
+type WakerFunc func() error
 
-func TestConcurrent(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Artemis Concurrent Suite")
+// Wake implements Waker which calls f().
+func (f WakerFunc) Wake() error {
+	return f()
 }

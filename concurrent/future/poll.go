@@ -14,16 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package concurrent_test
+package future
 
-import (
-	"testing"
+// A PollResult indicates whether a value is available or not.
+type PollResult interface{}
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-)
+// pollPendingResult serves as type for PollResultPending.
+type pollPendingResult int
 
-func TestConcurrent(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Artemis Concurrent Suite")
+// IsReady implements PollResult.
+func (pollPendingResult) IsReady() bool {
+	return false
 }
+
+// pollResult implements PollResult.
+func (pollPendingResult) pollResult() {}
+
+// PollResultPending is a special value which will be recognized by executor to indicate that value
+// of the future is not ready yet.
+const PollResultPending = pollPendingResult(0)

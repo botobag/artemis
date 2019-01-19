@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package concurrent_test
+package future_test
 
 import (
 	"testing"
@@ -23,7 +23,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestConcurrent(t *testing.T) {
+func TestFuture(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Artemis Concurrent Suite")
+	RunSpecs(t, "Artemis Future Suite")
 }

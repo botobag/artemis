@@ -14,16 +14,28 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package concurrent_test
+package future_test
 
 import (
-	"testing"
+	"errors"
+
+	"github.com/botobag/artemis/concurrent/future"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-func TestConcurrent(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Artemis Concurrent Suite")
-}
+var _ = Describe("Ready: Future that is immediately ready with a value", func() {
+	It("creates future that is ready with a value", func() {
+		Expect(future.Ready(1).Poll(nil)).Should(Equal(1))
+	})
+
+	It("creates future that is ready with an error", func() {
+		testErr := errors.New("ready with an error")
+		_, err := future.Err(testErr).Poll(nil)
+		Expect(err).Should(MatchError(testErr))
+
+		_, err = future.Err(nil).Poll(nil)
+		Expect(err).Should(MatchError(""))
+	})
+})

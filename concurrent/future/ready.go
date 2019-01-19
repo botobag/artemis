@@ -14,16 +14,41 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package concurrent_test
+package future
 
 import (
-	"testing"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"errors"
 )
 
-func TestConcurrent(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Artemis Concurrent Suite")
+// ready is a future that is immediately ready with a value.
+type ready struct {
+	value interface{}
+	err   error
+}
+
+var _ Future = (*ready)(nil)
+
+// Poll implements Future.
+func (r *ready) Poll(waker Waker) (PollResult, error) {
+	return r.value, r.err
+}
+
+// Ready creates a future that is immediately ready with a value.
+func Ready(value interface{}) Future {
+	return &ready{
+		value: value,
+	}
+}
+
+// errEmpty is error value used when calling Err(nil).
+var errEmpty = errors.New("")
+
+// Err creates a future that is immediately ready with an error value.
+func Err(err error) Future {
+	if err == nil {
+		err = errEmpty
+	}
+	return &ready{
+		err: err,
+	}
 }
