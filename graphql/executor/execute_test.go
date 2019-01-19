@@ -24,6 +24,7 @@ import (
 	"runtime"
 
 	"github.com/botobag/artemis/concurrent"
+	"github.com/botobag/artemis/concurrent/future"
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 	"github.com/botobag/artemis/graphql/executor"
@@ -44,6 +45,24 @@ func MatchResultInJSON(resultJSON string) types.GomegaMatcher {
 		return json
 	}
 	return Receive(WithTransform(stringify, MatchJSON(resultJSON)))
+}
+
+type ReadyOnNextPollFuture struct {
+	data   interface{}
+	polled bool
+}
+
+func (f *ReadyOnNextPollFuture) Poll(waker future.Waker) (future.PollResult, error) {
+	if !f.polled {
+		// f has not been polled. Return future.PollResultPending to indicate the Future is not ready
+		// yet and notify waker to poll again.
+		f.polled = true
+		if err := waker.Wake(); err != nil {
+			return nil, err
+		}
+		return future.PollResultPending, nil
+	}
+	return f.data, nil
 }
 
 func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
@@ -262,9 +281,13 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 				"deep": {
 					Type: deepDataTypeDef,
 				},
-				// FIXME: #70
 				"promise": {
 					Type: dataTypeDef,
+					Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+						return &ReadyOnNextPollFuture{
+							data: data,
+						}, nil
+					}),
 				},
 			}
 
@@ -589,34 +612,54 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 		})
 
 		It("nulls out error subtrees", func() {
-			// TODO: #70
 			document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-				Body: token.SourceBody([]byte(`{
-      sync
-      syncError
-      syncRawError
-      syncReturnError
-      syncReturnErrorList
-      syncReturnErrorWithExtensions
-      # async
-      # asyncReject
-      # asyncRawReject
-      # asyncEmptyReject
-      # asyncError
-      # asyncRawError
-      # asyncReturnError
-      # asyncReturnErrorWithExtensions
-  }`))}), parser.ParseOptions{})
+				Body: token.SourceBody([]byte(`
+      {
+        sync
+        syncError
+        syncRawError
+        syncReturnError
+        syncReturnErrorList
+        async
+        asyncReject
+        asyncRawReject
+        asyncEmptyReject
+        asyncError
+        asyncRawError
+        asyncReturnError
+        asyncReturnErrorWithExtensions
+      }`))}), parser.ParseOptions{})
 			Expect(err).ShouldNot(HaveOccurred())
 
 			data := struct {
-				Sync                          string
-				SyncError                     func(ctx context.Context) (interface{}, error)
-				SyncRawError                  func(ctx context.Context) (interface{}, error)
-				SyncReturnError               error
-				SyncReturnErrorList           []interface{}
-				SyncReturnErrorWithExtensions error
+				Sync                string
+				SyncError           func(ctx context.Context) (interface{}, error)
+				SyncRawError        func(ctx context.Context) (interface{}, error)
+				SyncReturnError     error
+				SyncReturnErrorList []interface{}
+
+				Async                          future.Future
+				AsyncReject                    future.Future
+				AsyncRawReject                 future.Future
+				AsyncEmptyReject               future.Future
+				AsyncError                     future.Future
+				AsyncRawError                  future.Future
+				AsyncReturnError               future.Future
+				AsyncReturnErrorWithExtensions future.Future
 			}{
+				//                      graphql-js                            Artemis
+				//                      ===================================== ======================================================
+				// SyncError:           throw new Error                       return nil, graphql.NewError
+				// SyncRawError:        throw                                 return nil, errors.New
+				// SyncReturnError:     return new Error                      return graphql.NewError, nil
+				// SyncReturnErrorList: return {<containing new Error>}       return []interface{<containing graphql.NewError>}, nil
+				// AsyncReject:         return Promise.reject(new Error)      return future.Err(graphql.NewError)
+				// AsyncRawReject:      return Promise.reject                 return future.Err(errors.New)
+				// AsyncEmptyReject:    return Promise.reject()               return future.Err(nil)
+				// AsyncError:          return Promise(() => throw new Error) return future.Err(graphql.NewError)
+				// AsyncRawError:       return Promise(() => throw)           return future.Err(errors.New)
+				// AsyncReturnError:    return Promise.resolve(new Error)     return future.Ready(graphql.NewError)
+
 				Sync: "sync",
 				SyncError: func(ctx context.Context) (interface{}, error) {
 					return nil, graphql.NewError("Error getting syncError")
@@ -631,7 +674,17 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 					"sync2",
 					graphql.NewError("Error getting syncReturnErrorList3"),
 				},
-				SyncReturnErrorWithExtensions: graphql.NewError("Error getting syncReturnErrorWithExtensions", graphql.ErrorExtensions{"foo": "bar"}),
+
+				Async:            future.Ready("async"),
+				AsyncReject:      future.Err(graphql.NewError("Error getting asyncReject")),
+				AsyncRawReject:   future.Err(errors.New("Error getting asyncRawReject")),
+				AsyncEmptyReject: future.Err(nil),
+				AsyncError:       future.Err(graphql.NewError("Error getting asyncError")),
+				AsyncRawError:    future.Err(errors.New("Error getting asyncRawError")),
+				AsyncReturnError: future.Ready(graphql.NewError("Error getting asyncReturnError")),
+				AsyncReturnErrorWithExtensions: future.Ready(graphql.NewError("Error getting asyncReturnErrorWithExtensions", graphql.ErrorExtensions{
+					"foo": "bar",
+				})),
 			}
 
 			queryType, err := graphql.NewObject(&graphql.ObjectConfig{
@@ -652,7 +705,28 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 					"syncReturnErrorList": {
 						Type: graphql.ListOfType(graphql.String()),
 					},
-					"syncReturnErrorWithExtensions": {
+					"async": {
+						Type: graphql.T(graphql.String()),
+					},
+					"asyncReject": {
+						Type: graphql.T(graphql.String()),
+					},
+					"asyncRawReject": {
+						Type: graphql.T(graphql.String()),
+					},
+					"asyncEmptyReject": {
+						Type: graphql.T(graphql.String()),
+					},
+					"asyncError": {
+						Type: graphql.T(graphql.String()),
+					},
+					"asyncRawError": {
+						Type: graphql.T(graphql.String()),
+					},
+					"asyncReturnError": {
+						Type: graphql.ListOfType(graphql.String()),
+					},
+					"asyncReturnErrorWithExtensions": {
 						Type: graphql.T(graphql.String()),
 					},
 				},
@@ -686,15 +760,22 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 					"sync2",
 					null
 				],
-				"syncReturnErrorWithExtensions": null
+				"async": "async",
+				"asyncReject": null,
+				"asyncRawReject": null,
+				"asyncEmptyReject": null,
+				"asyncError": null,
+				"asyncRawError": null,
+				"asyncReturnError": null,
+				"asyncReturnErrorWithExtensions": null
 			},
 			"errors": [
 				{
 					"message": "Error getting syncError",
 					"locations": [
 						{
-							"line": 3,
-							"column": 7
+							"line": 4,
+							"column": 9
 						}
 					],
 					"path": [
@@ -705,8 +786,8 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 					"message": "Error getting syncRawError",
 					"locations": [
 						{
-							"line": 4,
-							"column": 7
+							"line": 5,
+							"column": 9
 						}
 					],
 					"path": [
@@ -717,8 +798,8 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 					"message": "Error getting syncReturnError",
 					"locations": [
 						{
-							"line": 5,
-							"column": 7
+							"line": 6,
+							"column": 9
 						}
 					],
 					"path": [
@@ -729,8 +810,8 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 					"message": "Error getting syncReturnErrorList1",
 					"locations": [
 						{
-							"line": 6,
-							"column": 7
+							"line": 7,
+							"column": 9
 						}
 					],
 					"path": [
@@ -742,8 +823,8 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 					"message": "Error getting syncReturnErrorList3",
 					"locations": [
 						{
-							"line": 6,
-							"column": 7
+							"line": 7,
+							"column": 9
 						}
 					],
 					"path": [
@@ -752,15 +833,87 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 					]
 				},
 				{
-					"message": "Error getting syncReturnErrorWithExtensions",
+					"message": "Error getting asyncReject",
 					"locations": [
 						{
-							"line": 7,
-							"column": 7
+							"line": 9,
+							"column": 9
 						}
 					],
 					"path": [
-						"syncReturnErrorWithExtensions"
+						"asyncReject"
+					]
+				},
+				{
+					"message": "Error getting asyncRawReject",
+					"locations": [
+						{
+							"line": 10,
+							"column": 9
+						}
+					],
+					"path": [
+						"asyncRawReject"
+					]
+				},
+				{
+					"message": "",
+					"locations": [
+						{
+							"line": 11,
+							"column": 9
+						}
+					],
+					"path": [
+						"asyncEmptyReject"
+					]
+				},
+				{
+					"message": "Error getting asyncError",
+					"locations": [
+						{
+							"line": 12,
+							"column": 9
+						}
+					],
+					"path": [
+						"asyncError"
+					]
+				},
+				{
+					"message": "Error getting asyncRawError",
+					"locations": [
+						{
+							"line": 13,
+							"column": 9
+						}
+					],
+					"path": [
+						"asyncRawError"
+					]
+				},
+				{
+					"message": "Error getting asyncReturnError",
+					"locations": [
+						{
+							"line": 14,
+							"column": 9
+						}
+					],
+					"path": [
+						"asyncReturnError"
+					]
+				},
+				{
+					"message": "Error getting asyncReturnErrorWithExtensions",
+					"locations": [
+						{
+							"line": 15,
+							"column": 9
+						}
+					],
+					"path": [
+						"asyncReturnErrorWithExtensions"
 					],
 					"extensions": {
 						"foo": "bar"
@@ -771,7 +924,60 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 		})
 
 		It("nulls error subtree for promise rejection", func() {
-			// TODO: #70
+			queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+				Name: "Query",
+				Fields: graphql.Fields{
+					"foods": {
+						Type: graphql.ListOf(&graphql.ObjectConfig{
+							Name: "Food",
+							Fields: graphql.Fields{
+								"name": {
+									Type: graphql.T(graphql.String()),
+								},
+							},
+						}),
+						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+							return future.Err(graphql.NewError("Dangit")), nil
+						}),
+					},
+				},
+			})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+				Query: queryType,
+			})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			document, err := parser.Parse(token.NewSource(&token.SourceConfig{
+				Body: token.SourceBody([]byte(`
+      query {
+        foods {
+          name
+        }
+      }
+    `))}), parser.ParseOptions{})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			operation, errs := executor.Prepare(executor.PrepareParams{
+				Schema:   schema,
+				Document: document,
+			})
+			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
+
+			result := operation.Execute(context.Background(), executor.ExecuteParams{
+				Runner: runner,
+			})
+			Eventually(result).Should(MatchResultInJSON(`{
+				"data": { "foods": null },
+				"errors": [
+					{
+						"locations": [{ "column": 9, "line": 3 }],
+						"message": "Dangit",
+						"path": ["foods"]
+					}
+				]
+			}`))
 		})
 
 		It("outputs full response path included for non-nullable fields", func() {
@@ -1166,7 +1372,52 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 		})
 
 		It("correct field ordering despite execution order", func() {
-			// #70
+			queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+				Name: "Type",
+				Fields: graphql.Fields{
+					"a": {Type: graphql.T(graphql.String())},
+					"b": {Type: graphql.T(graphql.String())},
+					"c": {Type: graphql.T(graphql.String())},
+					"d": {Type: graphql.T(graphql.String())},
+					"e": {Type: graphql.T(graphql.String())},
+				},
+			})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+				Query: queryType,
+			})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			document, err := parser.Parse(token.NewSource(&token.SourceConfig{
+				Body: token.SourceBody([]byte("{ a, b, c, d, e }"))}), parser.ParseOptions{})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			operation, errs := executor.Prepare(executor.PrepareParams{
+				Schema:   schema,
+				Document: document,
+			})
+			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
+
+			result := operation.Execute(context.Background(), executor.ExecuteParams{
+				Runner: runner,
+				RootValue: map[string]interface{}{
+					"a": "a",
+					"b": &ReadyOnNextPollFuture{data: "b"},
+					"c": "c",
+					"d": &ReadyOnNextPollFuture{data: "d"},
+					"e": "e",
+				},
+			})
+			Eventually(result).Should(MatchResultInJSON(`{
+				"data": {
+					"a": "a",
+					"b": "b",
+					"c": "c",
+					"d": "d",
+					"e": "e"
+				}
+			}`))
 		})
 
 		It("avoids recursion", func() {

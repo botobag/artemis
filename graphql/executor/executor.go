@@ -38,6 +38,16 @@ type executor interface {
 	// Run starts the runner and returns the channel that passing execution result.
 	Run(ctx *ExecutionContext) <-chan ExecutionResult
 
+	// Yield pauses the execution of the given task. It is used by tasks (e.g., AsyncValueTask) to
+	// notify that it is waiting for some resources to complete (i.e., wait for DataLoader to load
+	// data) and executor can continue processing other tasks. Resume will be called once the Task has
+	// made progress.
+	Yield(task Task)
+
+	// Resume resumes the execution of the given task paused by Yield. Typically, implementation
+	// should re-dispatches the task.
+	Resume(task Task)
+
 	// AppendError adds an error to the error list of the given result node to indicate a failed field
 	// execution. It implements error handling described in "Errors and Non-Nullability" [0] which
 	// propagate the field error until a nullable field was encountered.
@@ -62,19 +72,90 @@ func propagateExecutionError(result *ResultNode) {
 // blockingExecutor
 //===----------------------------------------------------------------------------------------====//
 
+type yieldTaskState int
+
+const (
+	// The task is waiting for resumption
+	yieldTaskStateWaiting yieldTaskState = iota
+	// The task was resumed
+	yieldTaskStateResumed
+)
+
 type blockingExecutor struct {
 	// Errors that occurred during the execution
 	errs graphql.Errors
+
+	// Mutex that protects concurrent accesses to yieldCond, yieldTasks and resumeTasks.
+	yieldMutex sync.Mutex
+	yieldCond  sync.Cond
+	// Queue of the tasks yielded during task execution
+	yieldTasks map[Task]yieldTaskState
 }
 
 func newBlockingExecutor() executor {
-	return &blockingExecutor{}
+	e := &blockingExecutor{
+		yieldTasks: map[Task]yieldTaskState{},
+	}
+	e.yieldCond = sync.Cond{
+		L: &e.yieldMutex,
+	}
+	return e
 }
 
 // Dispatch implements executor.
 func (e *blockingExecutor) Dispatch(task Task) {
-	// Run the task.
+	// Run the specified task.
 	task.run()
+
+	// task may generate (yield) other tasks during its processing. Process them before return.
+
+	// Acquire mutex to wait for yielded tasks.
+	mutex := &e.yieldMutex
+	mutex.Lock()
+
+	// Load yielded tasks.
+	yieldTasks := e.yieldTasks
+
+	for {
+		hasResumedTask := false
+
+		// Find the first task that has been resumed.
+		for task, state := range yieldTasks {
+			if state == yieldTaskStateResumed {
+				hasResumedTask = true
+				// Remove the task from yieldTasks.
+				delete(yieldTasks, task)
+				// Unlock mutex in prior to running the task.
+				mutex.Unlock()
+				// Run the task.
+				task.run()
+				// Re-lock the mutex.
+				mutex.Lock()
+				// Reload e.yieldTasks.
+				yieldTasks = e.yieldTasks
+				// Break to restart loop with newly loaded yieldTasks (which may have been changed during
+				// task.run.)
+				break
+			}
+		}
+
+		// Stop if all tasks have been processed.
+		if len(yieldTasks) <= 0 {
+			break
+		}
+
+		// When:
+		//
+		//  1. There're some tasks (checked above), and
+		//  2. All tasks are waiting for resumption
+		//
+		// Block on Cond to wait for signal from Resume.
+		if !hasResumedTask {
+			e.yieldCond.Wait()
+		}
+	}
+
+	mutex.Unlock()
 }
 
 // Run implements executor.
@@ -95,6 +176,29 @@ func (e *blockingExecutor) Run(ctx *ExecutionContext) <-chan ExecutionResult {
 	}
 
 	return resultChan
+}
+
+// Yield implements executor. blockingExecutor can only
+func (e *blockingExecutor) Yield(task Task) {
+	// Acquire e.yieldMutex to place the task into yieldTasks.
+	mutex := &e.yieldMutex
+	mutex.Lock()
+	yieldTasks := e.yieldTasks
+	if _, exists := yieldTasks[task]; !exists {
+		yieldTasks[task] = yieldTaskStateWaiting
+	}
+	mutex.Unlock()
+}
+
+// Resume implements executor.
+func (e *blockingExecutor) Resume(task Task) {
+	mutex := &e.yieldMutex
+	mutex.Lock()
+	e.yieldTasks[task] = yieldTaskStateResumed
+	mutex.Unlock()
+
+	// Unblock waiters in Dispatch.
+	e.yieldCond.Signal()
 }
 
 func (e *blockingExecutor) AppendError(err *graphql.Error, result *ResultNode) {
@@ -140,6 +244,22 @@ func (e *concurrentExecutor) IncTaskCount() (remainingTasks int64) {
 
 func (e *concurrentExecutor) DecTaskCount() (remainingTasks int64) {
 	return atomic.AddInt64(&e.taskCounter, -1)
+}
+
+// Yield implements executor.Yield.
+func (e *concurrentExecutor) Yield(task Task) {
+	// This is tricky.
+	//
+	// When yielding a task, the task will be removed from the executor queue and task count will be
+	// decremented. When the task count reaches 0, executor thinks that all tasks have been processed
+	// and will send the result. This IncTaskCount cancels the effect of DecTaskCount in taskFunc. It
+	// retains the task count for the yielding task to avoid executor returning the result before its
+	// resumption.
+	//
+	// BUG(zonr): Note that in an extreme condition, the following e.IncTaskCount may be performed
+	//            AFTER task was re-dispatched by Resume and completed its execution. This causes
+	//            task count being changed to a non-zero value after exeutor sends the result.
+	e.IncTaskCount()
 }
 
 // AppendError implements executor.AppendError.
@@ -249,6 +369,13 @@ func (e *serialExecutor) taskFunc(task Task) concurrent.Task {
 	})
 }
 
+// Resume implements executor.
+func (e *serialExecutor) Resume(task Task) {
+	// Re-dispatch task to runner directly. Not using Dispatch here to avoid incrementing task count
+	// (which was retained when the task was yielded.)
+	e.runner.Submit(e.taskFunc(task))
+}
+
 //===----------------------------------------------------------------------------------------====//
 // parallelExecutor
 //===----------------------------------------------------------------------------------------====//
@@ -308,4 +435,11 @@ func (e *parallelExecutor) taskFunc(task Task) concurrent.Task {
 
 		return nil, nil
 	})
+}
+
+// Resume implements executor.
+func (e *parallelExecutor) Resume(task Task) {
+	// Re-dispatch task to runner directly. Not using Dispatch here to avoid incrementing task count
+	// (which was retained when the task was yielded.)
+	e.runner.Submit(e.taskFunc(task))
 }
