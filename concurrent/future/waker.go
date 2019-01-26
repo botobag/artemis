@@ -33,3 +33,13 @@ type WakerFunc func() error
 func (f WakerFunc) Wake() error {
 	return f()
 }
+
+// Type for NopWaker
+type nopWaker int
+
+func (nopWaker) Wake() error {
+	return nil
+}
+
+// NopWaker is a Waker that does nothing. It is useful to be used as an initial value for Waker.
+const NopWaker nopWaker = 0
