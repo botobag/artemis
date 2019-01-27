@@ -27,15 +27,15 @@ import (
 
 var _ = Describe("Ready: Future that is immediately ready with a value", func() {
 	It("creates future that is ready with a value", func() {
-		Expect(future.Ready(1).Poll(nil)).Should(Equal(1))
+		Expect(future.BlockOn(future.Ready(1))).Should(Equal(1))
 	})
 
 	It("creates future that is ready with an error", func() {
 		testErr := errors.New("ready with an error")
-		_, err := future.Err(testErr).Poll(nil)
+		_, err := future.BlockOn(future.Err(testErr))
 		Expect(err).Should(MatchError(testErr))
 
-		_, err = future.Err(nil).Poll(nil)
+		_, err = future.BlockOn(future.Err(nil))
 		Expect(err).Should(MatchError(""))
 	})
 })
