@@ -1237,7 +1237,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 })
 
 var _ = Describe("It is resilient to job queue ordering", func() {
-	It("batches loads occuring within promises", func() {
+	It("batches loads occurring within promises", func() {
 		// TODO
 	})
 

@@ -380,7 +380,7 @@ type ExecuteNodeTask struct {
 	// The node to evaluate
 	node *ExecutionNode
 
-	// The ResultNode for writting the field value. It is allocated by the one that prepares the
+	// The ResultNode for writing the field value. It is allocated by the one that prepares the
 	// ExecuteNodeTask for execution.
 	result *ResultNode
 

@@ -34,7 +34,7 @@ type WorkerPoolExecutorConfig struct {
 	// The maximum number of workers allowed in pool (required, must be greater than 0)
 	MaxPoolSize uint32
 
-	// The minumum number of workers to maintain in pool
+	// The minimum number of workers to maintain in pool
 	MinPoolSize uint32
 
 	// The maximum time for an idle thread to wait for new task
@@ -99,7 +99,7 @@ func (s workerPoolExecutorState) WorkerCount() uint32 {
 	return uint32(s & 0xffffffff)
 }
 
-// Load loads state word with atomic.LoadInt64 because it is a lock-free varaible. This supresses
+// Load loads state word with atomic.LoadInt64 because it is a lock-free variable. This suppresses
 // the errors from Go's race detector. On conventional machines (e.g., x86-64), this is the same as
 // dereferencing an int64 pointer. See [0] for more details.
 //
@@ -207,7 +207,7 @@ func (task *workerPoolTask) Cancel() error {
 		return err
 	}
 
-	// task was succesfully cancelled. Set its result to ErrTaskCancelled.
+	// task was successfully cancelled. Set its result to ErrTaskCancelled.
 	task.setResult(nil, ErrTaskCancelled)
 
 	return nil
