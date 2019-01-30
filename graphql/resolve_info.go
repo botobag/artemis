@@ -18,7 +18,10 @@ package graphql
 
 import (
 	"encoding/json"
+	"sync"
 
+	"github.com/botobag/artemis/concurrent/future"
+	"github.com/botobag/artemis/dataloader"
 	"github.com/botobag/artemis/graphql/ast"
 )
 
@@ -126,6 +129,74 @@ type FieldSelectionInfo interface {
 	// TODO: Also expose the field result (from executor.ResultNode).
 }
 
+// DataLoaderManager provides a way to,
+//
+//  1. Let user manage DataLoader instances being used during execution and access the loaders via
+//     ResolveInfo;
+//  2. Let executor know which DataLoader's are pending for batch data fetching and schedule for
+//     their dispatch.
+type DataLoaderManager interface {
+	// HasPendingDataLoaders returns true if there's any data loaders waiting for dispatch.
+	HasPendingDataLoaders() bool
+
+	// GetAndResetPendingDataLoaders reports DataLoader's that are waiting for dispatching and resets
+	// current list.
+	GetAndResetPendingDataLoaders() map[*dataloader.DataLoader]bool
+}
+
+// DataLoaderManagerBase is useful to embed in a DataLoaderManager class to track the use of data
+// loaders as required by DataLoaderManager.
+type DataLoaderManagerBase struct {
+	// Mutex that guards pendingDataLoaders
+	mutex sync.Mutex
+
+	// Data loaders that have pending batch load to perform
+	pendingLoaders map[*dataloader.DataLoader]bool
+}
+
+// LoadWith requests given loader for data at given key. It also updates
+func (manager *DataLoaderManagerBase) LoadWith(loader *dataloader.DataLoader, key dataloader.Key) (future.Future, error) {
+	// Acquire lock to update pendingLoaders. Note that have to be done before loader.Load.
+	mutex := &manager.mutex
+	mutex.Lock()
+
+	f, err := loader.Load(key)
+	if err != nil {
+		mutex.Unlock()
+		return nil, err
+	}
+
+	// Update pendingLoaders.
+	pendingLoaders := manager.pendingLoaders
+	if pendingLoaders == nil {
+		pendingLoaders = map[*dataloader.DataLoader]bool{}
+		manager.pendingLoaders = pendingLoaders
+	}
+	pendingLoaders[loader] = true
+
+	mutex.Unlock()
+	return f, nil
+}
+
+// HasPendingDataLoaders implements DataLoaderManager.HasPendingDataLoaders.
+func (manager *DataLoaderManagerBase) HasPendingDataLoaders() bool {
+	mutex := &manager.mutex
+	mutex.Lock()
+	result := len(manager.pendingLoaders) != 0
+	mutex.Unlock()
+	return result
+}
+
+// GetAndResetPendingDataLoaders implements DataLoaderManager.HasPendingDataLoaders.
+func (manager *DataLoaderManagerBase) GetAndResetPendingDataLoaders() map[*dataloader.DataLoader]bool {
+	mutex := &manager.mutex
+	mutex.Lock()
+	result := manager.pendingLoaders
+	manager.pendingLoaders = nil
+	mutex.Unlock()
+	return result
+}
+
 // ResolveInfo exposes a collection of information about execution state for resolvers.
 type ResolveInfo interface {
 	//===----------------------------------------------------------------------------------------===//
@@ -148,6 +219,9 @@ type ResolveInfo interface {
 	//===----------------------------------------------------------------------------------------===//
 	// The following states are related to the contexts supplied with the execution request (provided
 	// by executor.ExecutionContext)
+
+	// DataLoaderManager that manages usage and dispatch of data loaders during execution.
+	DataLoaderManager() DataLoaderManager
 
 	// RootValue is an initial value corresponding to the root type being executed.
 	RootValue() interface{}

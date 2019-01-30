@@ -17,6 +17,7 @@
 package executor
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -389,8 +390,8 @@ type ExecuteNodeTask struct {
 }
 
 // run implements Task. It executes the task to value for the field corresponding to the
-// ExecutionNode. The execution result is written to the task.result and errors are added to ctx
-// with ctx.AppendErrors so nothing is returned from this method.
+// ExecutionNode. The execution result is written to the task.result and errors are added to
+// executor (via task.executor.AppendErrors) so nothing is returned from this method.
 func (task *ExecuteNodeTask) run() {
 	var (
 		ctx    = task.ctx
@@ -413,7 +414,7 @@ func (task *ExecuteNodeTask) run() {
 	}
 
 	// Execute resolver to retrieve the field value
-	value, err := resolver.Resolve(ctx.ctx, task.source, info)
+	value, err := resolver.Resolve(ctx.Context(), task.source, info)
 	if err != nil {
 		task.handleNodeError(err, result)
 		return
@@ -488,10 +489,11 @@ func (task *ExecuteNodeTask) completeValuePrologue(
 	// not be ready yet. Dispatch a task to poll its result.
 	if value, ok := value.(future.Future); ok {
 		task.executor.Dispatch(&AsyncValueTask{
-			nodeTask:   task,
-			returnType: returnType,
-			result:     result,
-			value:      value,
+			nodeTask:        task,
+			dataLoaderCycle: task.executor.DataLoaderCycle(),
+			returnType:      returnType,
+			result:          result,
+			value:           value,
 		})
 		return true
 	}
@@ -725,6 +727,10 @@ type AsyncValueTask struct {
 	// Node that requires the value to complete
 	nodeTask *ExecuteNodeTask
 
+	// dataLoaderCycle specifies which cycle of data loaders dispatching this task is waiting for. See
+	// comments for DataLoaderCycle type in executor.go for details.
+	dataLoaderCycle DataLoaderCycle
+
 	// The value to wait for calling completeValue
 	value future.Future
 
@@ -748,6 +754,9 @@ func (task *AsyncValueTask) run() {
 		// Value is not available at the time. Someone will perform the computation and notifies us via
 		// wake when the value is ready.
 		task.nodeTask.executor.Yield(task)
+
+		// Dispatch data loaders if there's any pending .
+		tryDispatchDataLoaders(task.nodeTask.ctx, task.nodeTask.executor, task.dataLoaderCycle)
 	}
 }
 
@@ -755,4 +764,53 @@ func (task *AsyncValueTask) run() {
 func (task *AsyncValueTask) wake() error {
 	task.nodeTask.executor.Resume(task)
 	return nil
+}
+
+// tryDispatchDataLoaders dispatches data loaders if the dispatch hasn't occurred in the given
+// taskCycle.
+func tryDispatchDataLoaders(
+	ctx *ExecutionContext,
+	executor executor,
+	taskCycle DataLoaderCycle) (newCycle DataLoaderCycle) {
+
+	dataLoaderManager := ctx.DataLoaderManager()
+	if dataLoaderManager == nil || !dataLoaderManager.HasPendingDataLoaders() {
+		// Quick return if data loader is not enabled or there's no any loaders pending for dispatch.
+		return
+	}
+
+	for {
+		// Obtain current data loader cycle.
+		curCycle := executor.DataLoaderCycle()
+
+		if taskCycle == curCycle {
+			// The task depends on the dispatch of data loaders in given cycle which hasn't happened.
+			// Increment the cycle to obtain the permit to run dispatch for the cycle. The increment may
+			// fail. For example, concurrent executor performs a CAS to ensure only one successfully
+			// increment the counter. In such case, restart the loop to reload executor's cycle counter.
+			if executor.IncDataLoaderCycle(taskCycle + 1) {
+				// Successfully increment the cycle counter. Perform the actual data loader dispatch.
+				dispatchDataLoaders(ctx.Context(), dataLoaderManager)
+				return taskCycle + 1
+			}
+		} else {
+			// Someone has dispatched the data loaders.
+			return curCycle
+		}
+	}
+}
+
+func dispatchDataLoaders(ctx context.Context, manager graphql.DataLoaderManager) {
+	// Dispatching a DataLoader may request more data which generate a new set of loaders that is
+	// waiting for dispatch.
+	for {
+		pendingLoaders := manager.GetAndResetPendingDataLoaders()
+		if len(pendingLoaders) == 0 {
+			break
+		}
+
+		for loader := range pendingLoaders {
+			loader.Dispatch(ctx)
+		}
+	}
 }

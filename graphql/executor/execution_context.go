@@ -30,7 +30,10 @@ type ExecutionContext struct {
 	// Context for the execution
 	ctx context.Context
 
-	// operation being executed.
+	// dataLoaderManager that manages dispatch for data loaders being used during execution
+	dataLoaderManager graphql.DataLoaderManager
+
+	// operation being executed
 	operation *PreparedOperation
 
 	// rootValue is the "source" data for the top level field ("root fields").
@@ -57,12 +60,23 @@ func newExecutionContext(ctx context.Context, operation *PreparedOperation, para
 	}
 
 	return &ExecutionContext{
-		ctx:            ctx,
-		operation:      operation,
-		rootValue:      params.RootValue,
-		appContext:     params.AppContext,
-		variableValues: variableValues,
+		ctx:               ctx,
+		dataLoaderManager: params.DataLoaderManager,
+		operation:         operation,
+		rootValue:         params.RootValue,
+		appContext:        params.AppContext,
+		variableValues:    variableValues,
 	}, graphql.NoErrors()
+}
+
+// Context return context.context.
+func (context *ExecutionContext) Context() context.Context {
+	return context.ctx
+}
+
+// DataLoaderManager returns context.dataLoaderManager.
+func (context *ExecutionContext) DataLoaderManager() graphql.DataLoaderManager {
+	return context.dataLoaderManager
 }
 
 // Operation returns context.operation.

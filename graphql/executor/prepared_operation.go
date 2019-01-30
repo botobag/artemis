@@ -191,6 +191,10 @@ type ExecuteParams struct {
 	// calling goroutine to complete the execution.
 	Runner concurrent.Executor
 
+	// DataLoaderManager that manages dispatch for data loaders being used during execution; User can
+	// also tracks DataLoader instances being used during the execution.
+	DataLoaderManager graphql.DataLoaderManager
+
 	// RootValue is an initial value corresponding to the root type being executed. Conceptually, an
 	// initial value represents the “universe” of data available via a GraphQL Service. It is common
 	// for a GraphQL Service to always use the same initial value for every request.

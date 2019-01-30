@@ -31,6 +31,26 @@ type Task interface {
 	run()
 }
 
+// DataLoaderCycle is used to determine when an AsyncValueTask should dispatches. The following
+// explains the magic:
+//
+//  1. It is an unsigned integer starting from 0.
+//  2. Every update to cycle counter increments its value by 1.
+//  3. The cycle counter is only incremented when DataLoaderManager in current execution dispatches
+//     data loaders that have pending batch fetching.
+//  4. Base on 3., there's at most one dispatch occurred in each cycle. The executor maintains a
+//     DataLoaderCycle which indicates the next cycle that hasn't started dispatching
+//     DataLoaderManager. The cycle value can be accessed via DataLoadrCycle method provided by
+//     executor. For concurrent executor, the cycle is updated and accessed with atomic primitives.
+//  5. Task (currently only AsyncValueTask) that relies on data loaders (for fetching data) also
+//     maintains a DataLoadrCycle indicating in which cycle of the data loader dispatch being
+//     depended by the task. The value is usually initialized to the value of executor's
+//     DataLoadrCycle at the time a task was created.
+//  6. tryDispatchDataLoaders is called when a Task want to dispatch data loaders to fetch desired
+//     data. See the comments in the function to see how DataLoadrCycle is used by executor and task
+//     cooperatively to avoid excessive data loader dispatch.
+type DataLoaderCycle uint64
+
 type executor interface {
 	// Dispatch dispatches and schedules Task for running with executor.
 	Dispatch(task Task)
@@ -47,6 +67,12 @@ type executor interface {
 	// Resume resumes the execution of the given task paused by Yield. Typically, implementation
 	// should re-dispatches the task.
 	Resume(task Task)
+
+	// See comments for DataLoaderCycle type.
+	DataLoaderCycle() DataLoaderCycle
+
+	// See comments in tryDispatchDataLoaders.
+	IncDataLoaderCycle(expected DataLoaderCycle) bool
 
 	// AppendError adds an error to the error list of the given result node to indicate a failed field
 	// execution. It implements error handling described in "Errors and Non-Nullability" [0] which
@@ -84,6 +110,9 @@ const (
 type blockingExecutor struct {
 	// Errors that occurred during the execution
 	errs graphql.Errors
+
+	// See comments for DataLoaderCycle.
+	dataLoaderCycle DataLoaderCycle
 
 	// Mutex that protects concurrent accesses to yieldCond, yieldTasks and resumeTasks.
 	yieldMutex sync.Mutex
@@ -178,7 +207,7 @@ func (e *blockingExecutor) Run(ctx *ExecutionContext) <-chan ExecutionResult {
 	return resultChan
 }
 
-// Yield implements executor. blockingExecutor can only
+// Yield implements executor.
 func (e *blockingExecutor) Yield(task Task) {
 	// Acquire e.yieldMutex to place the task into yieldTasks.
 	mutex := &e.yieldMutex
@@ -199,6 +228,18 @@ func (e *blockingExecutor) Resume(task Task) {
 
 	// Unblock waiters in Dispatch.
 	e.yieldCond.Signal()
+}
+
+// DataLoaderCycle implements executor.
+func (e *blockingExecutor) DataLoaderCycle() DataLoaderCycle {
+	return e.dataLoaderCycle
+}
+
+// IncDataLoaderCycle implements executor.
+func (e *blockingExecutor) IncDataLoaderCycle(expected DataLoaderCycle) bool {
+	// Tasks are executed serially. Therefore it is safe to increment the counter directly.
+	e.dataLoaderCycle++
+	return true
 }
 
 func (e *blockingExecutor) AppendError(err *graphql.Error, result *ResultNode) {
@@ -223,8 +264,11 @@ type concurrentExecutor struct {
 	result     chan *ResultNode
 	resultChan chan ExecutionResult
 
-	// taskCounter is a
+	// taskCounter tracks number of tasks that are pending for execution.
 	taskCounter int64
+
+	// See comments for DataLoaderCycle.
+	dataLoaderCycle DataLoaderCycle
 
 	// Errors that occurred during the execution
 	errs graphql.Errors
@@ -253,13 +297,25 @@ func (e *concurrentExecutor) Yield(task Task) {
 	// When yielding a task, the task will be removed from the executor queue and task count will be
 	// decremented. When the task count reaches 0, executor thinks that all tasks have been processed
 	// and will send the result. This IncTaskCount cancels the effect of DecTaskCount in taskFunc. It
-	// retains the task count for the yielding task to avoid executor returning the result before its
-	// resumption.
+	// retains the task count for the yielding task to avoid executor returning the result before
+	// resumption of yielding tasks.
 	//
 	// BUG(zonr): Note that in an extreme condition, the following e.IncTaskCount may be performed
 	//            AFTER task was re-dispatched by Resume and completed its execution. This causes
 	//            task count being changed to a non-zero value after exeutor sends the result.
 	e.IncTaskCount()
+}
+
+// DataLoaderCycle implements executor.DataLoaderCycle.
+func (e *concurrentExecutor) DataLoaderCycle() DataLoaderCycle {
+	return DataLoaderCycle(atomic.LoadUint64((*uint64)(&e.dataLoaderCycle)))
+}
+
+// IncDataLoaderCycle implements executor.IncDataLoaderCycle.
+func (e *concurrentExecutor) IncDataLoaderCycle(expected DataLoaderCycle) bool {
+	// Tasks are executed serially. Therefore it is safe to increment the counter directly.
+	return atomic.CompareAndSwapUint64(
+		(*uint64)(&e.dataLoaderCycle), uint64(expected-1), uint64(expected))
 }
 
 // AppendError implements executor.AppendError.

@@ -54,6 +54,11 @@ func (info *ResolveInfo) Operation() *ast.OperationDefinition {
 	return info.ExecutionContext.Operation().Definition()
 }
 
+// DataLoaderManager implements graphql.ResolveInfo.
+func (info *ResolveInfo) DataLoaderManager() graphql.DataLoaderManager {
+	return info.ExecutionContext.DataLoaderManager()
+}
+
 // RootValue implements graphql.ResolveInfo.
 func (info *ResolveInfo) RootValue() interface{} {
 	return info.ExecutionContext.RootValue()
