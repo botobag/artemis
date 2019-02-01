@@ -154,7 +154,7 @@ func (loader *DataLoader) Load(key Key) (future.Future, error) {
 
 // LoadMany loads collection of data identified by multiple keys. It returns a Future for the values
 // represented by those keys.
-func (loader *DataLoader) LoadMany(keys []Key) (future.Future, error) {
+func (loader *DataLoader) LoadMany(keys ...Key) (future.Future, error) {
 	futures := make([]future.Future, len(keys))
 	for i, key := range keys {
 		f, err := loader.Load(key)
