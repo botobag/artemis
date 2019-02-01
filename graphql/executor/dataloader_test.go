@@ -143,15 +143,7 @@ func (manager *StarWarsDataLoaderManager) LoadCharacterByID(id CharacterID) (fut
 }
 
 func (manager *StarWarsDataLoaderManager) LoadManyCharactersByID(ids []CharacterID) (future.Future, error) {
-	futures := make([]future.Future, len(ids))
-	for i, id := range ids {
-		f, err := manager.LoadCharacterByID(id)
-		if err != nil {
-			return nil, err
-		}
-		futures[i] = f
-	}
-	return future.Join(futures...), nil
+	return manager.LoadManyWith(manager.characterLoader, ids...)
 }
 
 func (manager *StarWarsDataLoaderManager) CharacterLoadCalls() [][]dataloader.Key {
