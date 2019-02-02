@@ -158,17 +158,17 @@ func buildChildExecutionNodesForSelectionSet(
 					}
 
 					// Get argument values.
-					arguments, err := values.ArgumentValues(fieldDef, selection, ctx.VariableValues())
+					args, err := values.ArgumentValues(fieldDef, selection, ctx.VariableValues())
 					if err != nil {
 						return nil, err
 					}
 
 					// Build a node.
 					field = &ExecutionNode{
-						Parent:         parentNode,
-						Definitions:    []*ast.Field{selection},
-						Field:          fieldDef,
-						ArgumentValues: arguments,
+						Parent:      parentNode,
+						Definitions: []*ast.Field{selection},
+						Field:       fieldDef,
+						Args:        args,
 					}
 
 					// Add to result.

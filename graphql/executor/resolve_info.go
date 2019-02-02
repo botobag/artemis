@@ -121,9 +121,9 @@ func (info *ResolveInfo) Path() graphql.ResponsePath {
 	return info.ResultNode.Path()
 }
 
-// ArgumentValues implements graphql.ResolveInfo.
-func (info *ResolveInfo) ArgumentValues() graphql.ArgumentValues {
-	return info.ExecutionNode.ArgumentValues
+// Args implements graphql.ResolveInfo.
+func (info *ResolveInfo) Args() graphql.ArgumentValues {
+	return info.ExecutionNode.Args
 }
 
 //===------------------------------------------------------------------------------------------===//
@@ -145,7 +145,7 @@ func (info fieldSelectionInfo) Field() graphql.Field {
 	return info.node.Field
 }
 
-// ArgumentValues implements graphql.FieldSelectionInfo.
-func (info fieldSelectionInfo) ArgumentValues() graphql.ArgumentValues {
-	return info.node.ArgumentValues
+// Args implements graphql.FieldSelectionInfo.
+func (info fieldSelectionInfo) Args() graphql.ArgumentValues {
+	return info.node.Args
 }

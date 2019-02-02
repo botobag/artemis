@@ -150,7 +150,7 @@ var _ = Describe("Enum", func() {
 							},
 						},
 						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
-							args := info.ArgumentValues()
+							args := info.Args()
 							if fromInt, ok := args.Lookup("fromInt"); ok {
 								return fromInt, nil
 							}
@@ -174,7 +174,7 @@ var _ = Describe("Enum", func() {
 							},
 						},
 						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
-							args := info.ArgumentValues()
+							args := info.Args()
 							if fromInt, ok := args.Lookup("fromInt"); ok {
 								return fromInt, nil
 							}
@@ -201,7 +201,7 @@ var _ = Describe("Enum", func() {
 							},
 						},
 						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
-							args := info.ArgumentValues()
+							args := info.Args()
 							if provideGoodValue, ok := args.Lookup("provideGoodValue"); ok && provideGoodValue.(bool) {
 								// Note: this is one of the references of the internal values which complexEnum
 								// allows.
@@ -238,7 +238,7 @@ var _ = Describe("Enum", func() {
 							},
 						},
 						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
-							args := info.ArgumentValues()
+							args := info.Args()
 							if color, ok := args.Lookup("color"); ok {
 								return color, nil
 							}
@@ -260,7 +260,7 @@ var _ = Describe("Enum", func() {
 							},
 						},
 						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
-							args := info.ArgumentValues()
+							args := info.Args()
 							if color, ok := args.Lookup("color"); ok {
 								return color, nil
 							}
@@ -671,7 +671,7 @@ var _ = Describe("Enum", func() {
 								},
 							},
 							Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
-								args := info.ArgumentValues()
+								args := info.Args()
 								var result struct {
 									Color *int
 									Foo   *int

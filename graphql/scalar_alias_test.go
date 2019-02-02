@@ -231,13 +231,13 @@ var _ = Describe("ScalarAlias", func() {
 							},
 						},
 						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
-							userID, ok := info.ArgumentValues().Get("id").(UserID)
+							userID, ok := info.Args().Get("id").(UserID)
 							Expect(ok).Should(BeTrue())
 
-							num, ok := info.ArgumentValues().Get("n").(int)
+							num, ok := info.Args().Get("n").(int)
 							Expect(ok).Should(BeTrue())
 
-							complexValue, ok := info.ArgumentValues().Get("c").(map[string]interface{})
+							complexValue, ok := info.Args().Get("c").(map[string]interface{})
 							Expect(ok).Should(BeTrue())
 
 							var userID2 *UserID

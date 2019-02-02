@@ -168,7 +168,7 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 					return "Fish", nil
 				},
 				Pic: func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
-					arg := info.ArgumentValues().Get("size")
+					arg := info.Args().Get("size")
 					if arg == nil {
 						arg = 50
 					}
@@ -581,7 +581,7 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 							},
 						},
 						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
-							resolvedArgs = info.ArgumentValues()
+							resolvedArgs = info.Args()
 							return nil, nil
 						}),
 					},
@@ -1521,7 +1521,7 @@ func WithWorkerPool(config *concurrent.WorkerPoolExecutorConfig) func() {
 					"field": {
 						Type: graphql.T(graphql.String()),
 						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
-							args, err := json.Marshal(info.ArgumentValues())
+							args, err := json.Marshal(info.Args())
 							return string(args), err
 						}),
 						Args: graphql.ArgumentConfigMap{

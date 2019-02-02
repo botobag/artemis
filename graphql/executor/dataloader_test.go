@@ -264,7 +264,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 							},
 						},
 						Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
-							id := info.ArgumentValues().Get("id").(string)
+							id := info.Args().Get("id").(string)
 							return info.DataLoaderManager().(*StarWarsDataLoaderManager).LoadCharacterByID(CharacterID(id))
 						}),
 					},

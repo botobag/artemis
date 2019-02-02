@@ -99,7 +99,7 @@ type ExecutionNode struct {
 
 	// Arguments to this field; Note that the argument value is coerced unless it is a variable which
 	// will remain as an ast.Variable.
-	ArgumentValues graphql.ArgumentValues
+	Args graphql.ArgumentValues
 
 	// The child nodes of this node; Note that this is a map where key is the concrete type of the
 	// node. Selection Sets in a field may vary subject to its runtime type.

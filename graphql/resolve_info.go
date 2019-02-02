@@ -124,7 +124,7 @@ type FieldSelectionInfo interface {
 	Field() Field
 
 	// Argument values that are given to the field
-	ArgumentValues() ArgumentValues
+	Args() ArgumentValues
 
 	// TODO: Also expose the field result (from executor.ResultNode).
 }
@@ -303,5 +303,5 @@ type ResolveInfo interface {
 	Path() ResponsePath
 
 	// Argument values that are given to the field
-	ArgumentValues() ArgumentValues
+	Args() ArgumentValues
 }
