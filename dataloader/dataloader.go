@@ -22,10 +22,69 @@ import (
 	"sync"
 
 	"github.com/botobag/artemis/concurrent/future"
+	"github.com/botobag/artemis/iterator"
 )
 
 // Key is an unique identifier of a value loaded by a DataLoader.
 type Key interface{}
+
+// Keys specifies a list of keys and provides an iterator over the keys.
+type Keys interface {
+	Iterator() KeyIterator
+}
+
+// KeysWithSize is a Keys with size hint.
+type KeysWithSize interface {
+	Keys
+	Size() int
+}
+
+// KeyIterator is an iterator over keys in Keys.
+type KeyIterator interface {
+	// Next returns the next key in the iteration. It conforms the iterator pattern described in
+	// iterator package.
+	Next() (Key, error)
+}
+
+// keysArray is a return value for KeysFromArray which implements KeysWithSize.
+type keysArray struct {
+	keys []Key
+}
+
+type keysArrayIterator struct {
+	keys []Key
+	i    int
+	size int
+}
+
+// Iterator implements Keys.
+func (a keysArray) Iterator() KeyIterator {
+	return &keysArrayIterator{
+		keys: a.keys,
+		i:    0,
+		size: len(a.keys),
+	}
+}
+
+// Size implements KeysWithSize.
+func (a keysArray) Size() int {
+	return len(a.keys)
+}
+
+// Next implements KeyIterator.
+func (iter *keysArrayIterator) Next() (Key, error) {
+	i := iter.i
+	if i != iter.size {
+		iter.i++
+		return iter.keys[i], nil
+	}
+	return nil, iterator.Done
+}
+
+// KeysFromArray creates from an array of Key's.
+func KeysFromArray(keys ...Key) KeysWithSize {
+	return keysArray{keys}
+}
 
 type taskQueue struct {
 	// DataLoader that creates and executes the tasks in the queue.
@@ -154,15 +213,31 @@ func (loader *DataLoader) Load(key Key) (future.Future, error) {
 
 // LoadMany loads collection of data identified by multiple keys. It returns a Future for the values
 // represented by those keys.
-func (loader *DataLoader) LoadMany(keys []Key) (future.Future, error) {
-	futures := make([]future.Future, len(keys))
-	for i, key := range keys {
+func (loader *DataLoader) LoadMany(keys Keys) (future.Future, error) {
+	var futures []future.Future
+
+	// Pre-allocate futures when size hint is available.
+	if keys, ok := keys.(KeysWithSize); ok {
+		futures = make([]future.Future, 0, keys.Size())
+	}
+
+	keyIter := keys.Iterator()
+	for {
+		key, err := keyIter.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+
 		f, err := loader.Load(key)
 		if err != nil {
 			return nil, err
 		}
-		futures[i] = f
+
+		futures = append(futures, f)
 	}
+
 	return future.Join(futures...), nil
 }
 

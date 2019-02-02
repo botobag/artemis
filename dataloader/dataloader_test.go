@@ -293,7 +293,7 @@ func (loader *chainBatchLoader) Load(ctx context.Context, tasks *dataloader.Task
 
 	// Call deepLoader to load values.
 	deepLoader := loader.deepLoader
-	f, err := deepLoader.LoadMany(keys)
+	f, err := deepLoader.LoadMany(dataloader.KeysFromArray(keys...))
 	Expect(err).ShouldNot(HaveOccurred())
 
 	// Dispatch tasks.
@@ -482,7 +482,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		_, err := idLoader.Load(nil)
 		Expect(err).Should(HaveOccurred())
 
-		_, err = idLoader.LoadMany([]dataloader.Key{nil})
+		_, err = idLoader.LoadMany(dataloader.KeysFromArray(nil))
 		Expect(err).Should(HaveOccurred())
 	})
 
@@ -539,12 +539,12 @@ var _ = Describe("DataLoader: Primary API", func() {
 	})
 
 	It("supports loading multiple keys in one call", func() {
-		f, err := idLoader.LoadMany([]dataloader.Key{1, 2})
+		f, err := idLoader.LoadMany(dataloader.KeysFromArray(1, 2))
 		Expect(err).ShouldNot(HaveOccurred())
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(f)).Should(Equal([]interface{}{1, 2}))
 
-		f, err = idLoader.LoadMany([]dataloader.Key{})
+		f, err = idLoader.LoadMany(dataloader.KeysFromArray())
 		Expect(err).ShouldNot(HaveOccurred())
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(f)).Should(BeEmpty())
@@ -1008,7 +1008,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				value3, err := idLoader.Load("D")
 				Expect(err).ShouldNot(HaveOccurred())
 
-				value4, err := idLoader.LoadMany([]dataloader.Key{"C", "D", "A", "A", "B"})
+				value4, err := idLoader.LoadMany(dataloader.KeysFromArray("C", "D", "A", "A", "B"))
 				Expect(err).ShouldNot(HaveOccurred())
 
 				go idLoader.Dispatch(context.Background())
