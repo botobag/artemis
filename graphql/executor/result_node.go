@@ -49,7 +49,7 @@ type ResultFlag uint16
 // Enumeration of ResultFlag
 const (
 	// ResultNode must represents a value other than nil.
-	ResultFlagNonNull ResultFlag = 1 << iota
+	ResultFlagRejectNull ResultFlag = 1 << iota
 )
 
 // A ResultNode holds a field value. Result data from an execution of a GraphQL Operation [0] is
@@ -105,15 +105,15 @@ func (node *ResultNode) IsLeaf() bool {
 	return node.Kind == ResultKindLeaf
 }
 
-// SetIsNonNull marks the result to not have a nil value.
-func (node *ResultNode) SetIsNonNull() {
-	node.Flags = node.Flags | uint16(ResultFlagNonNull)
+// SetToRejectNull marks the result to reject a nil value.
+func (node *ResultNode) SetToRejectNull() {
+	node.Flags = node.Flags | uint16(ResultFlagRejectNull)
 	return
 }
 
-// IsNonNull describes the result should not be nil.
-func (node *ResultNode) IsNonNull() bool {
-	return (node.Flags & uint16(ResultFlagNonNull)) != 0
+// ShouldRejectNull describes the result should not be nil.
+func (node *ResultNode) ShouldRejectNull() bool {
+	return (node.Flags & uint16(ResultFlagRejectNull)) != 0
 }
 
 // ListValue returns a value that is held by this node for a List field. It would panic if this is

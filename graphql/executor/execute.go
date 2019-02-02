@@ -351,7 +351,7 @@ func dispatchTasksForObject(
 
 		// Set the flag so field can reject nil value on error.
 		if graphql.IsNonNullType(childNode.Field.Type()) {
-			nodeResult.SetIsNonNull()
+			nodeResult.SetToRejectNull()
 		}
 
 		// Create a task and dispatch it with given dispatcher.
@@ -599,7 +599,7 @@ func (task *ExecuteNodeTask) completeWrappingValue(
 		// Set child results to reject nil value if it is unwrapped from a non-null type.
 		if isNonNullType {
 			for i := range resultNodes {
-				resultNodes[i].SetIsNonNull()
+				resultNodes[i].SetToRejectNull()
 			}
 		}
 

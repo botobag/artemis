@@ -87,7 +87,7 @@ func propagateExecutionError(result *ResultNode) {
 	// encountered.
 	//
 	// Reference: https://facebook.github.io/graphql/June2018/#sec-Errors-and-Non-Nullability
-	for result != nil && result.IsNonNull() {
+	for result != nil && result.ShouldRejectNull() {
 		result = result.Parent
 		result.Kind = ResultKindNil
 		result.Value = nil
