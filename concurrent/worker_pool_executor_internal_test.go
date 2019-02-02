@@ -19,7 +19,6 @@ package concurrent
 import (
 	"math/rand"
 	"sync"
-	"sync/atomic"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -34,6 +33,7 @@ func newTestTask() Task {
 func produce(queue *workerPoolTaskQueue, n int, tasks []Task, wg *sync.WaitGroup) {
 	for i := 0; i < n; i++ {
 		wg.Add(1)
+		// Fork number of n goroutines to push the tasks to the queue.
 		go func(workerIndex int) {
 			defer wg.Done()
 			for taskIndex, task := range tasks {
@@ -46,35 +46,31 @@ func produce(queue *workerPoolTaskQueue, n int, tasks []Task, wg *sync.WaitGroup
 }
 
 func consume(queue *workerPoolTaskQueue, n int, numRemovers int, tasks []Task, wg *sync.WaitGroup) {
+	var (
+		// Mutex that guards accesses to taskMap and numTasks.
+		mutex    sync.Mutex
+		taskMap  = map[Task]bool{}
+		numTasks = int64(len(tasks))
+	)
+
 	// Build task map for checking results.
-	taskMap := map[Task]bool{}
 	for _, task := range tasks {
 		taskMap[task] = true
 	}
-	// Mutex that guards accesses to taskMap.
-
-	var (
-		taskMapMutex sync.Mutex
-		numTasks     = int64(len(tasks))
-	)
 
 	for i := 0; i < n; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for {
-				// Decrement numTasks.
-				cur := atomic.LoadInt64(&numTasks)
-				if cur <= 0 {
-					// All tasks are consumed. Call Close to unblock others that stuck in Poll.
+				// Lock mutex to check numTasks.
+				mutex.Lock()
+				if numTasks == 0 {
 					queue.Close()
+					mutex.Unlock()
 					break
 				}
-
-				if !atomic.CompareAndSwapInt64(&numTasks, cur, cur-1) {
-					// numTasks has been modified by others. Restart the loop to check current value.
-					continue
-				}
+				mutex.Unlock()
 
 				task, err := queue.Poll(0)
 				Expect(err).ShouldNot(HaveOccurred())
@@ -82,11 +78,12 @@ func consume(queue *workerPoolTaskQueue, n int, numRemovers int, tasks []Task, w
 					continue
 				}
 
-				// Lock taskMapMutex.
-				taskMapMutex.Lock()
+				// Lock mutex to access taskMap and decrement numTasks.
+				mutex.Lock()
 				Expect(taskMap).Should(HaveKey(task))
 				delete(taskMap, task.(Task))
-				taskMapMutex.Unlock()
+				numTasks--
+				mutex.Unlock()
 			}
 		}()
 	}
@@ -96,14 +93,19 @@ func consume(queue *workerPoolTaskQueue, n int, numRemovers int, tasks []Task, w
 		go func() {
 			defer wg.Done()
 
-			for atomic.LoadInt64(&numTasks) > 0 {
+			for {
 				// Select task to be removed randomly.
 				task := tasks[rand.Int31n(int32(len(tasks)))]
 
-				// Check whether the specified task is removed.
-				taskMapMutex.Lock()
+				// Lock mutex to check numTasks and taskMap to see whether the specified task is removed.
+				mutex.Lock()
+				if numTasks == 0 {
+					queue.Close()
+					mutex.Unlock()
+					break
+				}
 				_, exists := taskMap[task.(Task)]
-				taskMapMutex.Unlock()
+				mutex.Unlock()
 
 				// Remove.
 				err := queue.Remove(task)
@@ -113,18 +115,13 @@ func consume(queue *workerPoolTaskQueue, n int, numRemovers int, tasks []Task, w
 					Expect(err).Should(Or(BeNil(), MatchError(ErrElementNotFound)))
 
 					if err == nil {
-						// Successfully removed. Update taskMap.
-						taskMapMutex.Lock()
+						// Successfully removed. Update taskMap and numTasks.
+						mutex.Lock()
 						Expect(taskMap).Should(HaveKey(task))
 						delete(taskMap, task.(Task))
-						taskMapMutex.Unlock()
-
 						// Decrement numTasks.
-						if atomic.AddInt64(&numTasks, -1) == 0 {
-							// All tasks are consumed. Call Close to unblock others that stuck in Poll.
-							queue.Close()
-							break
-						}
+						numTasks--
+						mutex.Unlock()
 					} else if err == ErrElementNotFound {
 						// Someone has consumed the task.
 					}
