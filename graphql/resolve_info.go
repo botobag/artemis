@@ -154,13 +154,40 @@ type DataLoaderManagerBase struct {
 	pendingLoaders map[*dataloader.DataLoader]bool
 }
 
-// LoadWith requests given loader for data at given key. It also updates
+// LoadWith requests given loader for data at given key. It also updates pendingLoaders as
+// appropriated.
 func (manager *DataLoaderManagerBase) LoadWith(loader *dataloader.DataLoader, key dataloader.Key) (future.Future, error) {
 	// Acquire lock to update pendingLoaders. Note that have to be done before loader.Load.
 	mutex := &manager.mutex
 	mutex.Lock()
 
 	f, err := loader.Load(key)
+	if err != nil {
+		mutex.Unlock()
+		return nil, err
+	}
+
+	// Update pendingLoaders.
+	pendingLoaders := manager.pendingLoaders
+	if pendingLoaders == nil {
+		pendingLoaders = map[*dataloader.DataLoader]bool{}
+		manager.pendingLoaders = pendingLoaders
+	}
+	pendingLoaders[loader] = true
+
+	mutex.Unlock()
+	return f, nil
+}
+
+// LoadManyWith requests given loader for data at given keys. It also updates pendingLoaders as
+// appropriated. It is very similar to LoadWith with just `loader.Load` replaced with
+// `loader.LoadMany`.
+func (manager *DataLoaderManagerBase) LoadManyWith(loader *dataloader.DataLoader, keys dataloader.Keys) (future.Future, error) {
+	// Acquire lock to update pendingLoaders. Note that have to be done before loader.LoadMany.
+	mutex := &manager.mutex
+	mutex.Lock()
+
+	f, err := loader.LoadMany(keys)
 	if err != nil {
 		mutex.Unlock()
 		return nil, err

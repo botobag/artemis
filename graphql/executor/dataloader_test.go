@@ -28,6 +28,7 @@ import (
 	"github.com/botobag/artemis/graphql/executor"
 	"github.com/botobag/artemis/graphql/parser"
 	"github.com/botobag/artemis/graphql/token"
+	"github.com/botobag/artemis/iterator"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -142,16 +143,43 @@ func (manager *StarWarsDataLoaderManager) LoadCharacterByID(id CharacterID) (fut
 	return manager.LoadWith(manager.characterLoader, id)
 }
 
-func (manager *StarWarsDataLoaderManager) LoadManyCharactersByID(ids []CharacterID) (future.Future, error) {
-	futures := make([]future.Future, len(ids))
-	for i, id := range ids {
-		f, err := manager.LoadCharacterByID(id)
-		if err != nil {
-			return nil, err
-		}
-		futures[i] = f
+// characterIDArray is a return value for KeysFromArray which implements KeysWithSize.
+type characterIDArray struct {
+	ids []CharacterID
+}
+
+type characterIDArrayIterator struct {
+	ids  []CharacterID
+	i    int
+	size int
+}
+
+// Iterator implements Keys.
+func (a characterIDArray) Iterator() dataloader.KeyIterator {
+	return &characterIDArrayIterator{
+		ids:  a.ids,
+		i:    0,
+		size: len(a.ids),
 	}
-	return future.Join(futures...), nil
+}
+
+// Size implements KeysWithSize.
+func (a characterIDArray) Size() int {
+	return len(a.ids)
+}
+
+// Next implements KeyIterator.
+func (iter *characterIDArrayIterator) Next() (dataloader.Key, error) {
+	i := iter.i
+	if i != iter.size {
+		iter.i++
+		return iter.ids[i], nil
+	}
+	return nil, iterator.Done
+}
+
+func (manager *StarWarsDataLoaderManager) LoadManyCharactersByID(ids []CharacterID) (future.Future, error) {
+	return manager.LoadManyWith(manager.characterLoader, characterIDArray{ids})
 }
 
 func (manager *StarWarsDataLoaderManager) CharacterLoadCalls() [][]dataloader.Key {
