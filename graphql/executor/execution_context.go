@@ -84,6 +84,11 @@ func (context *ExecutionContext) Operation() *PreparedOperation {
 	return context.operation
 }
 
+// Schema returns context.operation.Schema().
+func (context *ExecutionContext) Schema() *graphql.Schema {
+	return context.operation.Schema()
+}
+
 // RootValue returns context.rootValue.
 func (context *ExecutionContext) RootValue() interface{} {
 	return context.rootValue

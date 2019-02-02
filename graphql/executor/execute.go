@@ -711,7 +711,52 @@ func (task *ExecuteNodeTask) completeAbstractValue(
 	returnType graphql.AbstractType,
 	result *ResultNode,
 	value interface{}) (ok bool) {
-	panic("unimplemented")
+
+	var (
+		ctx  = task.ctx
+		node = task.node
+	)
+
+	resolver := returnType.TypeResolver()
+	if resolver == nil {
+		task.handleNodeError(
+			graphql.NewError(
+				fmt.Sprintf("Abstract type %s must provide resolver to resolve to an Object type at "+
+					"runtime for field %s.%s with value %+v",
+					returnType, parentFieldType(ctx, node).Name(), node.Field.Name(), value)), result)
+		return false
+	}
+
+	info := &ResolveInfo{
+		ExecutionContext: ctx,
+		ExecutionNode:    node,
+		ResultNode:       result,
+	}
+	runtimeType, err := resolver.Resolve(ctx.Context(), value, info)
+	if err != nil {
+		task.handleNodeError(err, result)
+		return false
+	}
+
+	if runtimeType == nil {
+		task.handleNodeError(
+			graphql.NewError(
+				fmt.Sprintf("Abstract type %s must resolve to an Object type at runtime for field %s.%s "+
+					"with value %+v, received nil.",
+					returnType, parentFieldType(ctx, node).Name(), node.Field.Name(), value)), result)
+		return false
+	}
+
+	possibleTypes := task.ctx.Schema().PossibleTypes(returnType)
+	if !possibleTypes.Contains(runtimeType) {
+		task.handleNodeError(
+			graphql.NewError(
+				fmt.Sprintf(`Runtime Object type "%s" is not a possible type for "%s".`,
+					runtimeType, returnType)), result)
+		return false
+	}
+
+	return task.completeObjectValue(runtimeType, result, value)
 }
 
 //===----------------------------------------------------------------------------------------====//
