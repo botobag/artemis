@@ -39,7 +39,7 @@ func (ThisIsTypeDefinition) ThisIsGraphQLTypeDefinition() {}
 //===-----------------------------------------------------------------------------------------====//
 
 // NewType creates a Type instance given a TypeDefinition. When type is known, calling a more
-// specific version is better. For example, if you know you're creating a Scalar, call NewScalar
+// specific version is prefer. For example, if you know you're creating a Scalar, call NewScalar
 // with ScalarTypeDefinition.
 func NewType(typeDef TypeDefinition) (Type, error) {
 	switch typeDef := typeDef.(type) {
@@ -306,20 +306,6 @@ func (f TypeResolverFunc) Resolve(ctx context.Context, value interface{}, info R
 
 // TypeResolverFunc implements TypeResolver.
 var _ TypeResolver = TypeResolverFunc(nil)
-
-// ResolveTypeParams specifies parameters passed to Type resolver for resolving the concrete object
-// type for a interface from a given value.
-type ResolveTypeParams struct {
-	// Value that is used to decide which GraphQL Object this value maps to.
-	Value interface{}
-
-	// Info is a collection of information about the current execution state.
-	Info *ResolveInfo
-
-	// Context argument is a context value that is provided to every resolve function within an
-	// execution.  It is commonly used to represent an authenticated user, or request-specific caches.
-	Context context.Context
-}
 
 // InterfaceTypeDefinition provides data accessors that are required for defining a Interface.
 type InterfaceTypeDefinition interface {
