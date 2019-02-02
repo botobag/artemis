@@ -98,7 +98,7 @@ func (typeMap TypeMap) add(t Type) error {
 			}
 
 		case Union:
-			for _, possibleType := range t.PossibleTypes() {
+			for possibleType := range t.PossibleTypes().types {
 				stack = append(stack, possibleType)
 			}
 
@@ -187,18 +187,17 @@ type Schema struct {
 	// directives contains all directives defined in the schema.
 	directives DirectiveList
 
-	// implementations keeps track of all implementations by interface name.
-	//
-	// TODO: Improve map by using TypeKey as key. #26
-	implementations map[Interface][]Object
+	// possibleTypeSets keeps track of set of possible types for all abstract types in the schema.
+	possibleTypeSets map[AbstractType]PossibleTypeSet
 }
 
 // NewSchema initializes a Schema from the given config.
 func NewSchema(config *SchemaConfig) (*Schema, error) {
 	schema := &Schema{
-		query:        config.Query,
-		mutation:     config.Mutation,
-		subscription: config.Subscription,
+		query:            config.Query,
+		mutation:         config.Mutation,
+		subscription:     config.Subscription,
+		possibleTypeSets: map[AbstractType]PossibleTypeSet{},
 	}
 
 	// Add standard directives.
@@ -271,15 +270,25 @@ func NewSchema(config *SchemaConfig) (*Schema, error) {
 	// Storing the resulting map for reference by the schema.
 	schema.typeMap = typeMap
 
-	// Keep track of all implementations by interface name.
-	implementations := map[Interface][]Object{}
+	// Build possibleTypeSets to keep track of all possible types for Interface and Union types.
+	possibleTypeSets := schema.possibleTypeSets
 	for _, t := range typeMap.types {
-		// Find all Object types.
-		if t, ok := t.(Object); ok {
-			// Create a reverse link from the Interface to the Objects that implement it.
+		switch t := t.(type) {
+		case Object:
+			// Create a reverse link from Object's implementing Interface to the Object.
 			for _, iface := range t.Interfaces() {
-				implementations[iface] = append(implementations[iface], t)
+				set, exists := possibleTypeSets[iface]
+				if !exists {
+					// Create a new PossibleTypeSet for iface.
+					set = NewPossibleTypeSet()
+					possibleTypeSets[iface] = set
+				}
+				// Add Object type t to the PossibleTypeSet for iface.
+				set.Add(t)
 			}
+
+		case Union:
+			possibleTypeSets[t] = t.PossibleTypes()
 		}
 	}
 
@@ -317,17 +326,11 @@ func (schema *Schema) Subscription() Object {
 	return schema.subscription
 }
 
-// PossibleTypes returns concrete types for an abstract type in the schema. For Interface, this is
-// the list of Object type that implement it. For Union, this is the list of its member types.
-func (schema *Schema) PossibleTypes(t AbstractType) []Object {
-	switch t := t.(type) {
-	case Union:
-		return t.PossibleTypes()
-	case Interface:
-		return schema.implementations[t]
-	default:
-		return nil
-	}
+// PossibleTypes returns set of possible concrete types for the given abstract type in the schema.
+// For Interface, this contains the list of Object types that implement it. For Union, this contains
+// the list of its member types.
+func (schema *Schema) PossibleTypes(t AbstractType) PossibleTypeSet {
+	return schema.possibleTypeSets[t]
 }
 
 // TypeFromAST returns a graphql.Type that applies to the ast.Type in the given schema For example,

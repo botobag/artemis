@@ -306,6 +306,30 @@ func (*ThisIsInterfaceType) graphqlInterfaceType() {}
 // Union
 //===----------------------------------------------------------------------------------------====//
 
+// PossibleTypeSet stores possible types for an abstract type (could be either an Interface or an
+// Union) in a schema.
+type PossibleTypeSet struct {
+	types map[Object]bool
+}
+
+// NewPossibleTypeSet creates an empty PossibleTypeSet.
+func NewPossibleTypeSet() PossibleTypeSet {
+	return PossibleTypeSet{
+		types: map[Object]bool{},
+	}
+}
+
+// Add adds a type to the set.
+func (set PossibleTypeSet) Add(o Object) {
+	set.types[o] = true
+}
+
+// Contains returns true if the given Object type is the possible types of the abstract type
+// associated with the set.
+func (set PossibleTypeSet) Contains(o Object) bool {
+	return set.types[o]
+}
+
 // Union Type Definition
 //
 // When a field can return one of a heterogeneous set of types, a Union type is used to describe
@@ -317,7 +341,7 @@ type Union interface {
 	AbstractType
 
 	// Types returns member of the union type.
-	PossibleTypes() []Object
+	PossibleTypes() PossibleTypeSet
 
 	// graphqlUnionType puts a special mark for an Union type.
 	graphqlUnionType()

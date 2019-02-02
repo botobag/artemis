@@ -94,18 +94,15 @@ func (creator *unionTypeCreator) Finalize(t Type, typeDefResolver typeDefinition
 	union.typeResolver = typeResolver
 
 	// Resolve possible object types.
-	numPossibleTypes := len(union.data.PossibleTypes)
-	if numPossibleTypes > 0 {
-		possibleTypes := make([]Object, numPossibleTypes)
-		for i, possibleTypeDef := range union.data.PossibleTypes {
-			possibleType, err := typeDefResolver(possibleTypeDef)
-			if err != nil {
-				return err
-			}
-			possibleTypes[i] = possibleType.(Object)
+	possibleTypes := NewPossibleTypeSet()
+	for _, possibleTypeDef := range union.data.PossibleTypes {
+		possibleType, err := typeDefResolver(possibleTypeDef)
+		if err != nil {
+			return err
 		}
-		union.possibleTypes = possibleTypes
+		possibleTypes.Add(possibleType.(Object))
 	}
+	union.possibleTypes = possibleTypes
 
 	return nil
 }
@@ -115,7 +112,7 @@ func (creator *unionTypeCreator) Finalize(t Type, typeDefResolver typeDefinition
 type union struct {
 	ThisIsUnionType
 	data          UnionTypeData
-	possibleTypes []Object
+	possibleTypes PossibleTypeSet
 	typeResolver  TypeResolver
 }
 
@@ -163,6 +160,6 @@ func (u *union) Description() string {
 }
 
 // PossibleTypes implements Union.
-func (u *union) PossibleTypes() []Object {
+func (u *union) PossibleTypes() PossibleTypeSet {
 	return u.possibleTypes
 }

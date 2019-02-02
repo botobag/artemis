@@ -36,18 +36,20 @@ var _ = Describe("Union", func() {
 	})
 
 	It("accepts empty set of possible types", func() {
+		emptyPossibleSet := graphql.NewPossibleTypeSet()
+
 		unionType, err := graphql.NewUnion(&graphql.UnionConfig{
 			Name:          "UnionWithEmptySetOfPossibleTypes",
 			PossibleTypes: []graphql.ObjectTypeDefinition{},
 		})
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(unionType.PossibleTypes()).Should(BeEmpty())
+		Expect(unionType.PossibleTypes()).Should(Equal(emptyPossibleSet))
 
 		unionType, err = graphql.NewUnion(&graphql.UnionConfig{
 			Name: "UnionWithoutPossibleTypes",
 		})
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(unionType.PossibleTypes()).Should(BeEmpty())
+		Expect(unionType.PossibleTypes()).Should(Equal(emptyPossibleSet))
 	})
 
 	It("rejects creating type without a name", func() {

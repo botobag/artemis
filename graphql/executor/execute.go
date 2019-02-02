@@ -275,7 +275,7 @@ func findFieldDef(
 func doesTypeConditionSatisfy(
 	ctx *ExecutionContext,
 	typeCondition ast.NamedType,
-	t graphql.Type) bool {
+	t graphql.Object) bool {
 	schema := ctx.Operation().Schema()
 
 	conditionalType := schema.TypeFromAST(typeCondition)
@@ -283,12 +283,9 @@ func doesTypeConditionSatisfy(
 		return true
 	}
 
-	if abstractType, ok := t.(graphql.AbstractType); ok {
-		for _, possibleType := range schema.PossibleTypes(abstractType) {
-			if possibleType == t {
-				return true
-			}
-		}
+	if abstractType, ok := conditionalType.(graphql.AbstractType); ok {
+		possibleTypes := schema.PossibleTypes(abstractType)
+		return possibleTypes.Contains(t)
 	}
 
 	return false
