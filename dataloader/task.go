@@ -271,23 +271,22 @@ func (t *Task) Completed() bool {
 //===----------------------------------------------------------------------------------------====//
 
 // TaskList represents a list of Task's stored in a linked list from begin (included) to the end
-// (excluded). It provides an iterator to access the TaskList in the list.
+// (included). It provides an iterator to access the TaskList in the list.
 type TaskList struct {
 	first *Task
 	last  *Task
 }
 
-// Begin returns an iterator pointing to the first task in the list.
-func (tasks *TaskList) Begin() TaskIterator {
-	return TaskIterator{tasks.first}
-}
-
-// End returns an iterator refers to the pass-to-the-end task in the list.
-func (tasks *TaskList) End() TaskIterator {
-	if tasks.last != nil {
-		return TaskIterator{tasks.last.next}
+// Iterator returns an iterator over tasks in the list.
+func (tasks *TaskList) Iterator() *TaskIterator {
+	if tasks.Empty() {
+		return &TaskIterator{}
 	}
-	return TaskIterator{nil}
+
+	return &TaskIterator{
+		cur: tasks.first,
+		end: tasks.last.next,
+	}
 }
 
 // Empty returns true if the TaskList doesn't contain any tasks.
@@ -311,18 +310,30 @@ func (tasks *TaskList) push(task *Task) {
 //
 // Example:
 //
-//	for taskIter, taskEnd := tasks.Begin(), tasks.End(); taskIter != taskEnd; taskIter = taskIter.Next() {
-//		task := taskIter.Task()
-//		...
+//	taskIter := tasks.Iterator()
+//	for {
+//		task, done := taskIter.Next()
+//		if done {
+//			break
+//		}
+//
+//		... process task ...
 //	}
 type TaskIterator struct {
 	// The referring task by this iterator
-	*Task
+	cur *Task
+	// The pass-to-the-end task
+	end *Task
 }
 
 // Next returns a TaskIterator that refers to the Task next to the one referred by iter in the list.
 // Note that it is an undefined behavior if iter doesn't refer to one of the task in the corresponding
 // TaskList.
-func (iter TaskIterator) Next() TaskIterator {
-	return TaskIterator{iter.Task.next}
+func (iter *TaskIterator) Next() (task *Task, done bool) {
+	cur := iter.cur
+	if cur == iter.end {
+		return nil, true
+	}
+	iter.cur = cur.next
+	return cur, false
 }

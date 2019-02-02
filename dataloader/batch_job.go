@@ -38,8 +38,13 @@ func (job *BatchLoadJob) Run() (interface{}, error) {
 	config.BatchLoader.Load(job.ctx, tasks)
 
 	// Make sure that all tasks were completed. If not, complete it with an error.
-	for taskIter, taskEnd := tasks.Begin(), tasks.End(); taskIter != taskEnd; taskIter = taskIter.Next() {
-		task := taskIter.Task
+	taskIter := tasks.Iterator()
+	for {
+		task, done := taskIter.Next()
+		if done {
+			break
+		}
+
 		result := task.loadResult()
 		if result.Kind == taskNotCompleted {
 			task.SetError(fmt.Errorf("%T must complete every given data loading task with either a "+

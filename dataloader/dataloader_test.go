@@ -85,8 +85,13 @@ func (logger *batchLoadLogger) LogKeys(tasks *dataloader.TaskList) {
 		keys []dataloader.Key
 	)
 
-	for taskIter, taskEnd := tasks.Begin(), tasks.End(); taskIter != taskEnd; taskIter = taskIter.Next() {
-		keys = append(keys, taskIter.Task.Key())
+	taskIter := tasks.Iterator()
+	for {
+		task, done := taskIter.Next()
+		if done {
+			break
+		}
+		keys = append(keys, task.Key())
 	}
 
 	// Acquire lock to append keys to loader.loadCalls.
@@ -107,8 +112,12 @@ type identityBatchLoader struct {
 
 func (loader *identityBatchLoader) Load(ctx context.Context, tasks *dataloader.TaskList) {
 	// Complete task with its key as loaded value.
-	for taskIter, taskEnd := tasks.Begin(), tasks.End(); taskIter != taskEnd; taskIter = taskIter.Next() {
-		task := taskIter.Task
+	taskIter := tasks.Iterator()
+	for {
+		task, done := taskIter.Next()
+		if done {
+			break
+		}
 		task.Complete(task.Key())
 	}
 
@@ -151,8 +160,12 @@ type evenBatchLoader struct {
 
 func (loader *evenBatchLoader) Load(ctx context.Context, tasks *dataloader.TaskList) {
 	// Complete task with its key as loaded value.
-	for taskIter, taskEnd := tasks.Begin(), tasks.End(); taskIter != taskEnd; taskIter = taskIter.Next() {
-		task := taskIter.Task
+	taskIter := tasks.Iterator()
+	for {
+		task, done := taskIter.Next()
+		if done {
+			break
+		}
 		key := task.Key()
 		if key, ok := key.(int); ok && key%2 == 0 {
 			task.Complete(key)
@@ -200,8 +213,12 @@ type errorBatchLoader struct {
 
 func (loader *errorBatchLoader) Load(ctx context.Context, tasks *dataloader.TaskList) {
 	// Complete task with its key as loaded value.
-	for taskIter, taskEnd := tasks.Begin(), tasks.End(); taskIter != taskEnd; taskIter = taskIter.Next() {
-		task := taskIter.Task
+	taskIter := tasks.Iterator()
+	for {
+		task, done := taskIter.Next()
+		if done {
+			break
+		}
 		key := task.Key()
 		task.SetError(fmt.Errorf("Error: %+v", key))
 	}
@@ -286,8 +303,12 @@ type chainBatchLoader struct {
 func (loader *chainBatchLoader) Load(ctx context.Context, tasks *dataloader.TaskList) {
 	// Collect keys.
 	var keys []dataloader.Key
-	for taskIter, taskEnd := tasks.Begin(), tasks.End(); taskIter != taskEnd; taskIter = taskIter.Next() {
-		task := taskIter.Task
+	taskIter := tasks.Iterator()
+	for {
+		task, done := taskIter.Next()
+		if done {
+			break
+		}
 		keys = append(keys, task.Key())
 	}
 
@@ -305,11 +326,14 @@ func (loader *chainBatchLoader) Load(ctx context.Context, tasks *dataloader.Task
 	Expect(values).Should(HaveLen(len(keys)))
 
 	// Complete task.
-	taskIter := tasks.Begin()
+	taskIter = tasks.Iterator()
 	for _, value := range values.([]interface{}) {
-		taskIter.Task.Complete(value)
-		taskIter = taskIter.Next()
+		task, done := taskIter.Next()
+		Expect(done).Should(BeFalse())
+		task.Complete(value)
 	}
+	_, done := taskIter.Next()
+	Expect(done).Should(BeTrue())
 
 	// Log keys for check.
 	loader.logger.LogKeys(tasks)
@@ -489,7 +513,9 @@ var _ = Describe("DataLoader: Primary API", func() {
 	It("throws error if a task is completed value multiple times", func() {
 		loader, err := dataloader.New(dataloader.Config{
 			BatchLoader: dataloader.BatchLoadFunc(func(ctx context.Context, tasks *dataloader.TaskList) {
-				task := tasks.Begin().Task
+				// Get the first task.
+				task, done := tasks.Iterator().Next()
+				Expect(done).Should(BeFalse())
 
 				// Complete task with its key (first time, should be ok).
 				Expect(task.Complete(task.Key())).Should(Succeed())
@@ -514,8 +540,13 @@ var _ = Describe("DataLoader: Primary API", func() {
 		loader, err := dataloader.New(dataloader.Config{
 			BatchLoader: dataloader.BatchLoadFunc(func(ctx context.Context, tasks *dataloader.TaskList) {
 				// All tasks remains unfinished on return.
-				for taskIter, taskEnd := tasks.Begin(), tasks.End(); taskIter != taskEnd; taskIter = taskIter.Next() {
-					Expect(taskIter.Task.Completed()).Should(BeFalse())
+				taskIter := tasks.Iterator()
+				for {
+					task, done := taskIter.Next()
+					if done {
+						break
+					}
+					Expect(task.Completed()).Should(BeFalse())
 				}
 			}),
 		})

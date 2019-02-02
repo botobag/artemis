@@ -98,8 +98,12 @@ func (loader *CharacterBatchLoader) Load(ctx context.Context, tasks *dataloader.
 	// Collect keys for check.
 	var keys []dataloader.Key
 
-	for taskIter, taskEnd := tasks.Begin(), tasks.End(); taskIter != taskEnd; taskIter = taskIter.Next() {
-		task := taskIter.Task
+	taskIter := tasks.Iterator()
+	for {
+		task, done := taskIter.Next()
+		if done {
+			break
+		}
 		key := task.Key()
 		Expect(task.Complete(loader.data[key.(CharacterID)])).Should(Succeed())
 		keys = append(keys, key)

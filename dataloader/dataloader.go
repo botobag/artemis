@@ -281,7 +281,7 @@ func (loader *DataLoader) dispatchQueue(ctx context.Context, queue *taskQueue) {
 			counter   = maxBatchSize
 		)
 
-		for task != nil {
+		for {
 			nextTask := task.next
 
 			counter--
@@ -298,15 +298,19 @@ func (loader *DataLoader) dispatchQueue(ctx context.Context, queue *taskQueue) {
 				firstTask = nextTask
 			}
 
+			// We reach the end of list. Dispatch the last batch.
+			if nextTask == nil {
+				if firstTask != nil {
+					loader.dispatchQueueBatch(ctx, TaskList{
+						first: firstTask,
+						last:  task,
+					})
+				}
+				break
+			}
+
 			// Move to the next task.
 			task = nextTask
-		}
-
-		// Dispatch the last batch.
-		if firstTask != nil {
-			loader.dispatchQueueBatch(ctx, TaskList{
-				first: firstTask,
-			})
 		}
 	}
 }
