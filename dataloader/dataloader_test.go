@@ -27,6 +27,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/format"
+	"github.com/onsi/gomega/types"
 )
 
 // The following tests are derived from:
@@ -61,6 +63,55 @@ import (
 // ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+type loadCallsMatcher struct {
+	expected       [][]dataloader.Key
+	failureMessage string
+}
+
+func (matcher *loadCallsMatcher) Match(actual interface{}) (success bool, err error) {
+	loadCalls, ok := actual.([][]dataloader.Key)
+	if !ok {
+		return false, fmt.Errorf("LoadCalls matcher expects an [][]dataloader.Key, but got %T", actual)
+	}
+
+	expected := matcher.expected
+
+	// Check len.
+	haveLenMatcher := HaveLen(len(expected))
+	success, err = haveLenMatcher.Match(actual)
+	if err != nil || !success {
+		matcher.failureMessage = haveLenMatcher.FailureMessage(actual)
+		return
+	}
+
+	// For each i, match loadCalls[i] and expected[i].
+	for i := range expected {
+		// Match with ConsistOf to ignore the ordering.
+		success, err = ConsistOf(expected[i]).Match(loadCalls[i])
+		if err != nil || !success {
+			matcher.failureMessage = fmt.Sprintf("Expected load calls at %d\n%s\n%s\n%s",
+				i, format.Object(actual, 1), "to consist of", format.Object(expected[0], 1))
+			return
+		}
+	}
+
+	return true, nil
+}
+
+func (matcher *loadCallsMatcher) FailureMessage(actual interface{}) (message string) {
+	return matcher.failureMessage
+}
+
+func (matcher *loadCallsMatcher) NegatedFailureMessage(actual interface{}) (message string) {
+	return format.Message(actual, "not to equal", matcher.expected)
+}
+
+func MatchLoadCalls(expected [][]dataloader.Key) types.GomegaMatcher {
+	return &loadCallsMatcher{
+		expected: expected,
+	}
+}
 
 type batchLoadLogger struct {
 	// mutex that guards loadCalls
@@ -591,7 +642,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(future.Join(f1, f2))).Should(Equal([]interface{}{1, 2}))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{1, 2},
 		}))
 	})
@@ -613,7 +664,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(future.Join(f1, f2, f3))).Should(Equal([]interface{}{1, 2, 3}))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{1, 2},
 			{3},
 		}))
@@ -629,7 +680,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(future.Join(f1a, f1b))).Should(Equal([]interface{}{1, 1}))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{1},
 		}))
 	})
@@ -644,7 +695,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(future.Join(a, b))).Should(Equal([]interface{}{"A", "B"}))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"A", "B"},
 		}))
 
@@ -657,7 +708,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(future.Join(a2, c))).Should(Equal([]interface{}{"A", "C"}))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"A", "B"},
 			{"C"},
 		}))
@@ -674,7 +725,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(future.Join(a3, b2, c2))).Should(Equal([]interface{}{"A", "B", "C"}))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"A", "B"},
 			{"C"},
 		}))
@@ -690,7 +741,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(future.Join(a, b))).Should(Equal([]interface{}{"A", "B"}))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"A", "B"},
 		}))
 
@@ -705,7 +756,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(future.Join(a2, b2))).Should(Equal([]interface{}{"A", "B"}))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"A", "B"},
 			{"A"},
 		}))
@@ -721,7 +772,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(future.Join(a, b))).Should(Equal([]interface{}{"A", "B"}))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"A", "B"},
 		}))
 
@@ -736,7 +787,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(future.Join(a2, b2))).Should(Equal([]interface{}{"A", "B"}))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"A", "B"},
 			{"A", "B"},
 		}))
@@ -754,7 +805,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		go idLoader.Dispatch(context.Background())
 		Expect(future.BlockOn(future.Join(a, b))).Should(Equal([]interface{}{"A", "B"}))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"B"},
 		}))
 	})
@@ -785,7 +836,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		Expect(future.BlockOn(a2)).Should(Equal("X"))
 		Expect(future.BlockOn(b2)).Should(Equal("B"))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"B"},
 		}))
 	})
@@ -818,7 +869,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 		Expect(future.BlockOn(a2)).Should(Equal("Y"))
 		Expect(future.BlockOn(b2)).Should(Equal("Y"))
 
-		Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"B"},
 		}))
 	})
@@ -840,7 +891,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 			go evenLoader.Dispatch(context.Background())
 			Expect(future.BlockOn(f2)).Should(Equal(2))
 
-			Expect(evenLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+			Expect(evenLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 				{1},
 				{2},
 			}))
@@ -862,7 +913,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 
 			Expect(future.BlockOn(f2)).Should(Equal(2))
 
-			Expect(evenLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+			Expect(evenLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 				{1, 2},
 			}))
 		})
@@ -884,7 +935,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 			_, caughtErrorB := future.BlockOn(f2)
 			Expect(caughtErrorB).Should(MatchError("Error: 1"))
 
-			Expect(errorLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+			Expect(errorLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 				{1},
 			}))
 		})
@@ -925,7 +976,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				go idLoader.Dispatch(context.Background())
 				Expect(future.BlockOn(future.Join(valueA, valueB))).Should(Equal([]interface{}{keyA, keyB}))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{keyA, keyB},
 				}))
 
@@ -941,7 +992,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				go idLoader.Dispatch(context.Background())
 				Expect(future.BlockOn(future.Join(valueA2, valueB2))).Should(Equal([]interface{}{keyA, keyB}))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{keyA, keyB},
 					{keyA},
 				}))
@@ -965,7 +1016,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				go idLoader.Dispatch(context.Background())
 				Expect(future.BlockOn(future.Join(f1, f2))).Should(Equal([]interface{}{1, 2}))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{1},
 					{2},
 				}))
@@ -987,7 +1038,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				go idLoader.Dispatch(context.Background())
 				Expect(future.BlockOn(future.Join(a, b))).Should(Equal([]interface{}{"A", "B"}))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{"A", "B"},
 				}))
 
@@ -1000,7 +1051,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				go idLoader.Dispatch(context.Background())
 				Expect(future.BlockOn(future.Join(a2, c))).Should(Equal([]interface{}{"A", "C"}))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{"A", "B"},
 					{"A", "C"},
 				}))
@@ -1017,7 +1068,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				go idLoader.Dispatch(context.Background())
 				Expect(future.BlockOn(future.Join(a3, b2, c2))).Should(Equal([]interface{}{"A", "B", "C"}))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{"A", "B"},
 					{"A", "C"},
 					{"A", "B", "C"},
@@ -1048,7 +1099,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				Expect(future.BlockOn(value3)).Should(Equal("D"))
 				Expect(future.BlockOn(value4)).Should(Equal([]interface{}{"C", "D", "A", "A", "B"}))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{"A", "C", "D", "C", "D", "A", "A", "B"},
 				}))
 			})
@@ -1083,10 +1134,11 @@ var _ = Describe("DataLoader: Primary API", func() {
 				go idLoader.Dispatch(context.Background())
 				Expect(future.BlockOn(values2)).Should(Equal([]interface{}{"A", "B", "A"}))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{"A", "B"},
 					{"A", "B"},
 				}))
+
 			})
 		})
 
@@ -1112,7 +1164,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				go idLoader.Dispatch(context.Background())
 				Expect(future.BlockOn(value2)).Should(Equal(key1))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{key1},
 				}))
 			})
@@ -1141,7 +1193,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				go idLoader.Dispatch(context.Background())
 				Expect(future.BlockOn(value2)).Should(Equal(key1))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{key1},
 					{key1},
 				}))
@@ -1172,7 +1224,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 					keyA,
 				}))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{keyA},
 				}))
 			})
@@ -1222,7 +1274,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				Expect(future.BlockOn(valueA)).Should(Equal("a"))
 				Expect(future.BlockOn(valueB1)).Should(Equal("b"))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{"a", "b"},
 				}))
 				Expect(aCustomMap.Stash.Keys()).Should(Equal([]dataloader.Key{"a", "b"}))
@@ -1237,7 +1289,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				Expect(future.BlockOn(valueC)).Should(Equal("c"))
 				Expect(future.BlockOn(valueB2)).Should(Equal("b"))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{"a", "b"},
 					{"c"},
 				}))
@@ -1252,7 +1304,7 @@ var _ = Describe("DataLoader: Primary API", func() {
 				go idLoader.Dispatch(context.Background())
 				Expect(future.BlockOn(valueB3)).Should(Equal("b"))
 
-				Expect(idLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+				Expect(idLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 					{"a", "b"},
 					{"c"},
 					{"b"},
@@ -1298,13 +1350,13 @@ var _ = Describe("It is resilient to job queue ordering", func() {
 		Expect(future.BlockOn(a2)).Should(Equal("A2"))
 		Expect(future.BlockOn(b2)).Should(Equal("B2"))
 
-		Expect(aLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(aLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"A1", "A2"},
 		}))
-		Expect(bLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(bLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"B1", "B2"},
 		}))
-		Expect(deepLoader.LoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(deepLoader.LoadCalls()).Should(MatchLoadCalls([][]dataloader.Key{
 			{"A1", "A2"},
 			{"B1", "B2"},
 		}))
