@@ -383,7 +383,7 @@ var _ = Describe("Enum", func() {
 			Expect(executeQuery(schema, query)).Should(testutil.SerializeToJSONAs(map[string]interface{}{
 				"errors": []interface{}{
 					map[string]interface{}{
-						"message": `Argument "fromEnum" has invalid value "1".`,
+						"message": `Argument "fromEnum" has invalid value 1.`,
 						"locations": []interface{}{
 							map[string]interface{}{
 								"line":   1,

@@ -359,7 +359,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 			},
 			"errors": [
 				{
-					"message": "Abstract type FooInterface must resolve to an Object type at runtime for field Query.foo with value dummy, received nil.",
+					"message": "Abstract type FooInterface must resolve to an Object type at runtime for field Query.foo with value \"dummy\", received nil.",
 					"locations": [{ "line": 1, "column": 3 }],
 					"path": ["foo"]
 				}
@@ -416,7 +416,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 			},
 			"errors": [
 				{
-					"message": "Abstract type FooInterface must provide resolver to resolve to an Object type at runtime for field Query.foo with value dummy",
+					"message": "Abstract type FooInterface must provide resolver to resolve to an Object type at runtime for field Query.foo with value \"dummy\"",
 					"locations": [{ "line": 1, "column": 3 }],
 					"path": ["foo"]
 				}
@@ -468,7 +468,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 			},
 			"errors": [
 				{
-					"message": "Abstract type FooUnion must provide resolver to resolve to an Object type at runtime for field Query.foo with value dummy",
+					"message": "Abstract type FooUnion must provide resolver to resolve to an Object type at runtime for field Query.foo with value \"dummy\"",
 					"locations": [{ "line": 1, "column": 3 }],
 					"path": ["foo"]
 				}

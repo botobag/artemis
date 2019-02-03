@@ -192,7 +192,7 @@ var _ = Describe("Scalars", func() {
 			_, err = graphql.ID().CoerceResultValue(struct{}{})
 			Expect(err).Should(MatchCoercionError("ID cannot represent {}: unexpected result type `struct {}`"))
 			_, err = graphql.ID().CoerceResultValue([]string{"abc"})
-			Expect(err).Should(MatchCoercionError("ID cannot represent [abc]: unexpected result type `[]string`"))
+			Expect(err).Should(MatchCoercionError("ID cannot represent [\"abc\"]: unexpected result type `[]string`"))
 		})
 	})
 

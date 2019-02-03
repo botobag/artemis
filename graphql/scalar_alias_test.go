@@ -296,7 +296,7 @@ var _ = Describe("ScalarAlias", func() {
 }`
 			result := executeQuery(Schema, query)
 			Expect(result.Errors.Errors).Should(ConsistOf(testutil.MatchGraphQLError(
-				testutil.MessageEqual(`Argument "n" has invalid value "-123".`),
+				testutil.MessageEqual(`Argument "n" has invalid value -123.`),
 				testutil.LocationEqual(graphql.ErrorLocation{
 					Line:   2,
 					Column: 23,
@@ -309,14 +309,24 @@ var _ = Describe("ScalarAlias", func() {
     name
   }
 }`
+			locationMatcher := testutil.LocationEqual(graphql.ErrorLocation{
+				Line:   2,
+				Column: 31,
+			})
 			result = executeQuery(Schema, query)
-			Expect(result.Errors.Errors).Should(ConsistOf(testutil.MatchGraphQLError(
-				testutil.MessageContainSubstring(`Argument "c" has invalid value`),
-				testutil.LocationEqual(graphql.ErrorLocation{
-					Line:   2,
-					Column: 31,
-				}),
-			)))
+			Expect(result.Errors.Errors).Should(ConsistOf(
+				// This is ugly but the ordering of entries in the map is not stable in Go. So we use Or to
+				// consider all possibilities.
+				Or(
+					testutil.MatchGraphQLError(
+						testutil.MessageContainSubstring(`Argument "c" has invalid value { "userId": 1, "userNum": 5 }.`),
+						locationMatcher,
+					),
+					testutil.MatchGraphQLError(
+						testutil.MessageContainSubstring(`Argument "c" has invalid value { "userNum": 5, "userId": 1 }.`),
+						locationMatcher,
+					),
+				)))
 
 			query = `{
   user(id: "1234", n: 123, c: {userNum: -5}) {
@@ -326,7 +336,7 @@ var _ = Describe("ScalarAlias", func() {
 }`
 			result = executeQuery(Schema, query)
 			Expect(result.Errors.Errors).Should(ConsistOf(testutil.MatchGraphQLError(
-				testutil.MessageEqual(`Argument "c" has invalid value "map[userNum:-5]".`),
+				testutil.MessageEqual(`Argument "c" has invalid value { "userNum": -5 }.`),
 				testutil.LocationEqual(graphql.ErrorLocation{
 					Line:   2,
 					Column: 31,

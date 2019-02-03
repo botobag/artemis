@@ -121,7 +121,8 @@ func ArgumentValues(
 					// Note: ValuesOfCorrectType validation should catch this before execution. This is a
 					// runtime check to ensure execution does not continue with an invalid argument value.
 					return graphql.NoArgumentValues(), graphql.NewError(
-						fmt.Sprintf(`Argument "%s" has invalid value "%v".`, argName, argValue.Interface()),
+						fmt.Sprintf(`Argument "%s" has invalid value %s.`,
+							argName, graphql.Inspect(argValue.Interface())),
 						graphql.ErrorLocationOfASTNode(argValue), err)
 				}
 				coercedValues[argName] = coercedValue

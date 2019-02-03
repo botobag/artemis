@@ -722,8 +722,9 @@ func (task *ExecuteNodeTask) completeAbstractValue(
 		task.handleNodeError(
 			graphql.NewError(
 				fmt.Sprintf("Abstract type %s must provide resolver to resolve to an Object type at "+
-					"runtime for field %s.%s with value %+v",
-					returnType, parentFieldType(ctx, node).Name(), node.Field.Name(), value)), result)
+					"runtime for field %s.%s with value %s",
+					returnType, parentFieldType(ctx, node).Name(), node.Field.Name(),
+					graphql.Inspect(value))), result)
 		return false
 	}
 
@@ -742,8 +743,9 @@ func (task *ExecuteNodeTask) completeAbstractValue(
 		task.handleNodeError(
 			graphql.NewError(
 				fmt.Sprintf("Abstract type %s must resolve to an Object type at runtime for field %s.%s "+
-					"with value %+v, received nil.",
-					returnType, parentFieldType(ctx, node).Name(), node.Field.Name(), value)), result)
+					"with value %s, received nil.",
+					returnType, parentFieldType(ctx, node).Name(), node.Field.Name(),
+					graphql.Inspect(value))), result)
 		return false
 	}
 

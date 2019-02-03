@@ -63,18 +63,16 @@ var _ typeutil.CoercionHelper = (*scalarCoercerBase)(nil)
 
 // RaiseError overrides typeutil.CoercionHelperBase.
 func (coercer *scalarCoercerBase) RaiseError(value interface{}, ctx *typeutil.CoercionContext, format string, a ...interface{}) error {
-	if v, ok := value.(string); ok {
-		// Quote the string for pretty printing.
-		value = strconv.Quote(v)
-	}
-	return NewCoercionError("%s cannot represent %v: %s", coercer.typeName, value, fmt.Sprintf(format, a...))
+	return NewCoercionError("%s cannot represent %s: %s",
+		coercer.typeName, Inspect(value), fmt.Sprintf(format, a...))
 }
 
 // RaiseInvalidArgumentTypeError returns an error indicating an unexpected type in input argument
 // coercion.
 func (coercer *scalarCoercerBase) RaiseInvalidArgumentTypeError(value ast.Value) error {
 	v := value.Interface()
-	return NewCoercionError("%s cannot represent %v: unexpected argument node type `%T`", coercer.typeName, v, value)
+	return NewCoercionError("%s cannot represent %s: unexpected argument node type `%T`",
+		coercer.typeName, Inspect(v), value)
 }
 
 func (coercer *scalarCoercerBase) init(typeName string, impl typeutil.CoercionHelper) {

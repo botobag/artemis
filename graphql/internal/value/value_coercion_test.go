@@ -33,7 +33,7 @@ var _ = Describe("CoerceValue", func() {
 		It("returns error for array input as string", func() {
 			_, errs := value.CoerceValue([]interface{}{1, 2, 3}, graphql.String(), nil)
 			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
-				testutil.MessageEqual("Expected type String; String cannot represent [1 2 3]: invalid variable type `[]interface {}`"),
+				testutil.MessageEqual("Expected type String; String cannot represent [1, 2, 3]: invalid variable type `[]interface {}`"),
 			)))
 		})
 	})
@@ -42,7 +42,7 @@ var _ = Describe("CoerceValue", func() {
 		It("returns error for array input as ID", func() {
 			_, errs := value.CoerceValue([]interface{}{1, 2, 3}, graphql.ID(), nil)
 			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
-				testutil.MessageEqual("Expected type ID; ID cannot represent [1 2 3]: invalid variable type `[]interface {}`"),
+				testutil.MessageEqual("Expected type ID; ID cannot represent [1, 2, 3]: invalid variable type `[]interface {}`"),
 			)))
 		})
 	})
