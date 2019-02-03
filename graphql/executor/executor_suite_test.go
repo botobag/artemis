@@ -17,13 +17,56 @@
 package executor_test
 
 import (
+	"encoding/json"
+	"runtime"
 	"testing"
+
+	"github.com/botobag/artemis/concurrent"
+	"github.com/botobag/artemis/graphql/executor"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/types"
 )
 
 func TestGraphQLExecutor(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "GraphQL Executor Suite")
+}
+
+func MatchResultInJSON(resultJSON string) types.GomegaMatcher {
+	stringify := func(result executor.ExecutionResult) []byte {
+		json, err := json.Marshal(&result)
+		Expect(err).ShouldNot(HaveOccurred())
+		return json
+	}
+	return Receive(WithTransform(stringify, MatchJSON(resultJSON)))
+}
+
+func DescribeExecute(message string, body func(runner concurrent.Executor)) bool {
+	return Describe(message, func() {
+		Context("without concurrent runner", func() {
+			body(nil)
+		})
+
+		Context("with concurrent runner", func() {
+			var runner concurrent.Executor
+
+			BeforeEach(func() {
+				var err error
+				runner, err = concurrent.NewWorkerPoolExecutor(concurrent.WorkerPoolExecutorConfig{
+					MaxPoolSize: uint32(runtime.GOMAXPROCS(-1)),
+				})
+				Expect(err).ShouldNot(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				terminated, err := runner.Shutdown()
+				Expect(err).ShouldNot(HaveOccurred())
+				Eventually(terminated).Should(Receive(BeTrue()))
+			})
+
+			body(runner)
+		})
+	})
 }
