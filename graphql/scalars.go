@@ -37,7 +37,7 @@ import (
 // | ID           | string                          |
 // +--------------+---------------------------------+
 //
-// That is, the type of underlying value behind the interface{} returned by CoerceArgumentValue and
+// That is, the type of underlying value behind the interface{} returned by CoerceLiteralValue and
 // CoerceVariableValue are fixed to the one given in the table for each type. Therefore, for
 // example, when you receive an Int argument, you can expect you got an "int" not int32 or others.
 
@@ -192,8 +192,8 @@ func (coercer *intCoercer) CoerceVariableValue(value interface{}) (interface{}, 
 	})
 }
 
-// CoerceArgumentValue implements ScalarInputCoercer.
-func (coercer *intCoercer) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+// CoerceLiteralValue implements ScalarInputCoercer.
+func (coercer *intCoercer) CoerceLiteralValue(value ast.Value) (interface{}, error) {
 	ctx := &typeutil.CoercionContext{
 		Mode: typeutil.InputCoercionMode,
 	}
@@ -239,9 +239,9 @@ func (i *intType) CoerceVariableValue(value interface{}) (interface{}, error) {
 	return i.coercer.CoerceVariableValue(value)
 }
 
-// CoerceArgumentValue implmenets Scalar.
-func (i *intType) CoerceArgumentValue(value ast.Value) (interface{}, error) {
-	return i.coercer.CoerceArgumentValue(value)
+// CoerceLiteralValue implmenets Scalar.
+func (i *intType) CoerceLiteralValue(value ast.Value) (interface{}, error) {
+	return i.coercer.CoerceLiteralValue(value)
 }
 
 var intTypeInstance = func() Scalar {
@@ -386,8 +386,8 @@ func (coercer *floatCoercer) CoerceVariableValue(value interface{}) (interface{}
 	})
 }
 
-// CoerceArgumentValue implements ScalarInputCoercer.
-func (coercer *floatCoercer) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+// CoerceLiteralValue implements ScalarInputCoercer.
+func (coercer *floatCoercer) CoerceLiteralValue(value ast.Value) (interface{}, error) {
 	ctx := &typeutil.CoercionContext{
 		Mode: typeutil.InputCoercionMode,
 	}
@@ -436,9 +436,9 @@ func (f *floatType) CoerceVariableValue(value interface{}) (interface{}, error) 
 	return f.coercer.CoerceVariableValue(value)
 }
 
-// CoerceArgumentValue implmenets Scalar.
-func (f *floatType) CoerceArgumentValue(value ast.Value) (interface{}, error) {
-	return f.coercer.CoerceArgumentValue(value)
+// CoerceLiteralValue implmenets Scalar.
+func (f *floatType) CoerceLiteralValue(value ast.Value) (interface{}, error) {
+	return f.coercer.CoerceLiteralValue(value)
 }
 
 var floatTypeInstance = func() Scalar {
@@ -538,8 +538,8 @@ func (coercer *stringCoercer) CoerceVariableValue(value interface{}) (interface{
 	})
 }
 
-// CoerceArgumentValue implements ScalarInputCoercer.
-func (coercer *stringCoercer) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+// CoerceLiteralValue implements ScalarInputCoercer.
+func (coercer *stringCoercer) CoerceLiteralValue(value ast.Value) (interface{}, error) {
 	if value, ok := value.(ast.StringValue); ok {
 		return value.Value(), nil
 	}
@@ -580,9 +580,9 @@ func (s *stringType) CoerceVariableValue(value interface{}) (interface{}, error)
 	return s.coercer.CoerceVariableValue(value)
 }
 
-// CoerceArgumentValue implmenets Scalar.
-func (s *stringType) CoerceArgumentValue(value ast.Value) (interface{}, error) {
-	return s.coercer.CoerceArgumentValue(value)
+// CoerceLiteralValue implmenets Scalar.
+func (s *stringType) CoerceLiteralValue(value ast.Value) (interface{}, error) {
+	return s.coercer.CoerceLiteralValue(value)
 }
 
 var stringTypeInstance = func() Scalar {
@@ -667,8 +667,8 @@ func (coercer *booleanCoercer) CoerceVariableValue(value interface{}) (interface
 	})
 }
 
-// CoerceArgumentValue implements ScalarInputCoercer.
-func (coercer *booleanCoercer) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+// CoerceLiteralValue implements ScalarInputCoercer.
+func (coercer *booleanCoercer) CoerceLiteralValue(value ast.Value) (interface{}, error) {
 	// Only boolean is accepted as per spec..
 	if value, ok := value.(ast.BooleanValue); ok {
 		return value.Value(), nil
@@ -708,9 +708,9 @@ func (b *booleanType) CoerceVariableValue(value interface{}) (interface{}, error
 	return b.coercer.CoerceVariableValue(value)
 }
 
-// CoerceArgumentValue implmenets Scalar.
-func (b *booleanType) CoerceArgumentValue(value ast.Value) (interface{}, error) {
-	return b.coercer.CoerceArgumentValue(value)
+// CoerceLiteralValue implmenets Scalar.
+func (b *booleanType) CoerceLiteralValue(value ast.Value) (interface{}, error) {
+	return b.coercer.CoerceLiteralValue(value)
 }
 
 var booleanTypeInstance = func() Scalar {
@@ -773,9 +773,9 @@ func (coercer *idCoercer) CoerceVariableValue(value interface{}) (interface{}, e
 	})
 }
 
-// CoerceArgumentValue implements ScalarInputCoercer.
-func (coercer *idCoercer) CoerceArgumentValue(value ast.Value) (interface{}, error) {
-	// CoerceArgumentValue implements ScalarInputCoercerInputParser.
+// CoerceLiteralValue implements ScalarInputCoercer.
+func (coercer *idCoercer) CoerceLiteralValue(value ast.Value) (interface{}, error) {
+	// CoerceLiteralValue implements ScalarInputCoercerInputParser.
 	switch value := value.(type) {
 	case ast.StringValue:
 		return value.Value(), nil
@@ -821,9 +821,9 @@ func (id *idType) CoerceVariableValue(value interface{}) (interface{}, error) {
 	return id.coercer.CoerceVariableValue(value)
 }
 
-// CoerceArgumentValue implmenets Scalar.
-func (id *idType) CoerceArgumentValue(value ast.Value) (interface{}, error) {
-	return id.coercer.CoerceArgumentValue(value)
+// CoerceLiteralValue implmenets Scalar.
+func (id *idType) CoerceLiteralValue(value ast.Value) (interface{}, error) {
+	return id.coercer.CoerceLiteralValue(value)
 }
 
 var idTypeInstance = func() Scalar {

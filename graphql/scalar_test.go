@@ -79,7 +79,7 @@ var _ = Describe("Scalar", func() {
 					CoerceVariableValueFunc: func(interface{}) (interface{}, error) {
 						return nil, nil
 					},
-					CoerceArgumentValueFunc: func(ast.Value) (interface{}, error) {
+					CoerceLiteralValueFunc: func(ast.Value) (interface{}, error) {
 						return nil, nil
 					},
 				},

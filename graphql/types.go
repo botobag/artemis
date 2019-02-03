@@ -129,9 +129,9 @@ type Scalar interface {
 	// CoerceVariableValue coerces values in input variables into eligible Go values for the scalar.
 	CoerceVariableValue(value interface{}) (interface{}, error)
 
-	// CoerceArgumentValue coerces values in field or directive argument into eligible Go values for
+	// CoerceLiteralValue coerces values in field or directive argument into eligible Go values for
 	// the scalar.
-	CoerceArgumentValue(value ast.Value) (interface{}, error)
+	CoerceLiteralValue(value ast.Value) (interface{}, error)
 
 	// graphqlScalarType puts a special mark for scalar type.
 	graphqlScalarType()
@@ -183,16 +183,16 @@ type ScalarInputCoercer interface {
 	// [0]: https://facebook.github.io/graphql/June2018/#CoerceVariableValues()
 	CoerceVariableValue(value interface{}) (interface{}, error)
 
-	// CoerceArgumentValue coerces a scalar value in input field arguments [0].
+	// CoerceLiteralValue coerces a scalar value in input field arguments [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#CoerceArgumentValues()
-	CoerceArgumentValue(value ast.Value) (interface{}, error)
+	// [0]: https://facebook.github.io/graphql/June2018/#CoerceLiteralValues()
+	CoerceLiteralValue(value ast.Value) (interface{}, error)
 }
 
 // ScalarInputCoercerFuncs is an adapter to create a ScalarInputCoercer from function values.
 type ScalarInputCoercerFuncs struct {
 	CoerceVariableValueFunc func(value interface{}) (interface{}, error)
-	CoerceArgumentValueFunc func(value ast.Value) (interface{}, error)
+	CoerceLiteralValueFunc  func(value ast.Value) (interface{}, error)
 }
 
 // CoerceVariableValue calls f.CoerceVariableValueFunc(value).
@@ -200,9 +200,9 @@ func (f ScalarInputCoercerFuncs) CoerceVariableValue(value interface{}) (interfa
 	return f.CoerceVariableValueFunc(value)
 }
 
-// CoerceArgumentValue calls f.CoerceArgumentValueFunc(value).
-func (f ScalarInputCoercerFuncs) CoerceArgumentValue(value ast.Value) (interface{}, error) {
-	return f.CoerceArgumentValueFunc(value)
+// CoerceLiteralValue calls f.CoerceLiteralValueFunc(value).
+func (f ScalarInputCoercerFuncs) CoerceLiteralValue(value ast.Value) (interface{}, error) {
+	return f.CoerceLiteralValueFunc(value)
 }
 
 // ScalarInputCoercerFuncs implements ScalarInputCoercer.

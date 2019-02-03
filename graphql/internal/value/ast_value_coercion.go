@@ -150,10 +150,10 @@ func CoerceFromAST(value ast.Value, t graphql.Type, variables graphql.VariableVa
 		return coercedValues, nil
 
 	case graphql.Scalar:
-		return ttype.CoerceArgumentValue(value)
+		return ttype.CoerceLiteralValue(value)
 
 	case graphql.Enum:
-		return coerceEnumArgumentValue(ttype, value)
+		return coreceEnumLiteralValue(ttype, value)
 	}
 
 	return nil, fmt.Errorf(`"%v" is not a valid input type`, t)

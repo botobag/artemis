@@ -32,8 +32,8 @@ func (coercer *defaultScalarInputCoercer) CoerceVariableValue(value interface{})
 	return value, nil
 }
 
-// CoerceArgumentValue implements ScalarInputCoercer.
-func (coercer *defaultScalarInputCoercer) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+// CoerceLiteralValue implements ScalarInputCoercer.
+func (coercer *defaultScalarInputCoercer) CoerceLiteralValue(value ast.Value) (interface{}, error) {
 	return nil, NewError(fmt.Sprintf("coercer for the input type %s was not provided", coercer.scalar.Name()))
 }
 
@@ -197,7 +197,7 @@ func (s *scalar) CoerceVariableValue(value interface{}) (interface{}, error) {
 	return s.inputCoercer.CoerceVariableValue(value)
 }
 
-// CoerceArgumentValue implmenets Scalar.
-func (s *scalar) CoerceArgumentValue(value ast.Value) (interface{}, error) {
-	return s.inputCoercer.CoerceArgumentValue(value)
+// CoerceLiteralValue implmenets Scalar.
+func (s *scalar) CoerceLiteralValue(value ast.Value) (interface{}, error) {
+	return s.inputCoercer.CoerceLiteralValue(value)
 }

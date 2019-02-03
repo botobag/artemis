@@ -82,7 +82,7 @@ func NewSyntaxError(source *token.Source, location token.SourceLocation, descrip
 //  - When CoerceValue sees these errors, it will present a query error with the message specified
 //    in the error to the user.
 //
-// 3. For coercion errors returning from Enum and Scalar's CoerceArgumentValue:
+// 3. For coercion errors returning from Enum and Scalar's CoerceLiteralValue:
 //  - Currently it makes no difference than other errors.
 //
 // [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars

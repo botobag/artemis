@@ -164,10 +164,10 @@ func (a *scalarAlias) CoerceVariableValue(value interface{}) (interface{}, error
 	return a.inputCoercer.CoerceVariableValue(value)
 }
 
-// CoerceArgumentValue implmenets ScalarAlias.
-func (a *scalarAlias) CoerceArgumentValue(value ast.Value) (interface{}, error) {
+// CoerceLiteralValue implmenets ScalarAlias.
+func (a *scalarAlias) CoerceLiteralValue(value ast.Value) (interface{}, error) {
 	if a.inputCoercer == nil {
-		return a.Scalar.CoerceArgumentValue(value)
+		return a.Scalar.CoerceLiteralValue(value)
 	}
-	return a.inputCoercer.CoerceArgumentValue(value)
+	return a.inputCoercer.CoerceLiteralValue(value)
 }

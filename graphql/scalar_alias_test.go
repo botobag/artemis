@@ -83,8 +83,8 @@ func (coercer UserIDCoercer) CoerceVariableValue(value interface{}) (interface{}
 	return coercer.coerceInputValue(value)
 }
 
-func (coercer UserIDCoercer) CoerceArgumentValue(value ast.Value) (interface{}, error) {
-	v, err := graphql.String().CoerceArgumentValue(value)
+func (coercer UserIDCoercer) CoerceLiteralValue(value ast.Value) (interface{}, error) {
+	v, err := graphql.String().CoerceLiteralValue(value)
 	if err != nil {
 		return nil, err
 	}
@@ -114,8 +114,8 @@ func (coercer PositiveIntCoercer) CoerceVariableValue(value interface{}) (interf
 	return coercer.coerceInputValue(value)
 }
 
-func (coercer PositiveIntCoercer) CoerceArgumentValue(value ast.Value) (interface{}, error) {
-	v, err := graphql.Int().CoerceArgumentValue(value)
+func (coercer PositiveIntCoercer) CoerceLiteralValue(value ast.Value) (interface{}, error) {
+	v, err := graphql.Int().CoerceLiteralValue(value)
 	if err != nil {
 		return nil, err
 	}

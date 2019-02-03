@@ -25,7 +25,7 @@ import (
 )
 
 // These errors are returned when coercion failed in coerceEnumVariableValue and
-// coerceEnumArgumentValue. These are ordinary error instead of CoercionError to let the caller
+// coreceEnumLiteralValue. These are ordinary error instead of CoercionError to let the caller
 // present default message to the user instead of these internal details.
 var (
 	errNilEnumValue      = errors.New("enum value is not provided")
@@ -73,9 +73,9 @@ func coerceEnumVariableValue(enum graphql.Enum, value interface{}) (interface{},
 	return nil, errEnumValueNotFound
 }
 
-// coerceEnumArgumentValue is similar to coerceEnumVariableValue but coerces a value from input
-// field argument that specifies a name of enum value.
-func coerceEnumArgumentValue(enum graphql.Enum, value ast.Value) (interface{}, error) {
+// coreceEnumLiteralValue is similar to coerceEnumVariableValue but coerces a value from an AST
+// value (could come from input field argument) that specifies a name of enum value.
+func coreceEnumLiteralValue(enum graphql.Enum, value ast.Value) (interface{}, error) {
 	if value, ok := value.(ast.EnumValue); ok {
 		if enumValue := enum.Values().Lookup(value.Value()); enumValue != nil {
 			return enumValue.Value(), nil
