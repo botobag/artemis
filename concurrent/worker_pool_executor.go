@@ -240,15 +240,9 @@ func (task *workerPoolTask) hasResult() bool {
 
 // Result implements TaskHandle.
 func (task *workerPoolTask) AwaitResult(timeout time.Duration) (interface{}, error) {
-	// Check hasResult without lock.
-	if task.hasResult() {
-		return task.result, task.err
-	}
-
 	// Lock mutex and recheck hasResult.
 	mutex := &task.mutex
 	mutex.Lock()
-	defer mutex.Unlock()
 
 	if !task.hasResult() {
 		// Block on cond.
@@ -257,7 +251,13 @@ func (task *workerPoolTask) AwaitResult(timeout time.Duration) (interface{}, err
 		task.cond.Wait()
 	}
 
-	return task.result, task.err
+	// Read result and err.
+	result, err := task.result, task.err
+
+	// Unlock mutex before return.
+	mutex.Unlock()
+
+	return result, err
 }
 
 //===----------------------------------------------------------------------------------------====//
