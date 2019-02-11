@@ -17,7 +17,7 @@
 package executor_test
 
 import (
-	"encoding/json"
+	"bytes"
 	"runtime"
 	"testing"
 
@@ -36,9 +36,9 @@ func TestGraphQLExecutor(t *testing.T) {
 
 func MatchResultInJSON(resultJSON string) types.GomegaMatcher {
 	stringify := func(result executor.ExecutionResult) []byte {
-		json, err := json.Marshal(&result)
-		Expect(err).ShouldNot(HaveOccurred())
-		return json
+		var buf bytes.Buffer
+		Expect(result.MarshalJSONTo(&buf)).Should(Succeed())
+		return buf.Bytes()
 	}
 	return Receive(WithTransform(stringify, MatchJSON(resultJSON)))
 }
