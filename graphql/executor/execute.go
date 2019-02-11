@@ -19,18 +19,32 @@ package executor
 import (
 	"context"
 	"fmt"
+	"io"
 	"reflect"
 
 	"github.com/botobag/artemis/concurrent/future"
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 	values "github.com/botobag/artemis/graphql/internal/value"
+
+	"github.com/json-iterator/go"
 )
 
 // ExecutionResult contains result from running an Executor.
 type ExecutionResult struct {
 	Data   *ResultNode
 	Errors graphql.Errors
+}
+
+// MarshalJSONTo writes the JSON encoding of result to the w. It makes use of jsoniter
+// implementation which offers better performance compared to Go's built-in encoding/json. Using
+// this API to write result is preferred rather than encoding/json.Marshal.
+func (result *ExecutionResult) MarshalJSONTo(w io.Writer) error {
+	stream := jsoniter.NewStream(jsoniter.ConfigDefault, w, 512)
+	stream.WriteVal(result)
+	stream.WriteRaw("\n")
+	stream.Flush()
+	return stream.Error
 }
 
 // Given a selectionSet, adds all of the fields in that selection to the passed in map of fields,

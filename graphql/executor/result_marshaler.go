@@ -38,19 +38,24 @@ func (resultMarshaller) IsEmpty(ptr unsafe.Pointer) bool {
 // Encode implements jsoniter.ValEncoder.
 func (resultMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	result := (*ExecutionResult)(ptr)
-
 	stream.WriteObjectStart()
+
+	// Specification [0] suggests placing the "errors" first in response to make it clear.
+	//
+	// [0]: See the note for https://facebook.github.io/graphql/June2018/#sec-Response-Format.
+	if result.Errors.HaveOccurred() {
+		stream.WriteObjectField("errors")
+		stream.WriteVal(result.Errors)
+		if result.Data != nil {
+			stream.WriteMore()
+		}
+	}
+
 	if result.Data != nil {
 		stream.WriteObjectField("data")
 		stream.WriteVal(result.Data)
 	}
-	if result.Errors.HaveOccurred() {
-		if result.Data != nil {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("errors")
-		stream.WriteVal(result.Errors)
-	}
+
 	stream.WriteObjectEnd()
 }
 
