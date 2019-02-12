@@ -22,12 +22,10 @@ import (
 	"reflect"
 	"runtime"
 	"strconv"
-	"unsafe"
 
 	"github.com/botobag/artemis/graphql/ast"
 	"github.com/botobag/artemis/internal/util"
-
-	"github.com/json-iterator/go"
+	"github.com/botobag/artemis/jsonwriter"
 )
 
 // Op describes an operation, usually as the package and method, such as "language/parser.Parse".
@@ -172,20 +170,22 @@ func (path ResponsePath) String() string {
 	return b.String()
 }
 
-// responsePathMarshaller implements jsoniter.ValEncoder to encode ResponsePath to JSON.
-type responsePathMarshaller struct{}
-
-var _ jsoniter.ValEncoder = responsePathMarshaller{}
-
-// IsEmpty implements jsoniter.ValEncoder.
-func (responsePathMarshaller) IsEmpty(ptr unsafe.Pointer) bool {
-	return len((*ResponsePath)(ptr).keys) == 0
+// responsePathMarshaler implements jsonwriter.ValueMarshaler to encode ResponsePath to JSON.
+type responsePathMarshaler struct {
+	path *ResponsePath
 }
 
-// Encode implements jsoniter.ValEncoder.
-func (responsePathMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	path := (*ResponsePath)(ptr)
+// NewResponsePathMarshaler creates marshaler to write JSON encoding for given ResponsePath with
+// jsonwriter.
+func NewResponsePathMarshaler(path *ResponsePath) jsonwriter.ValueMarshaler {
+	return responsePathMarshaler{path}
+}
+
+// MarshalJSONTo implements jsonwriter.ValueMarshaler.
+func (marshaler responsePathMarshaler) MarshalJSONTo(stream *jsonwriter.Stream) error {
+	path := marshaler.path
 	numPathKeys := len(path.keys)
+
 	stream.WriteArrayStart()
 	for i, key := range path.keys {
 		switch key := key.(type) {
@@ -194,8 +194,7 @@ func (responsePathMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream
 		case int:
 			stream.WriteInt(key)
 		default:
-			stream.Error = fmt.Errorf(`unsupported type "%T" of key in response path`, key)
-			return
+			return fmt.Errorf(`unsupported type "%T" of key in response path`, key)
 		}
 
 		if i != numPathKeys-1 {
@@ -203,11 +202,13 @@ func (responsePathMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream
 		}
 	}
 	stream.WriteArrayEnd()
+
+	return nil
 }
 
 // MarshalJSON serializes path keys to JSON.
 func (path *ResponsePath) MarshalJSON() ([]byte, error) {
-	return jsoniter.Marshal(path)
+	return jsonwriter.Marshal(NewResponsePathMarshaler(path))
 }
 
 // ErrorWithPath indicates an error that contains a path for reporting. If "path" is not given in
@@ -456,22 +457,22 @@ func (e *Error) printError(b *util.StringBuilder, nextErr *Error) {
 
 // MarshalJSON implements json.Marshaler.
 func (e *Error) MarshalJSON() ([]byte, error) {
-	return jsoniter.Marshal(e)
+	return jsonwriter.Marshal(NewErrorMarshaler(e))
 }
 
-// errorMarshaller implements jsoniter.ValEncoder to encode Error to JSON.
-type errorMarshaller struct{}
-
-var _ jsoniter.ValEncoder = errorMarshaller{}
-
-// IsEmpty implements jsoniter.ValEncoder.
-func (errorMarshaller) IsEmpty(ptr unsafe.Pointer) bool {
-	return (*Error)(ptr) == nil
+// errorMarshaler implements jsonwriter.ValueMarshaler to encode Error to JSON.
+type errorMarshaler struct {
+	err *Error
 }
 
-// Encode implements jsoniter.ValEncoder.
-func (errorMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	err := (*Error)(ptr)
+// NewErrorMarshaler creates marshaler to write JSON encoding for given Error with jsonwriter.
+func NewErrorMarshaler(err *Error) jsonwriter.ValueMarshaler {
+	return errorMarshaler{err}
+}
+
+// MarshalJSONTo implements jsonwriter.ValueMarshaler.
+func (marshaler errorMarshaler) MarshalJSONTo(stream *jsonwriter.Stream) error {
+	err := marshaler.err
 	stream.WriteObjectStart()
 
 	stream.WriteObjectField("message")
@@ -501,7 +502,7 @@ func (errorMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	if !err.Path.Empty() {
 		stream.WriteMore()
 		stream.WriteObjectField("path")
-		stream.WriteVal(&err.Path)
+		stream.WriteValue(NewResponsePathMarshaler(&err.Path))
 	}
 
 	numExtensios := len(err.Extensions)
@@ -511,7 +512,7 @@ func (errorMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 		stream.WriteObjectStart()
 		for k, v := range err.Extensions {
 			stream.WriteObjectField(k)
-			stream.WriteVal(v)
+			stream.WriteInterface(v)
 			numExtensios--
 			if numExtensios > 0 {
 				stream.WriteMore()
@@ -521,6 +522,8 @@ func (errorMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	}
 
 	stream.WriteObjectEnd()
+
+	return nil
 }
 
 // Errors wraps a list of Error. Intentionally wrapped in a struct instead of a simple alias to
@@ -620,39 +623,35 @@ func (errs Errors) HaveOccurred() bool {
 
 // MarshalJSON implements json.Marshaler.
 func (errs Errors) MarshalJSON() ([]byte, error) {
-	return jsoniter.Marshal(&errs)
+	return jsonwriter.Marshal(errorsMarshaler{errs})
 }
 
-// errorsMarshaller implements jsoniter.ValEncoder to encode Errors to JSON.
-type errorsMarshaller struct{}
-
-var _ jsoniter.ValEncoder = errorsMarshaller{}
-
-// IsEmpty implements jsoniter.ValEncoder.
-func (errorsMarshaller) IsEmpty(ptr unsafe.Pointer) bool {
-	return (*Errors)(ptr).HaveOccurred()
+// errorsMarshaler implements jsonwriter.ValueMarshaler to encode Errors to JSON.
+type errorsMarshaler struct {
+	errs Errors
 }
 
-// Encode implements jsoniter.ValEncoder.
-func (errorsMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	errs := (*Errors)(ptr)
+// NewErrorsMarshaler creates marshaler to write JSON encoding for given errs with jsonwriter.
+func NewErrorsMarshaler(errs Errors) jsonwriter.ValueMarshaler {
+	return errorsMarshaler{errs}
+}
+
+// MarshalJSONTo implements jsonwriter.ValueMarshaler.
+func (marshaler errorsMarshaler) MarshalJSONTo(stream *jsonwriter.Stream) error {
+	errs := marshaler.errs
 
 	numErrs := len(errs.Errors)
 	if numErrs == 0 {
 		stream.WriteEmptyArray()
 	} else {
 		stream.WriteArrayStart()
-		stream.WriteVal(errs.Errors[0])
+		stream.WriteValue(NewErrorMarshaler(errs.Errors[0]))
 		for _, err := range errs.Errors[1:] {
 			stream.WriteMore()
-			stream.WriteVal(err)
+			stream.WriteValue(NewErrorMarshaler(err))
 		}
 		stream.WriteArrayEnd()
 	}
-}
 
-func init() {
-	jsoniter.RegisterTypeEncoder("graphql.ResponsePath", responsePathMarshaller{})
-	jsoniter.RegisterTypeEncoder("graphql.Error", errorMarshaller{})
-	jsoniter.RegisterTypeEncoder("graphql.Errors", errorsMarshaller{})
+	return nil
 }

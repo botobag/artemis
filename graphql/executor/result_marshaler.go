@@ -17,27 +17,24 @@
 package executor
 
 import (
-	"unsafe"
-
 	"github.com/botobag/artemis/graphql"
-
-	"github.com/json-iterator/go"
+	"github.com/botobag/artemis/jsonwriter"
 )
 
-// resultMarshaller implements jsoniter.ValEncoder to encode ExecutionResult to JSON.
-type resultMarshaller struct{}
-
-var _ jsoniter.ValEncoder = resultMarshaller{}
-
-// IsEmpty implements jsoniter.ValEncoder.
-func (resultMarshaller) IsEmpty(ptr unsafe.Pointer) bool {
-	result := (*ExecutionResult)(ptr)
-	return result == nil || (result.Data == nil && !result.Errors.HaveOccurred())
+// resultMarshaler implements jsonwriter.ValueMarshaler to encode ExecutionResult to JSON.
+type resultMarshaler struct {
+	result *ExecutionResult
 }
 
-// Encode implements jsoniter.ValEncoder.
-func (resultMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	result := (*ExecutionResult)(ptr)
+// NewExecutionResultMarshaler creates marshaler to write JSON encoding for given ExecutionResult
+// with jsonwriter.
+func NewExecutionResultMarshaler(result *ExecutionResult) jsonwriter.ValueMarshaler {
+	return resultMarshaler{result}
+}
+
+// Encode implements jsonwriter.ValueMarshaler.
+func (marshaler resultMarshaler) MarshalJSONTo(stream *jsonwriter.Stream) error {
+	result := marshaler.result
 	stream.WriteObjectStart()
 
 	// Specification [0] suggests placing the "errors" first in response to make it clear.
@@ -45,7 +42,7 @@ func (resultMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	// [0]: See the note for https://facebook.github.io/graphql/June2018/#sec-Response-Format.
 	if result.Errors.HaveOccurred() {
 		stream.WriteObjectField("errors")
-		stream.WriteVal(result.Errors)
+		stream.WriteValue(graphql.NewErrorsMarshaler(result.Errors))
 		if result.Data != nil {
 			stream.WriteMore()
 		}
@@ -53,28 +50,27 @@ func (resultMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 
 	if result.Data != nil {
 		stream.WriteObjectField("data")
-		stream.WriteVal(result.Data)
+		stream.WriteValue(NewResultNodeMarshaler(result.Data))
 	}
 
 	stream.WriteObjectEnd()
+
+	return nil
 }
 
-// MarshalJSON implements json.Marshaler interface for ExecutionResult.
-func (result ExecutionResult) MarshalJSON() ([]byte, error) {
-	return jsoniter.Marshal(&result)
+// resultNodeMarshaler implements jsonwriter.ValueMarshaler to encode a ResultNode to JSON.
+type resultNodeMarshaler struct {
+	node *ResultNode
 }
 
-// resultNodeMarshaller implements jsoniter.ValEncoder to encode a ResultNode to JSON.
-type resultNodeMarshaller struct{}
-
-// IsEmpty implements jsoniter.ValEncoder.
-func (resultNodeMarshaller) IsEmpty(ptr unsafe.Pointer) bool {
-	result := (*ResultNode)(ptr)
-	return result == nil
+// NewResultNodeMarshaler creates marshaler to write JSON encoding for given ResultNode with
+// jsonwriter.
+func NewResultNodeMarshaler(result *ResultNode) jsonwriter.ValueMarshaler {
+	return resultNodeMarshaler{result}
 }
 
-// Encode implements jsoniter.ValEncoder.
-func (resultNodeMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+// Encode implements jsonwriter.ValueMarshaler.
+func (marshaler resultNodeMarshaler) MarshalJSONTo(stream *jsonwriter.Stream) error {
 	var (
 		// objectEndTask calls stream.WriteObjectEnd().
 		objectEndTask interface{} = &struct{ int }{1}
@@ -82,7 +78,7 @@ func (resultNodeMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) 
 		arrayEndTask interface{} = &struct{ int }{2}
 		// moreTask calls stream.WriteMore().
 		moreTask interface{} = &struct{ int }{3}
-		stack                = []interface{}{(*ResultNode)(ptr)}
+		stack                = []interface{}{marshaler.node}
 	)
 
 	for len(stack) > 0 {
@@ -129,9 +125,8 @@ func (resultNodeMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) 
 					nodes := object.ExecutionNodes
 					values := object.FieldValues
 					if len(nodes) != len(values) {
-						stream.Error = graphql.NewError("malformed object result value: mismatch length of " +
+						return graphql.NewError("malformed object result value: mismatch length of " +
 							"field values with the execution nodes")
-						return
 					}
 
 					for i := len(nodes) - 1; i >= 0; i-- {
@@ -142,18 +137,15 @@ func (resultNodeMarshaller) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) 
 				}
 
 			case ResultKindLeaf:
-				stream.WriteVal(result.Value)
+				stream.WriteInterface(result.Value)
 			}
 		}
 	}
+
+	return nil
 }
 
 // MarshalJSON implements json.Marshaler interface for ResultNode.
 func (result *ResultNode) MarshalJSON() ([]byte, error) {
-	return jsoniter.Marshal(result)
-}
-
-func init() {
-	jsoniter.RegisterTypeEncoder("executor.ExecutionResult", resultMarshaller{})
-	jsoniter.RegisterTypeEncoder("executor.ResultNode", resultNodeMarshaller{})
+	return jsonwriter.Marshal(resultNodeMarshaler{result})
 }

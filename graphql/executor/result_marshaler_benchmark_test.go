@@ -154,7 +154,7 @@ func BenchmarkMarshalStarWarsFriendsQueryResultToJSONWithGo(b *testing.B) {
 	}
 }
 
-func BenchmarkMarshalStarWarsFriendsQueryResultToJSONWithJsoniter(b *testing.B) {
+func BenchmarkMarshalStarWarsFriendsQueryResultToJSONWithJsonwriter(b *testing.B) {
 	var (
 		buf    bytes.Buffer
 		result = queryStarWarsCharacterFriends(b)
