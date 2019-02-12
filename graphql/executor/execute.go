@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"sync"
+	"sync/atomic"
 
 	"github.com/botobag/artemis/concurrent/future"
 	"github.com/botobag/artemis/graphql"
@@ -369,13 +371,8 @@ func dispatchTasksForObject(
 		}
 
 		// Create a task and dispatch it with given dispatcher.
-		executor.Dispatch(&ExecuteNodeTask{
-			executor: executor,
-			ctx:      ctx,
-			node:     childNode,
-			result:   nodeResult,
-			source:   value,
-		})
+		task := newExecuteNodeTask(executor, ctx, childNode, nodeResult, value)
+		executor.Dispatch(task)
 	}
 }
 
@@ -383,8 +380,40 @@ func dispatchTasksForObject(
 // ExecuteNodeTask
 //===----------------------------------------------------------------------------------------====//
 
+var executeNodeTaskFreeList = sync.Pool{
+	New: func() interface{} {
+		return &ExecuteNodeTask{}
+	},
+}
+
+func newExecuteNodeTask(
+	executor executor,
+	ctx *ExecutionContext,
+	node *ExecutionNode,
+	result *ResultNode,
+	source interface{},
+) *ExecuteNodeTask {
+
+	// Find one from the free list.
+	task := executeNodeTaskFreeList.Get().(*ExecuteNodeTask)
+	task.executor = executor
+	task.ctx = ctx
+	task.node = node
+	task.result = result
+	task.source = source
+	// Initialze reference count to 1.
+	task.refCount = 1
+
+	return task
+}
+
 // ExecuteNodeTask executes a field (represented by ExecutionNode). It is scheduled and is run by
 // an executor.
+//
+// ExecuteNodeTask is a temporary object used extensively during execution. Its allocation is
+// managed by a sync.Pool (i.e., executeNodeTaskFreeList) to improve the allocation rate. A field
+// "refCount" is added to track the number of references to this task object. Once the count reaches
+// 0, the task is put back to the free list automatically.
 type ExecuteNodeTask struct {
 	// Executor that runs this task
 	executor executor
@@ -401,6 +430,24 @@ type ExecuteNodeTask struct {
 
 	// Source value which is passed to the field resolver; This is the field value of the parent.
 	source interface{}
+
+	// Track the number of references to this object. See retain and release.
+	refCount int64
+}
+
+// retain increment the reference count of the task.
+func (task *ExecuteNodeTask) retain() *ExecuteNodeTask {
+	atomic.AddInt64(&task.refCount, 1)
+	return task
+}
+
+// release decrement the reference count of the task. If the count reaches the task is considered
+// unused (and should not be used thereafter) and will be put to the free list for later reuse by
+// others (for another task).
+func (task *ExecuteNodeTask) release() {
+	if atomic.AddInt64(&task.refCount, -1) == 0 {
+		executeNodeTaskFreeList.Put(task)
+	}
 }
 
 // run implements Task. It executes the task to value for the field corresponding to the
@@ -431,11 +478,15 @@ func (task *ExecuteNodeTask) run() {
 	value, err := resolver.Resolve(ctx.Context(), task.source, info)
 	if err != nil {
 		task.handleNodeError(err, result)
+		task.release()
 		return
 	}
 
 	// Complete subfields with value.
 	task.completeValue(field.Type(), task.result, value)
+
+	// Decrement reference count.
+	task.release()
 
 	return
 }
@@ -503,7 +554,8 @@ func (task *ExecuteNodeTask) completeValuePrologue(
 	// not be ready yet. Dispatch a task to poll its result.
 	if value, ok := value.(future.Future); ok {
 		task.executor.Dispatch(&AsyncValueTask{
-			nodeTask:        task,
+			// Increment the reference count because the task is now referenced by the AsyncValueTask.
+			nodeTask:        task.retain(),
 			dataLoaderCycle: task.executor.DataLoaderCycle(),
 			returnType:      returnType,
 			result:          result,
@@ -679,6 +731,7 @@ func (task *ExecuteNodeTask) completeNonWrappingValue(
 	task.handleNodeError(
 		graphql.NewError(fmt.Sprintf(`Cannot complete value of unexpected type "%v".`, returnType)),
 		result)
+
 	return false
 }
 
@@ -811,6 +864,7 @@ func (task *AsyncValueTask) run() {
 		task.nodeTask.handleNodeError(err, task.result)
 	} else if value != future.PollResultPending {
 		task.nodeTask.completeValue(task.returnType, task.result, value)
+		task.nodeTask.release()
 	} else {
 		// Value is not available at the time. Someone will perform the computation and notifies us via
 		// wake when the value is ready.
