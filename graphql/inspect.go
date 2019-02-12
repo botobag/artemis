@@ -23,8 +23,7 @@ import (
 	"runtime"
 
 	"github.com/botobag/artemis/internal/util"
-
-	"github.com/json-iterator/go"
+	"github.com/botobag/artemis/jsonwriter"
 )
 
 // ValueWithCustomInspect provides custom inspect function to serialize value in Inspect.
@@ -44,7 +43,7 @@ func InspectToBuf(v interface{}, out io.Writer) error {
 	switch value.Kind() {
 	case reflect.String:
 		// graphql-js: JSON.stringify(value)
-		stream := jsoniter.NewStream(jsoniter.ConfigDefault, out, 0)
+		stream := jsonwriter.NewStream(out)
 		stream.WriteString(v.(string))
 		if err := stream.Flush(); err != nil {
 			return err
