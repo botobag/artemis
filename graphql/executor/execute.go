@@ -467,15 +467,8 @@ func (task *ExecuteNodeTask) run() {
 		resolver = ctx.Operation().DefaultFieldResolver()
 	}
 
-	// Create ResolveInfo.
-	info := &ResolveInfo{
-		ExecutionContext: ctx,
-		ExecutionNode:    node,
-		ResultNode:       result,
-	}
-
 	// Execute resolver to retrieve the field value
-	value, err := resolver.Resolve(ctx.Context(), task.source, info)
+	value, err := resolver.Resolve(ctx.Context(), task.source, task.newResolveInfoFor(result))
 	if err != nil {
 		task.handleNodeError(err, result)
 		task.release()
@@ -798,12 +791,7 @@ func (task *ExecuteNodeTask) completeAbstractValue(
 		return false
 	}
 
-	info := &ResolveInfo{
-		ExecutionContext: ctx,
-		ExecutionNode:    node,
-		ResultNode:       result,
-	}
-	runtimeType, err := resolver.Resolve(ctx.Context(), value, info)
+	runtimeType, err := resolver.Resolve(ctx.Context(), value, task.newResolveInfoFor(result))
 	if err != nil {
 		task.handleNodeError(err, result)
 		return false
@@ -829,6 +817,95 @@ func (task *ExecuteNodeTask) completeAbstractValue(
 	}
 
 	return task.completeObjectValue(runtimeType, result, value)
+}
+
+// newResolveInfoFor creates a ResolveInfo to resolve result with current task context.
+func (task *ExecuteNodeTask) newResolveInfoFor(result *ResultNode) graphql.ResolveInfo {
+	if result == task.result {
+		return task
+	}
+
+	return &ResolveInfo{
+		ExecutionContext: task.ctx,
+		ExecutionNode:    task.node,
+		ResultNode:       result,
+	}
+}
+
+// The following implements graphql.ResolveInfo for ExecuteNodeTask. This is a memory optimization.
+// When resolving value for task.result (that's the case for ExecuteNodeTask.run), we can pass:
+//
+//	info := &ResolveInfo{
+//		ExecutionContext: task.ctx,
+//		ExecutionNode:    task.node,
+//		ResultNode:       task.result,
+//	}
+//
+// But a better way is to use "task" as an ResolveInfo object to save allocation overheads.
+
+// Schema implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) Schema() *graphql.Schema {
+	return task.ctx.Operation().Schema()
+}
+
+// Document implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) Document() ast.Document {
+	return task.ctx.Operation().Document()
+}
+
+// Operation implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) Operation() *ast.OperationDefinition {
+	return task.ctx.Operation().Definition()
+}
+
+// DataLoaderManager implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) DataLoaderManager() graphql.DataLoaderManager {
+	return task.ctx.DataLoaderManager()
+}
+
+// RootValue implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) RootValue() interface{} {
+	return task.ctx.RootValue()
+}
+
+// AppContext implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) AppContext() interface{} {
+	return task.ctx.AppContext()
+}
+
+// VariableValues implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) VariableValues() graphql.VariableValues {
+	return task.ctx.VariableValues()
+}
+
+// ParentFieldSelection implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) ParentFieldSelection() graphql.FieldSelectionInfo {
+	return fieldSelectionInfo{task.node.Parent}
+}
+
+// Object implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) Object() graphql.Object {
+	return parentFieldType(task.ctx, task.node)
+}
+
+// FieldDefinitions implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) FieldDefinitions() []*ast.Field {
+	return task.node.Definitions
+}
+
+// Field implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) Field() graphql.Field {
+	return task.node.Field
+}
+
+// Path implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) Path() graphql.ResponsePath {
+	return task.result.Path()
+}
+
+// Args implements graphql.ResolveInfo.
+func (task *ExecuteNodeTask) Args() graphql.ArgumentValues {
+	return task.node.Args
 }
 
 //===----------------------------------------------------------------------------------------====//
