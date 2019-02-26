@@ -30,7 +30,7 @@ var _ = Describe("Type System: Schema", func() {
 		DirectiveInputType        graphql.InputObject
 		WrappedDirectiveInputType graphql.InputObject
 		Directive                 *graphql.Directive
-		Schema                    *graphql.Schema
+		Schema                    graphql.Schema
 	)
 
 	BeforeEach(func() {

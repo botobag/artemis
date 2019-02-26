@@ -175,7 +175,34 @@ type SchemaConfig struct {
 // This allows us to cache the results for some operations such as PossibleTypes.
 //
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Schema
-type Schema struct {
+type Schema interface {
+	// TypeMap keeps track of all named types referenced within the schema.
+	TypeMap() TypeMap
+
+	// Directives keeps track of all valid directives within the schema.
+	Directives() DirectiveList
+
+	// The following provides root operation types defined in a GraphQL schema.
+	//
+	// Reference: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
+	Query() Object
+	Mutation() Object
+	Subscription() Object
+
+	// PossibleTypes returns set of possible concrete types for the given abstract type in the schema.
+	// For Interface, this contains the list of Object types that implement it. For Union, this
+	// contains the list of its member types.
+	PossibleTypes(t AbstractType) PossibleTypeSet
+
+	// TypeFromAST returns a graphql.Type that applies to the ast.Type in the given schema For
+	// example, if provided the parsed AST node for `[User]`, a graphql.List instance will be
+	// returned, containing the type called "User" found in the schema. If a type called "User" is not
+	// found in the schema, then nil will be returned.
+	TypeFromAST(t ast.Type) Type
+}
+
+// schema provides an implementation to Schema which creates schema from a SchemaConfig.
+type schema struct {
 	// query, mutation and subscription are root operation objects.
 	query        Object
 	mutation     Object
@@ -192,8 +219,8 @@ type Schema struct {
 }
 
 // NewSchema initializes a Schema from the given config.
-func NewSchema(config *SchemaConfig) (*Schema, error) {
-	schema := &Schema{
+func NewSchema(config *SchemaConfig) (Schema, error) {
+	schema := &schema{
 		query:            config.Query,
 		mutation:         config.Mutation,
 		subscription:     config.Subscription,
@@ -295,49 +322,38 @@ func NewSchema(config *SchemaConfig) (*Schema, error) {
 	return schema, nil
 }
 
-// TypeMap keeps track of all named types referenced within the schema.
-func (schema *Schema) TypeMap() TypeMap {
+// TypeMap implements Schema.
+func (schema *schema) TypeMap() TypeMap {
 	return schema.typeMap
 }
 
-// Directives keeps track of all valid directives within the schema.
-func (schema *Schema) Directives() DirectiveList {
+// Directives implements Schema.
+func (schema *schema) Directives() DirectiveList {
 	return schema.directives
 }
 
-// Query is one of the three GraphQL Root Operations.
-//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
-func (schema *Schema) Query() Object {
+// Query implements Schema.
+func (schema *schema) Query() Object {
 	return schema.query
 }
 
-// Mutation is one of the three GraphQL Root Operations.
-//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
-func (schema *Schema) Mutation() Object {
+// Mutation implements Schema.
+func (schema *schema) Mutation() Object {
 	return schema.mutation
 }
 
-// Subscription is one of the three GraphQL Root Operations.
-//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
-func (schema *Schema) Subscription() Object {
+// Subscription implements Schema.
+func (schema *schema) Subscription() Object {
 	return schema.subscription
 }
 
-// PossibleTypes returns set of possible concrete types for the given abstract type in the schema.
-// For Interface, this contains the list of Object types that implement it. For Union, this contains
-// the list of its member types.
-func (schema *Schema) PossibleTypes(t AbstractType) PossibleTypeSet {
+// PossibleTypes implements Schema.
+func (schema *schema) PossibleTypes(t AbstractType) PossibleTypeSet {
 	return schema.possibleTypeSets[t]
 }
 
-// TypeFromAST returns a graphql.Type that applies to the ast.Type in the given schema For example,
-// if provided the parsed AST node for `[User]`, a graphql.List instance will be returned,
-// containing the type called "User" found in the schema. If a type called "User" is not found in
-// the schema, then nil will be returned.
-func (schema *Schema) TypeFromAST(t ast.Type) Type {
+// TypeFromAST implements Schema.
+func (schema *schema) TypeFromAST(t ast.Type) Type {
 	// Find the innermost ast.NamedType. Memoize what type we've went through.
 	var (
 		typeName string

@@ -38,7 +38,7 @@ import (
 // [2]: https://facebook.github.io/graphql/draft/#sec-Language.Document
 type PreparedOperation struct {
 	// Schema of the type system that is currently executing
-	schema *graphql.Schema
+	schema graphql.Schema
 
 	// Document that contains definitions for this operation
 	document ast.Document
@@ -60,7 +60,7 @@ type PreparedOperation struct {
 // PrepareParams specifies parameters to Prepare. All data are required except DefaultFieldResolver.
 type PrepareParams struct {
 	// Schema of the type system that this operation is executing on
-	Schema *graphql.Schema
+	Schema graphql.Schema
 
 	// Document that contains operations to be prepared for execution
 	Document ast.Document
@@ -170,7 +170,7 @@ func Prepare(params PrepareParams) (*PreparedOperation, graphql.Errors) {
 }
 
 // Schema returns the type system definition which the operation is based on.
-func (operation *PreparedOperation) Schema() *graphql.Schema {
+func (operation *PreparedOperation) Schema() graphql.Schema {
 	return operation.schema
 }
 

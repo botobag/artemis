@@ -1188,7 +1188,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	Describe("Provides error when erroneous operation name is provided to query with multiple operations", func() {
 		var (
 			document ast.Document
-			schema   *graphql.Schema
+			schema   graphql.Schema
 		)
 
 		BeforeEach(func() {
@@ -1244,7 +1244,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 				"a": "b",
 				"c": "d",
 			}
-			schema *graphql.Schema
+			schema graphql.Schema
 		)
 
 		BeforeEach(func() {

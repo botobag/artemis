@@ -110,7 +110,7 @@ func OverrideOperationCache(cache OperationCache) Option {
 
 // New creates a net/http.Handler and builds a GraphQL web service to serve queries against the
 // schema.
-func New(schema *graphql.Schema, opts ...Option) (http.Handler, error) {
+func New(schema graphql.Schema, opts ...Option) (http.Handler, error) {
 	// Apply Options on config.
 	config := httpHandlerConfig{
 		LLConfig: LLConfig{
@@ -203,7 +203,7 @@ type DefaultRequestBuilder struct {
 // HTTPHandler provides interfaces to access settings in httpHandler from RequestBuilder.
 type HTTPHandler interface {
 	// Schema served by this handler
-	Schema() *graphql.Schema
+	Schema() graphql.Schema
 
 	// OperationCache for the parsed queries
 	OperationCache() OperationCache

@@ -40,7 +40,7 @@ var (
 )
 
 // Schema implements graphql.ResolveInfo.
-func (info *ResolveInfo) Schema() *graphql.Schema {
+func (info *ResolveInfo) Schema() graphql.Schema {
 	return info.ExecutionContext.Operation().Schema()
 }
 

@@ -27,7 +27,7 @@ import (
 // provided variable definitions and arbitrary input. If the input cannot be parsed to match the
 // variable definitions, a graphql.Error will be raised.
 func CoerceVariableValues(
-	schema *graphql.Schema,
+	schema graphql.Schema,
 	variableDefinitions []*ast.VariableDefinition,
 	inputValues map[string]interface{}) (graphql.VariableValues, graphql.Errors) {
 	var errs graphql.Errors

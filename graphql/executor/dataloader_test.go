@@ -192,7 +192,7 @@ func (manager *StarWarsDataLoaderManager) CharacterLoadCalls() [][]dataloader.Ke
 
 var _ = Describe("Execute: fetch data with DataLoader", func() {
 	var (
-		schema            *graphql.Schema
+		schema            graphql.Schema
 		runner            concurrent.Executor
 		dataloaderManager *StarWarsDataLoaderManager
 	)

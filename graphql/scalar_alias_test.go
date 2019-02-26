@@ -151,7 +151,7 @@ var _ = Describe("ScalarAlias", func() {
 			Num  int
 		}
 
-		var Schema *graphql.Schema
+		var Schema graphql.Schema
 
 		BeforeEach(func() {
 			userIDType := &graphql.ScalarAliasConfig{

@@ -30,7 +30,7 @@ import (
 // such as GraphQL web services.
 type LLHandler struct {
 	// Schema served by this handler
-	schema *graphql.Schema
+	schema graphql.Schema
 
 	// Cache for the parsed query; Could be nil (when the handler was created
 	// with config.OperationCache set to NopOperationCache) to disable cache.
@@ -43,7 +43,7 @@ type LLHandler struct {
 // LLConfig contains configuration to set up a LLHandler.
 type LLConfig struct {
 	// Schema to be working on
-	Schema *graphql.Schema
+	Schema graphql.Schema
 
 	// OperationCache caches graphql.PreparedOperation created from a query to save parsing efforts.
 	OperationCache OperationCache
@@ -81,7 +81,7 @@ func NewLLHandler(config *LLConfig) (*LLHandler, error) {
 }
 
 // Schema returns handler.schema.
-func (handler *LLHandler) Schema() *graphql.Schema {
+func (handler *LLHandler) Schema() graphql.Schema {
 	return handler.schema
 }
 

@@ -34,7 +34,7 @@ func TestGraphQLCore(t *testing.T) {
 	RunSpecs(t, "GraphQL Core Suite")
 }
 
-func executeQueryWithParams(schema *graphql.Schema, query string, params map[string]interface{}) executor.ExecutionResult {
+func executeQueryWithParams(schema graphql.Schema, query string, params map[string]interface{}) executor.ExecutionResult {
 	document, err := parser.Parse(token.NewSource(&token.SourceConfig{
 		Body: token.SourceBody([]byte(query)),
 	}), parser.ParseOptions{})
@@ -53,6 +53,6 @@ func executeQueryWithParams(schema *graphql.Schema, query string, params map[str
 	return result
 }
 
-func executeQuery(schema *graphql.Schema, query string) executor.ExecutionResult {
+func executeQuery(schema graphql.Schema, query string) executor.ExecutionResult {
 	return executeQueryWithParams(schema, query, nil)
 }

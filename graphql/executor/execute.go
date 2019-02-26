@@ -283,7 +283,7 @@ func shouldIncludeNode(ctx *ExecutionContext, node ast.Selection) (bool, error) 
 // __schema could get automatically added to the query type, but that would require mutating type
 // definitions, which would cause issues.
 func findFieldDef(
-	schema *graphql.Schema,
+	schema graphql.Schema,
 	parentType graphql.Object,
 	fieldName string) graphql.Field {
 	// TODO: Deal with special introspection fields.
@@ -844,7 +844,7 @@ func (task *ExecuteNodeTask) newResolveInfoFor(result *ResultNode) graphql.Resol
 // But a better way is to use "task" as an ResolveInfo object to save allocation overheads.
 
 // Schema implements graphql.ResolveInfo.
-func (task *ExecuteNodeTask) Schema() *graphql.Schema {
+func (task *ExecuteNodeTask) Schema() graphql.Schema {
 	return task.ctx.Operation().Schema()
 }
 

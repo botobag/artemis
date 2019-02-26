@@ -233,7 +233,7 @@ type ResolveInfo interface {
 	// executor.PreparedOperation)
 
 	// Schema of the type system that is currently executing.
-	Schema() *Schema
+	Schema() Schema
 
 	// Document that contains definitions for the operation.
 	Document() ast.Document

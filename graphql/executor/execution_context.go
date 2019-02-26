@@ -85,7 +85,7 @@ func (context *ExecutionContext) Operation() *PreparedOperation {
 }
 
 // Schema returns context.operation.Schema().
-func (context *ExecutionContext) Schema() *graphql.Schema {
+func (context *ExecutionContext) Schema() graphql.Schema {
 	return context.operation.Schema()
 }
 

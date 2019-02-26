@@ -82,7 +82,7 @@ var _ = Describe("Enum", func() {
 	// graphql-js/src/type/__tests__/enumType-test.js
 	Describe("Type System: Enum Values", func() {
 		var (
-			schema           *graphql.Schema
+			schema           graphql.Schema
 			colorType        graphql.Enum
 			queryType        graphql.Object
 			mutationType     graphql.Object
@@ -623,7 +623,7 @@ var _ = Describe("Enum", func() {
 			var (
 				colorType graphql.Enum
 				queryType graphql.Object
-				schema    *graphql.Schema
+				schema    graphql.Schema
 			)
 
 			BeforeEach(func() {
