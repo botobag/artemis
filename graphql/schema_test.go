@@ -29,7 +29,7 @@ var _ = Describe("Type System: Schema", func() {
 		InterfaceType             graphql.Interface
 		DirectiveInputType        graphql.InputObject
 		WrappedDirectiveInputType graphql.InputObject
-		Directive                 *graphql.Directive
+		Directive                 graphql.Directive
 		Schema                    graphql.Schema
 	)
 

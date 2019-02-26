@@ -25,7 +25,7 @@ import (
 // node which may contain directives. Optionally also accepts a map of variable values. If the
 // directive does not exist on the node, returns nil.
 func DirectiveValues(
-	directiveDef *graphql.Directive,
+	directiveDef graphql.Directive,
 	nodeDirectives ast.Directives,
 	variableValues graphql.VariableValues) (graphql.ArgumentValues, error) {
 

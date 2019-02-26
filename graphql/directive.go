@@ -85,7 +85,24 @@ func (config *DirectiveConfig) DeepCopy() *DirectiveConfig {
 // tool behavior.
 //
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.Directives
-type Directive struct {
+type Directive interface {
+	fmt.Stringer
+
+	// Name of the directive
+	Name() string
+
+	// Description provides documentation for the directive.
+	Description() string
+
+	// Locations specifies the places where the directive must only be used.
+	Locations() []DirectiveLocation
+
+	// Args indicates the arguments taken by the directive.
+	Args() []Argument
+}
+
+// directive provides an implementation to Schema which creates schema from a SchemaConfig.
+type directive struct {
 	config DirectiveConfig
 	args   []Argument
 	// notation is cached value for returning from String() and is initialized in constructor.
@@ -93,11 +110,11 @@ type Directive struct {
 }
 
 var (
-	_ fmt.Stringer = (*Directive)(nil)
+	_ Directive = (*directive)(nil)
 )
 
-// NewDirective creates a
-func NewDirective(config *DirectiveConfig) (*Directive, error) {
+// NewDirective creates a Directive from a DirectiveConfig.
+func NewDirective(config *DirectiveConfig) (Directive, error) {
 	if len(config.Name) == 0 {
 		return nil, NewError("Must provide name for Directive.")
 	}
@@ -108,7 +125,7 @@ func NewDirective(config *DirectiveConfig) (*Directive, error) {
 		return nil, err
 	}
 
-	return &Directive{
+	return &directive{
 		config:   *config.DeepCopy(),
 		args:     args,
 		notation: fmt.Sprintf("@%s", config.Name),
@@ -117,7 +134,7 @@ func NewDirective(config *DirectiveConfig) (*Directive, error) {
 
 // MustNewDirective is a convenience function equivalent to NewDirective but panics on failure
 // instead of returning an error.
-func MustNewDirective(config *DirectiveConfig) *Directive {
+func MustNewDirective(config *DirectiveConfig) Directive {
 	directive, err := NewDirective(config)
 	if err != nil {
 		panic(err)
@@ -125,27 +142,27 @@ func MustNewDirective(config *DirectiveConfig) *Directive {
 	return directive
 }
 
-// Name of the directive
-func (d *Directive) Name() string {
+// Name implements Directive.
+func (d *directive) Name() string {
 	return d.config.Name
 }
 
-// Description provides documentation for the directive.
-func (d *Directive) Description() string {
+// Description implements Directive.
+func (d *directive) Description() string {
 	return d.config.Description
 }
 
-// Locations specifies the places where the directive must only be used.
-func (d *Directive) Locations() []DirectiveLocation {
+// Locations implements Directive.
+func (d *directive) Locations() []DirectiveLocation {
 	return d.config.Locations
 }
 
-// Args indicates the arguments taken by the directive.
-func (d *Directive) Args() []Argument {
+// Args implements Directive.
+func (d *directive) Args() []Argument {
 	return d.args
 }
 
 // String implemennts fmt.Stringer.
-func (d *Directive) String() string {
+func (d *directive) String() string {
 	return d.notation
 }

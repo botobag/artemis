@@ -44,7 +44,7 @@ var skipDirective = MustNewDirective(&DirectiveConfig{
 })
 
 // SkipDirective returns directive definition for @skip.
-func SkipDirective() *Directive {
+func SkipDirective() Directive {
 	return skipDirective
 }
 
@@ -75,7 +75,7 @@ var includeDirective = MustNewDirective(&DirectiveConfig{
 })
 
 // IncludeDirective returns directive definition for @include.
-func IncludeDirective() *Directive {
+func IncludeDirective() Directive {
 	return includeDirective
 }
 
@@ -111,7 +111,7 @@ var deprecatedDirective = MustNewDirective(&DirectiveConfig{
 })
 
 // DeprecatedDirective returns directive definition for @deprecated.
-func DeprecatedDirective() *Directive {
+func DeprecatedDirective() Directive {
 	return deprecatedDirective
 }
 
@@ -119,8 +119,8 @@ func DeprecatedDirective() *Directive {
 // per specification.
 //
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.Directives
-func StandardDirectives() []*Directive {
-	return []*Directive{
+func StandardDirectives() []Directive {
+	return []Directive{
 		// @skip
 		SkipDirective(),
 		// @include

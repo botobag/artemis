@@ -132,10 +132,10 @@ func (typeMap TypeMap) Lookup(name string) Type {
 }
 
 // DirectiveList is a list of Directive.
-type DirectiveList []*Directive
+type DirectiveList []Directive
 
 // Lookup finds a directive with given name in the list.
-func (directiveList DirectiveList) Lookup(name string) *Directive {
+func (directiveList DirectiveList) Lookup(name string) Directive {
 	for _, directive := range directiveList {
 		if directive.Name() == name {
 			return directive
@@ -164,7 +164,8 @@ type SchemaConfig struct {
 	// TODO: AST node
 }
 
-// Schema Definition
+// Schema states the requirements of a schema object that other components such as execution engine
+// depends on.
 //
 // A GraphQL service’s collective type system capabilities are referred to as that service’s
 // “schema”. A schema is defined in terms of the types and directives it supports as well as the
