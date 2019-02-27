@@ -60,7 +60,7 @@ func (typeMap TypeMap) add(t Type) error {
 			} else {
 				if prev != t {
 					return NewError(fmt.Sprintf(
-						"Schema must contain unique named types but contains multiple types named %s.", name))
+						`Schema must contain unique named types but contains multiple types named "%s".`, name))
 				}
 				// Skip t which has been processed.
 				continue

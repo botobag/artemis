@@ -24,102 +24,179 @@ import (
 )
 
 var _ = Describe("Type System: Schema", func() {
-	// graphql-js/src/type/__tests__/schema-test.js
-	var (
-		InterfaceType             graphql.Interface
-		DirectiveInputType        graphql.InputObject
-		WrappedDirectiveInputType graphql.InputObject
-		Directive                 graphql.Directive
-		Schema                    graphql.Schema
-	)
-
-	BeforeEach(func() {
-		var err error
-
-		InterfaceType, err = graphql.NewInterface(&graphql.InterfaceConfig{
-			Name: "Interface",
-			Fields: graphql.Fields{
-				"fieldName": {
-					Type: graphql.T(graphql.String()),
-				},
-			},
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-
-		DirectiveInputType, err = graphql.NewInputObject(&graphql.InputObjectConfig{
-			Name: "DirInput",
-			Fields: graphql.InputFields{
-				"field": {
-					Type: graphql.T(graphql.String()),
-				},
-			},
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-
-		WrappedDirectiveInputType, err = graphql.NewInputObject(&graphql.InputObjectConfig{
-			Name: "WrappedDirInput",
-			Fields: graphql.InputFields{
-				"field": {
-					Type: graphql.T(graphql.String()),
-				},
-			},
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-
-		Directive, err = graphql.NewDirective(&graphql.DirectiveConfig{
-			Name: "dir",
-			Locations: []graphql.DirectiveLocation{
-				graphql.DirectiveLocationObject,
-			},
-			Args: graphql.ArgumentConfigMap{
-				"arg": {
-					Type: graphql.T(DirectiveInputType),
-				},
-				"argList": {
-					Type: graphql.ListOfType(WrappedDirectiveInputType),
-				},
-			},
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-
-		query, err := graphql.NewObject(&graphql.ObjectConfig{
-			Name: "Query",
-			Fields: graphql.Fields{
-				"getObject": {
-					Type: graphql.T(InterfaceType),
-				},
-			},
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-
-		Schema, err = graphql.NewSchema(&graphql.SchemaConfig{
-			Query: query,
-			Directives: graphql.DirectiveList{
-				Directive,
-			},
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-	})
-
+	// graphql-js/src/type/__tests__/schema-test.js@2fcd55e
 	Describe("Type Map", func() {
+		It("includes interface possible types in the type map", func() {
+			SomeInterface := graphql.MustNewInterface(&graphql.InterfaceConfig{
+				Name:   "SomeInterface",
+				Fields: graphql.Fields{},
+			})
+
+			SomeSubType := graphql.MustNewObject(&graphql.ObjectConfig{
+				Name: "SomeSubType",
+				Interfaces: []graphql.InterfaceTypeDefinition{
+					graphql.I(SomeInterface),
+				},
+			})
+
+			Schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+				Query: graphql.MustNewObject(&graphql.ObjectConfig{
+					Name: "Query",
+					Interfaces: []graphql.InterfaceTypeDefinition{
+						graphql.I(SomeInterface),
+					},
+				}),
+				Types: []graphql.Type{SomeSubType},
+			})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Expect(Schema.TypeMap().Lookup("SomeInterface")).Should(Equal(SomeInterface))
+			Expect(Schema.TypeMap().Lookup("SomeSubType")).Should(Equal(SomeSubType))
+		})
+
+		It("includes nested input objects in the map", func() {
+			NestedInputObject := graphql.MustNewInputObject(&graphql.InputObjectConfig{
+				Name: "NestedInputObject",
+			})
+
+			SomeInputObject := graphql.MustNewInputObject(&graphql.InputObjectConfig{
+				Name: "SomeInputObject",
+				Fields: graphql.InputFields{
+					"nested": {
+						Type: graphql.T(NestedInputObject),
+					},
+				},
+			})
+
+			Schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+				Query: graphql.MustNewObject(&graphql.ObjectConfig{
+					Name: "Query",
+					Fields: graphql.Fields{
+						"something": {
+							Type: graphql.T(graphql.String()),
+							Args: graphql.ArgumentConfigMap{
+								"input": {
+									Type: graphql.T(SomeInputObject),
+								},
+							},
+						},
+					},
+				}),
+			})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Expect(Schema.TypeMap().Lookup("SomeInputObject")).Should(Equal(SomeInputObject))
+			Expect(Schema.TypeMap().Lookup("NestedInputObject")).Should(Equal(NestedInputObject))
+		})
+
 		It("includes input types only used in directives", func() {
-			Expect(Schema.TypeMap().Lookup("DirInput")).ShouldNot(BeNil())
-			Expect(Schema.TypeMap().Lookup("WrappedDirInput")).ShouldNot(BeNil())
+			directive := graphql.MustNewDirective(&graphql.DirectiveConfig{
+				Name: "dir",
+				Locations: []graphql.DirectiveLocation{
+					graphql.DirectiveLocationObject,
+				},
+				Args: graphql.ArgumentConfigMap{
+					"arg": {
+						Type: &graphql.InputObjectConfig{
+							Name: "Foo",
+						},
+					},
+					"argList": {
+						Type: &graphql.InputObjectConfig{
+							Name: "Bar",
+						},
+					},
+				},
+			})
+
+			schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+				Directives: []graphql.Directive{
+					directive,
+				},
+			})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Expect(schema.TypeMap().Lookup("Foo")).ShouldNot(BeNil())
+			Expect(schema.TypeMap().Lookup("Bar")).ShouldNot(BeNil())
 		})
 	})
 
-	It("defines a Schema", func() {
-		Expect(Schema.Query()).ShouldNot(BeNil())
-		Expect(Schema.Query().Name()).Should(Equal("Query"))
+	Describe("A Schema must contain uniquely named types", func() {
+		It("rejects a Schema which redefines a built-in type", func() {
+			FakeString := graphql.MustNewScalar(&graphql.ScalarConfig{
+				Name: "String",
+				ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
+					return nil, nil
+				}),
+			})
 
-		Expect(Schema.Mutation()).Should(BeNil())
-		Expect(Schema.Subscription()).Should(BeNil())
+			QueryType := graphql.MustNewObject(&graphql.ObjectConfig{
+				Name: "Query",
+				Fields: graphql.Fields{
+					"normal": {
+						Type: graphql.T(graphql.String()),
+					},
+					"fake": {
+						Type: graphql.T(FakeString),
+					},
+				},
+			})
+
+			_, err := graphql.NewSchema(&graphql.SchemaConfig{
+				Query: QueryType,
+			})
+			Expect(err).Should(MatchError(`Schema must contain unique named types but contains multiple types named "String".`))
+		})
+
+		It("rejects a Schema which defines an object type twice", func() {
+			SameName1 := &graphql.ObjectConfig{
+				Name: "SameName",
+			}
+			SameName2 := &graphql.ObjectConfig{
+				Name: "SameName",
+			}
+
+			types := []graphql.Type{
+				graphql.MustNewObject(SameName1),
+				graphql.MustNewObject(SameName2),
+			}
+
+			_, err := graphql.NewSchema(&graphql.SchemaConfig{
+				Types: types,
+			})
+			Expect(err).Should(MatchError(`Schema must contain unique named types but contains multiple types named "SameName".`))
+		})
+
+		It("rejects a Schema which defines fields with conflicting types", func() {
+			QueryType := graphql.MustNewObject(&graphql.ObjectConfig{
+				Name: "Query",
+				Fields: graphql.Fields{
+					"a": {
+						Type: &graphql.ObjectConfig{
+							Name: "SameName",
+						},
+					},
+					"b": {
+						Type: &graphql.ObjectConfig{
+							Name: "SameName",
+						},
+					},
+				},
+			})
+
+			_, err := graphql.NewSchema(&graphql.SchemaConfig{
+				Query: QueryType,
+			})
+			Expect(err).Should(MatchError(`Schema must contain unique named types but contains multiple types named "SameName".`))
+		})
 	})
 
-	Describe("Directives", func() {
+	Describe("Standard Directives", func() {
 		It("includes standard directives by default", func() {
+			schema, err := graphql.NewSchema(&graphql.SchemaConfig{})
+			Expect(err).ShouldNot(HaveOccurred())
 			for _, directive := range graphql.StandardDirectives() {
-				Expect(Schema.Directives()).Should(ContainElement(directive))
+				Expect(schema.Directives()).Should(ContainElement(directive))
 			}
 		})
 
@@ -135,5 +212,4 @@ var _ = Describe("Type System: Schema", func() {
 			})
 		})
 	})
-
 })
