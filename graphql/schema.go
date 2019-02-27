@@ -323,6 +323,16 @@ func NewSchema(config *SchemaConfig) (Schema, error) {
 	return schema, nil
 }
 
+// MustNewSchema is a convenience function equivalent to NewSchema but panics on failure instead of
+// returning an error.
+func MustNewSchema(config *SchemaConfig) Schema {
+	schema, err := NewSchema(config)
+	if err != nil {
+		panic(err)
+	}
+	return schema
+}
+
 // TypeMap implements Schema.
 func (schema *schema) TypeMap() TypeMap {
 	return schema.typeMap

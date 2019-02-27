@@ -39,7 +39,7 @@ var _ = Describe("Type System: Schema", func() {
 				},
 			})
 
-			Schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+			Schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 				Query: graphql.MustNewObject(&graphql.ObjectConfig{
 					Name: "Query",
 					Interfaces: []graphql.InterfaceTypeDefinition{
@@ -48,7 +48,6 @@ var _ = Describe("Type System: Schema", func() {
 				}),
 				Types: []graphql.Type{SomeSubType},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(Schema.TypeMap().Lookup("SomeInterface")).Should(Equal(SomeInterface))
 			Expect(Schema.TypeMap().Lookup("SomeSubType")).Should(Equal(SomeSubType))
@@ -68,7 +67,7 @@ var _ = Describe("Type System: Schema", func() {
 				},
 			})
 
-			Schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+			Schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 				Query: graphql.MustNewObject(&graphql.ObjectConfig{
 					Name: "Query",
 					Fields: graphql.Fields{
@@ -83,7 +82,6 @@ var _ = Describe("Type System: Schema", func() {
 					},
 				}),
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(Schema.TypeMap().Lookup("SomeInputObject")).Should(Equal(SomeInputObject))
 			Expect(Schema.TypeMap().Lookup("NestedInputObject")).Should(Equal(NestedInputObject))
@@ -109,12 +107,11 @@ var _ = Describe("Type System: Schema", func() {
 				},
 			})
 
-			schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+			schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 				Directives: []graphql.Directive{
 					directive,
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(schema.TypeMap().Lookup("Foo")).ShouldNot(BeNil())
 			Expect(schema.TypeMap().Lookup("Bar")).ShouldNot(BeNil())
@@ -146,6 +143,12 @@ var _ = Describe("Type System: Schema", func() {
 				Query: QueryType,
 			})
 			Expect(err).Should(MatchError(`Schema must contain unique named types but contains multiple types named "String".`))
+
+			Expect(func() {
+				graphql.MustNewSchema(&graphql.SchemaConfig{
+					Query: QueryType,
+				})
+			}).Should(Panic())
 		})
 
 		It("rejects a Schema which defines an object type twice", func() {
@@ -165,6 +168,12 @@ var _ = Describe("Type System: Schema", func() {
 				Types: types,
 			})
 			Expect(err).Should(MatchError(`Schema must contain unique named types but contains multiple types named "SameName".`))
+
+			Expect(func() {
+				graphql.MustNewSchema(&graphql.SchemaConfig{
+					Types: types,
+				})
+			}).Should(Panic())
 		})
 
 		It("rejects a Schema which defines fields with conflicting types", func() {
@@ -188,13 +197,18 @@ var _ = Describe("Type System: Schema", func() {
 				Query: QueryType,
 			})
 			Expect(err).Should(MatchError(`Schema must contain unique named types but contains multiple types named "SameName".`))
+
+			Expect(func() {
+				graphql.MustNewSchema(&graphql.SchemaConfig{
+					Query: QueryType,
+				})
+			}).Should(Panic())
 		})
 	})
 
 	Describe("Standard Directives", func() {
 		It("includes standard directives by default", func() {
-			schema, err := graphql.NewSchema(&graphql.SchemaConfig{})
-			Expect(err).ShouldNot(HaveOccurred())
+			schema := graphql.MustNewSchema(&graphql.SchemaConfig{})
 			for _, directive := range graphql.StandardDirectives() {
 				Expect(schema.Directives()).Should(ContainElement(directive))
 			}
@@ -202,10 +216,9 @@ var _ = Describe("Type System: Schema", func() {
 
 		Context("when ExcludeStandardDirectives is set", func() {
 			It("does not include standard directives", func() {
-				schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+				schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 					ExcludeStandardDirectives: true,
 				})
-				Expect(err).ShouldNot(HaveOccurred())
 				for _, directive := range graphql.StandardDirectives() {
 					Expect(schema.Directives()).ShouldNot(ContainElement(directive))
 				}
