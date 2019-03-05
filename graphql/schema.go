@@ -264,7 +264,10 @@ func NewSchema(config *SchemaConfig) (Schema, error) {
 		return nil, err
 	}
 
-	// TODO: Add __Schema type in introspection.
+	// Add __Schema type to support introspection.
+	if err := typeMap.add(_schema); err != nil {
+		return nil, err
+	}
 
 	// Add built-in types.
 	if err := typeMap.add(Int()); err != nil {
