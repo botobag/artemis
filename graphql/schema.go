@@ -131,6 +131,11 @@ func (typeMap TypeMap) Lookup(name string) Type {
 	return typeMap.types[name]
 }
 
+// Iterator returns iterator to loop over all types in type map.
+func (typeMap TypeMap) Iterator() Iterator {
+	return NewMapValuesIterator(typeMap.types)
+}
+
 // DirectiveList is a list of Directive.
 type DirectiveList []Directive
 
