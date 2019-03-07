@@ -30,6 +30,7 @@ import (
 	"github.com/botobag/artemis/graphql/parser"
 	"github.com/botobag/artemis/graphql/token"
 	"github.com/botobag/artemis/internal/testutil"
+	"github.com/botobag/artemis/iterator"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -52,6 +53,36 @@ func (f *ReadyOnNextPollFuture) Poll(waker future.Waker) (future.PollResult, err
 		return future.PollResultPending, nil
 	}
 	return f.data, nil
+}
+
+type TestIterable struct {
+	values []interface{}
+}
+
+func (iter *TestIterable) Iterator() executor.Iterator {
+	return iter
+}
+
+func (iter *TestIterable) Next() (interface{}, error) {
+	if len(iter.values) == 0 {
+		return nil, iterator.Done
+	}
+
+	// Pop one value.
+	value := iter.values[0]
+	iter.values = iter.values[1:]
+	if err, ok := value.(error); ok {
+		return nil, err
+	}
+	return value, nil
+}
+
+type SizedTestIterable struct {
+	TestIterable
+}
+
+func (iter *SizedTestIterable) Size() int {
+	return len(iter.values)
 }
 
 // graphql-js/src/execution/__tests__/executor-test.js
@@ -1580,5 +1611,94 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			Runner: runner,
 		})
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"foo":"foo"}}`))
+	})
+
+	Describe("Iterable: custom iterator to enumerate values for list field", func() {
+		var (
+			operation *executor.PreparedOperation
+			values    []interface{}
+		)
+
+		BeforeEach(func() {
+			schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+				Query: graphql.MustNewObject(&graphql.ObjectConfig{
+					Name: "Query",
+					Fields: graphql.Fields{
+						"foo": {
+							Type: graphql.ListOfType(graphql.Int()),
+							Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+								return info.RootValue(), nil
+							}),
+						},
+					},
+				}),
+			})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			document, err := parser.Parse(token.NewSource(&token.SourceConfig{
+				Body: token.SourceBody([]byte(`{ foo }`))}), parser.ParseOptions{})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			var errs graphql.Errors
+			operation, errs = executor.Prepare(executor.PrepareParams{
+				Schema:   schema,
+				Document: document,
+			})
+			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
+
+			values = make([]interface{}, 100)
+			for i := 0; i < len(values); i++ {
+				values[i] = i
+			}
+		})
+
+		It("uses custom iterator to enumerate values", func() {
+			valuesJSON, err := json.Marshal(values)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			expectedJSON := `{"data":{"foo":` + string(valuesJSON) + `}}`
+
+			result := operation.Execute(context.Background(), executor.ExecuteParams{
+				Runner:    runner,
+				RootValue: &TestIterable{values},
+			})
+			Eventually(result).Should(MatchResultInJSON(expectedJSON))
+
+			// Also test iterable with size hint.
+			result = operation.Execute(context.Background(), executor.ExecuteParams{
+				Runner:    runner,
+				RootValue: &SizedTestIterable{TestIterable{values}},
+			})
+			Eventually(result).Should(MatchResultInJSON(expectedJSON))
+		})
+
+		It("handles error during iteration", func() {
+			// Set an error value in the middle of values.
+			values[len(values)/2] = errors.New("iterator error")
+
+			result := operation.Execute(context.Background(), executor.ExecuteParams{
+				Runner:    runner,
+				RootValue: &TestIterable{values},
+			})
+			Eventually(result).Should(MatchResultInJSON(`{
+				"errors": [
+					{
+						"message": "Error occurred while enumerates values in the list field Query.foo.",
+						"locations": [
+							{
+								"line": 1,
+								"column": 3
+							}
+						],
+						"path": [
+							"foo"
+						]
+					}
+				],
+				"data": {
+					"foo": null
+				}
+			}`))
+		})
 	})
 })

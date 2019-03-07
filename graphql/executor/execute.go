@@ -28,6 +28,7 @@ import (
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 	values "github.com/botobag/artemis/graphql/internal/value"
+	"github.com/botobag/artemis/iterator"
 	"github.com/botobag/artemis/jsonwriter"
 )
 
@@ -633,53 +634,145 @@ func (task *ExecuteNodeTask) completeWrappingValue(
 		}
 
 		// Complete a list value by completing each item in the list with the inner type.
-		v := reflect.ValueOf(value)
-		if v.Kind() == reflect.Ptr {
-			v = v.Elem()
-		}
-
-		if v.Kind() != reflect.Array && v.Kind() != reflect.Slice {
-			node := task.node
-			task.handleNodeError(
-				graphql.NewError(
-					fmt.Sprintf("Expected Iterable, but did not find one for field %s.%s.",
-						parentFieldType(task.ctx, node).Name(), node.Field.Name())),
-				result)
-			continue
-		}
-
 		elementType := listType.ElementType()
 		elementWrappingType, isWrappingElementType := elementType.(graphql.WrappingType)
 
-		// Setup result nodes for elements.
-		numElements := v.Len()
-		resultNodes := NewFixedSizeResultNodeList(numElements)
+		// The following code is a bit mess. If the value implements Iterable interfaces, we want to
+		// enumerates the its item values via its custom iterator. Otherwise, we fallback to use
+		// reflect.Value.Index to obtain item values. It's possible to implement an Iterable for the
+		// fallback path and merges the control flow. But we choose to avoid indirection to minimize
+		// overheads.
+		//
+		// Invariants for the former case (value implements Iterable interfaces):
+		//
+		//  - iterable != nil
+		//  - v.IsValid() returns false
+		//  - numElements is undefined
+		//
+		// Invariants for the latter case (use reflection to get item values):
+		//
+		//  - iterable is nil
+		//  - v.Kind() returns reflect.Array or reflect.Slice
+		//  - numElements is defined
+		//
+		// We check "iterable" to see which case being dealt with as needed.
+		var (
+			iterable    Iterable
+			v           reflect.Value
+			resultNodes ResultNodeList
+			numElements int
+		)
+
+		// Setup iterable and v.
+		if iterableValue, ok := value.(Iterable); ok {
+			iterable = iterableValue
+			if sizedIterable, ok := iterable.(SizedIterable); ok {
+				// Make use of size hint to avoid list grow as possible.
+				resultNodes = NewFixedSizeResultNodeList(sizedIterable.Size())
+			} else {
+				resultNodes = NewResultNodeList()
+			}
+		} else {
+			v = reflect.ValueOf(value)
+			if v.Kind() == reflect.Ptr {
+				v = v.Elem()
+			}
+
+			if v.Kind() != reflect.Array && v.Kind() != reflect.Slice {
+				node := task.node
+				task.handleNodeError(
+					graphql.NewError(
+						fmt.Sprintf("Expected Iterable, but did not find one for field %s.%s.",
+							parentFieldType(task.ctx, node).Name(), node.Field.Name())),
+					result)
+				continue
+			}
+
+			numElements = v.Len()
+			resultNodes = NewFixedSizeResultNodeList(numElements)
+		}
 
 		// Complete result.
 		result.Kind = ResultKindList
 		result.Value = resultNodes
 
-		if isWrappingElementType {
-			for i := 0; i < numElements; i++ {
-				resultNode := resultNodes.EmplaceBack(result, !isNonNullType)
-				queue = append(queue, ValueNode{
-					returnType: elementWrappingType,
-					result:     resultNode,
-					value:      v.Index(i).Interface(),
-				})
-			}
-		} else {
-			for i := 0; i < numElements; i++ {
-				resultNode := resultNodes.EmplaceBack(result, !isNonNullType)
-				value := v.Index(i).Interface()
-				if !task.completeNonWrappingValue(elementType, resultNode, value) {
-					// If the err causes the parent to be nil'ed, stop procsessing the remaining elements.
-					if result.IsNil() {
-						break
+		// The following control flow diverage into 4 paths:
+		//
+		//	if iterable != nil {
+		//		if isWrappingElementType {
+		//			...
+		//		} else {
+		//			...
+		//		}
+		//	} else { // iterable == nil
+		//		// v must be a valid reflect.Value.
+		//		if isWrappingElementType {
+		//			...
+		//		} else {
+		//			...
+		//		}
+		//	}
+		if iterable != nil {
+			// Invariants: iterable != nil
+			iter := iterable.Iterator()
+
+			for {
+				value, err := iter.Next()
+				if err == iterator.Done {
+					break
+				} else if err != nil {
+					node := task.node
+					task.handleNodeError(
+						graphql.NewError(
+							fmt.Sprintf("Error occurred while enumerates values in the list field %s.%s.",
+								parentFieldType(task.ctx, node).Name(), node.Field.Name()), err),
+						result)
+					break
+				} else {
+					// Prepare resultNode for element.
+					resultNode := resultNodes.EmplaceBack(result, !isNonNullType)
+
+					if isWrappingElementType {
+						queue = append(queue, ValueNode{
+							returnType: elementWrappingType,
+							result:     resultNode,
+							value:      value,
+						})
+					} else { // !isWrappingElementType
+						if !task.completeNonWrappingValue(elementType, resultNode, value) {
+							// If the err causes the parent to be nil'ed, stop procsessing the remaining elements.
+							if result.IsNil() {
+								break
+							}
+						}
 					}
 				}
 			}
-		}
+		} else { // iterable == nil
+			// Invariants: v.IsValid() and numElements is defined
+
+			if isWrappingElementType {
+				for i := 0; i < numElements; i++ {
+					resultNode := resultNodes.EmplaceBack(result, !isNonNullType)
+					queue = append(queue, ValueNode{
+						returnType: elementWrappingType,
+						result:     resultNode,
+						value:      v.Index(i).Interface(),
+					})
+				}
+			} else { // !isWrappingElementType
+				for i := 0; i < numElements; i++ {
+					resultNode := resultNodes.EmplaceBack(result, !isNonNullType)
+					value := v.Index(i).Interface()
+					if !task.completeNonWrappingValue(elementType, resultNode, value) {
+						// If the err causes the parent to be nil'ed, stop procsessing the remaining elements.
+						if result.IsNil() {
+							break
+						}
+					}
+				}
+			} // if isWrappingElementType
+		} // if iterable != nil
 	}
 }
 
