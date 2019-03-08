@@ -657,16 +657,16 @@ func (task *ExecuteNodeTask) completeWrappingValue(
 		//
 		// We check "iterable" to see which case being dealt with as needed.
 		var (
-			iterable    Iterable
+			iterable    graphql.Iterable
 			v           reflect.Value
 			resultNodes ResultNodeList
 			numElements int
 		)
 
 		// Setup iterable and v.
-		if iterableValue, ok := value.(Iterable); ok {
+		if iterableValue, ok := value.(graphql.Iterable); ok {
 			iterable = iterableValue
-			if sizedIterable, ok := iterable.(SizedIterable); ok {
+			if sizedIterable, ok := iterable.(graphql.SizedIterable); ok {
 				// Make use of size hint to avoid list grow as possible.
 				resultNodes = NewFixedSizeResultNodeList(sizedIterable.Size())
 			} else {

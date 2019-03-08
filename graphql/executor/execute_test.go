@@ -59,7 +59,7 @@ type TestIterable struct {
 	values []interface{}
 }
 
-func (iter *TestIterable) Iterator() executor.Iterator {
+func (iter *TestIterable) Iterator() graphql.Iterator {
 	return iter
 }
 

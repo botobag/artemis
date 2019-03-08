@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package executor
+package graphql
 
 import (
 	"reflect"
@@ -69,7 +69,7 @@ func NewMapKeysIterable(m interface{}) *MapKeysIterable {
 
 // Iterator implements Iterable. It returns iterator for iterating map keys.
 func (iterable *MapKeysIterable) Iterator() Iterator {
-	return MapKeysIterator{util.NewImmutableMapIter(iterable.m)}
+	return NewMapKeysIterator(iterable.m)
 }
 
 // Size implements SizedIterable. It returns the number of entries in the map.
@@ -80,6 +80,11 @@ func (iterable *MapKeysIterable) Size() int {
 // MapKeysIterator implements Iterator to loop over the keys in a map.
 type MapKeysIterator struct {
 	iter *util.ImmutableMapIter
+}
+
+// NewMapKeysIterator creates a MapKeysIterator for given map.
+func NewMapKeysIterator(m interface{}) MapKeysIterator {
+	return MapKeysIterator{util.NewImmutableMapIter(m)}
 }
 
 // Next implements Iterator.
@@ -109,7 +114,7 @@ func NewMapValuesIterable(m interface{}) *MapValuesIterable {
 
 // Iterator implements Iterable. It returns iterator for iterating map values.
 func (iterable *MapValuesIterable) Iterator() Iterator {
-	return MapValuesIterator{util.NewImmutableMapIter(iterable.m)}
+	return NewMapValuesIterator(iterable.m)
 }
 
 // Size implements SizedIterable. It returns the number of entries in the map.
@@ -120,6 +125,11 @@ func (iterable *MapValuesIterable) Size() int {
 // MapValuesIterator implements Iterator to loop over the values in a map.
 type MapValuesIterator struct {
 	iter *util.ImmutableMapIter
+}
+
+// NewMapValuesIterator creates a MapValuesIterator for given map.
+func NewMapValuesIterator(m interface{}) MapValuesIterator {
+	return MapValuesIterator{util.NewImmutableMapIter(m)}
 }
 
 // Next implements Iterator.

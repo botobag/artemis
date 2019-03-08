@@ -14,14 +14,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package executor_test
+package graphql_test
 
 import (
 	"fmt"
 	"reflect"
 	"sort"
 
-	"github.com/botobag/artemis/graphql/executor"
+	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/iterator"
 
 	. "github.com/onsi/ginkgo"
@@ -38,8 +38,8 @@ type iterateAsStringsMatcher struct {
 func (matcher *iterateAsStringsMatcher) Match(actual interface{}) (success bool, err error) {
 	var (
 		got []string
-		// Assume an executor.Iterator.
-		it = actual.(executor.Iterator)
+		// Assume an graphql.Iterator.
+		it = actual.(graphql.Iterator)
 	)
 
 	for {
@@ -83,7 +83,7 @@ var _ = Describe("Iterable", func() {
 
 	Describe("MapKeysIterable", func() {
 		It("iterates keys in a map", func() {
-			iterable := executor.NewMapKeysIterable(testMap1)
+			iterable := graphql.NewMapKeysIterable(testMap1)
 			Expect(iterable.Size()).Should(Equal(3))
 			Expect(iterable.Iterator()).Should(IterateAsStrings([]string{"a", "b", "c"}))
 		})
@@ -91,7 +91,7 @@ var _ = Describe("Iterable", func() {
 
 	Describe("MapValuesIterable", func() {
 		It("iterates values in a map", func() {
-			iterable := executor.NewMapValuesIterable(testMap1)
+			iterable := graphql.NewMapValuesIterable(testMap1)
 			Expect(iterable.Size()).Should(Equal(3))
 			Expect(iterable.Iterator()).Should(IterateAsStrings([]string{"1", "2", "3"}))
 		})
