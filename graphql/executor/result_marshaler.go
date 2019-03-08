@@ -69,7 +69,7 @@ func NewResultNodeMarshaler(result *ResultNode) jsonwriter.ValueMarshaler {
 	return resultNodeMarshaler{result}
 }
 
-// Encode implements jsonwriter.ValueMarshaler.
+// MarshalJSONTo implements jsonwriter.ValueMarshaler.
 func (marshaler resultNodeMarshaler) MarshalJSONTo(stream *jsonwriter.Stream) error {
 	var (
 		// objectEndTask calls stream.WriteObjectEnd().
@@ -100,15 +100,34 @@ func (marshaler resultNodeMarshaler) MarshalJSONTo(stream *jsonwriter.Stream) er
 				stream.WriteNil()
 
 			case ResultKindList:
-				values := result.ListValue()
-				if len(values) == 0 {
+				nodeList := result.ListValue()
+				if nodeList.Empty() {
 					stream.WriteEmptyArray()
 				} else {
 					stream.WriteArrayStart()
 					stack = append(stack, arrayEndTask)
-					for i := len(values) - 1; i >= 0; i-- {
-						stack = append(stack, &values[i], moreTask)
+
+					// Traverse nodes in nodeList in reverse order.
+					var (
+						firstChunk = nodeList.Chunks()
+						// Start from the last chunk.
+						chunk = firstChunk.Prev()
+					)
+					for {
+						nodes := chunk.Nodes()
+						for i := len(nodes) - 1; i >= 0; i-- {
+							stack = append(stack, &nodes[i], moreTask)
+						}
+
+						// Loop until the first chunk.
+						if chunk == firstChunk {
+							break
+						}
+
+						// Move to the previous chunk in the list.
+						chunk = chunk.prev
 					}
+
 					// Pop the moreTask at the top. Don't write "," before first element.
 					stack = stack[:len(stack)-1]
 				}

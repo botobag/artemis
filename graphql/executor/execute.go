@@ -653,23 +653,15 @@ func (task *ExecuteNodeTask) completeWrappingValue(
 
 		// Setup result nodes for elements.
 		numElements := v.Len()
-		resultNodes := make([]ResultNode, numElements)
-
-		// Set child results to reject nil value if it is unwrapped from a non-null type.
-		if isNonNullType {
-			for i := range resultNodes {
-				resultNodes[i].SetToRejectNull()
-			}
-		}
+		resultNodes := NewFixedSizeResultNodeList(numElements)
 
 		// Complete result.
 		result.Kind = ResultKindList
 		result.Value = resultNodes
 
 		if isWrappingElementType {
-			for i := range resultNodes {
-				resultNode := &resultNodes[i]
-				resultNode.Parent = result
+			for i := 0; i < numElements; i++ {
+				resultNode := resultNodes.EmplaceBack(result, !isNonNullType)
 				queue = append(queue, ValueNode{
 					returnType: elementWrappingType,
 					result:     resultNode,
@@ -677,9 +669,8 @@ func (task *ExecuteNodeTask) completeWrappingValue(
 				})
 			}
 		} else {
-			for i := range resultNodes {
-				resultNode := &resultNodes[i]
-				resultNode.Parent = result
+			for i := 0; i < numElements; i++ {
+				resultNode := resultNodes.EmplaceBack(result, !isNonNullType)
 				value := v.Index(i).Interface()
 				if !task.completeNonWrappingValue(elementType, resultNode, value) {
 					// If the err causes the parent to be nil'ed, stop procsessing the remaining elements.

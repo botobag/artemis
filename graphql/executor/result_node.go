@@ -118,8 +118,8 @@ func (node *ResultNode) ShouldRejectNull() bool {
 
 // ListValue returns a value that is held by this node for a List field. It would panic if this is
 // not a resolved List result (i.e., IsList returns false).
-func (node *ResultNode) ListValue() []ResultNode {
-	return node.Value.([]ResultNode)
+func (node *ResultNode) ListValue() ResultNodeList {
+	return node.Value.(ResultNodeList)
 }
 
 // ObjectValue returns a value that is held by this node for a Object field. It would panic if this is
@@ -133,7 +133,7 @@ func (node *ResultNode) Path() graphql.ResponsePath {
 	var (
 		path      graphql.ResponsePath
 		pathKeys  []interface{}
-		chileNode = node
+		childNode = node
 	)
 
 	if node == nil {
@@ -141,28 +141,23 @@ func (node *ResultNode) Path() graphql.ResponsePath {
 	}
 
 	for node := node.Parent; node != nil; node = node.Parent {
-		var childNodes []ResultNode
 		if node.IsList() {
-			childNodes = node.ListValue()
+			pathKeys = append(pathKeys, node.ListValue().IndexOf(childNode))
 		} else if node.IsObject() {
-			childNodes = node.ObjectValue().FieldValues
+			fieldNodes := node.ObjectValue().FieldValues
+
+			// Find index.
+			childNodeAddr := uintptr(unsafe.Pointer(childNode))
+			firstFieldNodeAddr := uintptr(unsafe.Pointer(&fieldNodes[0]))
+			fieldIndex := int((childNodeAddr - firstFieldNodeAddr) / sizeOfResultNode)
+
+			pathKeys = append(pathKeys, node.ObjectValue().ExecutionNodes[fieldIndex].ResponseKey())
 		} else {
 			// ??
 			continue
 		}
 
-		// Find index.
-		childNodeAddr := uintptr(unsafe.Pointer(chileNode))
-		firstChildNodeAddr := uintptr(unsafe.Pointer(&childNodes[0]))
-		childIndex := int((childNodeAddr - firstChildNodeAddr) / sizeOfResultNode)
-
-		if node.IsList() {
-			pathKeys = append(pathKeys, childIndex)
-		} else if node.IsObject() {
-			pathKeys = append(pathKeys, node.ObjectValue().ExecutionNodes[childIndex].ResponseKey())
-		}
-
-		chileNode = node
+		childNode = node
 	}
 
 	// Pour keys in pathKeys to path in reverse order.
