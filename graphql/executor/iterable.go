@@ -28,10 +28,13 @@ import (
 type Iterable interface {
 	// Iterator returns iterator to loop over its values.
 	Iterator() Iterator
+}
 
-	// Size returns number of value in the sequence.
-	//
-	// TODO: Move this to an optional method.
+// SizedIterable provides hint about size of iterable.
+type SizedIterable interface {
+	Iterable
+
+	// Size provides hint about number of values in the sequence.
 	Size() int
 }
 
@@ -69,7 +72,7 @@ func (iterable *MapKeysIterable) Iterator() Iterator {
 	return MapKeysIterator{util.NewImmutableMapIter(iterable.m)}
 }
 
-// Size implements Iterable. It returns the number of entries in the map.
+// Size implements SizedIterable. It returns the number of entries in the map.
 func (iterable *MapKeysIterable) Size() int {
 	return reflect.ValueOf(iterable.m).Len()
 }
@@ -109,7 +112,7 @@ func (iterable *MapValuesIterable) Iterator() Iterator {
 	return MapValuesIterator{util.NewImmutableMapIter(iterable.m)}
 }
 
-// Size implements Iterable. It returns the number of entries in the map.
+// Size implements SizedIterable. It returns the number of entries in the map.
 func (iterable *MapValuesIterable) Size() int {
 	return reflect.ValueOf(iterable.m).Len()
 }

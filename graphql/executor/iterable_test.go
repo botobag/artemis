@@ -84,7 +84,6 @@ var _ = Describe("Iterable", func() {
 	Describe("MapKeysIterable", func() {
 		It("iterates keys in a map", func() {
 			iterable := executor.NewMapKeysIterable(testMap1)
-
 			Expect(iterable.Size()).Should(Equal(3))
 			Expect(iterable.Iterator()).Should(IterateAsStrings([]string{"a", "b", "c"}))
 		})
@@ -93,7 +92,6 @@ var _ = Describe("Iterable", func() {
 	Describe("MapValuesIterable", func() {
 		It("iterates values in a map", func() {
 			iterable := executor.NewMapValuesIterable(testMap1)
-
 			Expect(iterable.Size()).Should(Equal(3))
 			Expect(iterable.Iterator()).Should(IterateAsStrings([]string{"1", "2", "3"}))
 		})
