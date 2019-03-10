@@ -330,6 +330,11 @@ func (set PossibleTypeSet) Contains(o Object) bool {
 	return set.types[o]
 }
 
+// Iterator returns iterator to loop over all types in the set.
+func (set PossibleTypeSet) Iterator() Iterator {
+	return NewMapKeysIterator(set.types)
+}
+
 // Union Type Definition
 //
 // When a field can return one of a heterogeneous set of types, a Union type is used to describe
