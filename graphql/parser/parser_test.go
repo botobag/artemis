@@ -38,7 +38,7 @@ import (
 func parse(s string) (ast.Document, error) {
 	return parser.Parse(token.NewSource(&token.SourceConfig{
 		Body: token.SourceBody([]byte(s)),
-	}), parser.ParseOptions{})
+	}))
 }
 
 func parseValue(s string) (ast.Value, error) {
@@ -124,7 +124,7 @@ func MatchNameNode(fields TokenFields) types.GomegaMatcher {
 var _ = Describe("Parser", func() {
 	// graphql-js/src/language/__tests__/parser-test.js
 	It("asserts that an invalid source to parse was provided", func() {
-		_, err := parser.Parse(nil, parser.ParseOptions{})
+		_, err := parser.Parse(nil)
 		Expect(err).Should(MatchError("Must provide Source. Received: nil"))
 
 		_, err = parser.ParseValue(nil)
@@ -236,7 +236,7 @@ var _ = Describe("Parser", func() {
 
 		_, err = parser.Parse(token.NewSource(&token.SourceConfig{
 			Body: token.SourceBody(kitchenSink),
-		}), parser.ParseOptions{})
+		}))
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
@@ -281,7 +281,7 @@ var _ = Describe("Parser", func() {
 
 			_, err = parser.Parse(token.NewSource(&token.SourceConfig{
 				Body: token.SourceBody(buf.Bytes()),
-			}), parser.ParseOptions{})
+			}))
 			Expect(err).ShouldNot(HaveOccurred())
 		}
 	})
@@ -458,9 +458,7 @@ var _ = Describe("Parser", func() {
 
 		_, err := parser.Parse(token.NewSource(&token.SourceConfig{
 			Body: token.SourceBody([]byte(document)),
-		}), parser.ParseOptions{
-			ExperimentalFragmentVariables: true,
-		})
+		}), parser.EnableFragmentVariables())
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
@@ -468,7 +466,7 @@ var _ = Describe("Parser", func() {
 		source := token.NewSource(&token.SourceConfig{
 			Body: token.SourceBody([]byte("{ id }")),
 		})
-		result, err := parser.Parse(source, parser.ParseOptions{})
+		result, err := parser.Parse(source)
 		Expect(err).ShouldNot(HaveOccurred())
 
 		sourceRange := result.TokenRange().SourceRange()
@@ -1096,7 +1094,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		b.Time("parse time", func() {
-			_, err := parser.Parse(source, parser.ParseOptions{})
+			_, err := parser.Parse(source)
 			Expect(err).ShouldNot(HaveOccurred())
 		})
 	}, 10)

@@ -67,7 +67,7 @@ func MaxBodySize(size uint) Option {
 }
 
 // QueryParserOptions provides settings to the parser for GraphQL query.
-func QueryParserOptions(options parser.ParseOptions) Option {
+func QueryParserOptions(options ...parser.ParseOption) Option {
 	return func(h *httpHandlerConfig) {
 		h.defaultRequestBuilderConfig.QueryParserOptions = options
 	}
@@ -190,7 +190,7 @@ type RequestBuilder interface {
 // DefaultRequestBuilderConfig specifies settings to configure DefaultRequestBuilder.
 type DefaultRequestBuilderConfig struct {
 	HTTPRequestParserOptions ParseHTTPRequestOptions
-	QueryParserOptions       parser.ParseOptions
+	QueryParserOptions       []parser.ParseOption
 	DefaultFieldResolver     graphql.FieldResolver
 }
 
@@ -231,7 +231,7 @@ func (builder DefaultRequestBuilder) Build(r *http.Request, h HTTPHandler) (*Req
 		// Parse query.
 		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
 			Body: token.SourceBody([]byte(parsedReq.Query)),
-		}), builder.Config.QueryParserOptions)
+		}), builder.Config.QueryParserOptions...)
 
 		if err != nil {
 			return nil, &ErrParseQuery{

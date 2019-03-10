@@ -37,7 +37,7 @@ func TestGraphQLCore(t *testing.T) {
 func executeQueryWithParams(schema graphql.Schema, query string, params map[string]interface{}) executor.ExecutionResult {
 	document, err := parser.Parse(token.NewSource(&token.SourceConfig{
 		Body: token.SourceBody([]byte(query)),
-	}), parser.ParseOptions{})
+	}))
 	Expect(err).ShouldNot(HaveOccurred())
 
 	operation, errs := executor.Prepare(executor.PrepareParams{

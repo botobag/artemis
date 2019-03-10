@@ -122,7 +122,7 @@ func queryStarWarsCharacterFriends(b *testing.B) *executor.ExecutionResult {
 					}
 				}
 			}`)),
-	}), parser.ParseOptions{})
+	}))
 	if err != nil {
 		b.Fatal(err)
 	}

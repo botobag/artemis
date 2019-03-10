@@ -135,7 +135,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
           meows
         }
       }
-    }`))}), parser.ParseOptions{})
+    }`))}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(executor.PrepareParams{
@@ -260,7 +260,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
           meows
         }
       }
-    }`))}), parser.ParseOptions{})
+    }`))}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(executor.PrepareParams{
@@ -340,7 +340,8 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		Expect(err).ShouldNot(HaveOccurred())
 
 		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte("{ foo { bar } }"))}), parser.ParseOptions{})
+			Body: token.SourceBody([]byte("{ foo { bar } }")),
+		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(executor.PrepareParams{
@@ -397,7 +398,8 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		Expect(err).ShouldNot(HaveOccurred())
 
 		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte("{ foo { bar } }"))}), parser.ParseOptions{})
+			Body: token.SourceBody([]byte("{ foo { bar } }")),
+		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(executor.PrepareParams{
@@ -449,7 +451,8 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		Expect(err).ShouldNot(HaveOccurred())
 
 		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte("{ foo }"))}), parser.ParseOptions{})
+			Body: token.SourceBody([]byte("{ foo }")),
+		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(executor.PrepareParams{
@@ -525,7 +528,8 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		Expect(err).ShouldNot(HaveOccurred())
 
 		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte("{ foo { bar } }"))}), parser.ParseOptions{})
+			Body: token.SourceBody([]byte("{ foo { bar } }")),
+		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(executor.PrepareParams{
@@ -595,7 +599,8 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		}`
 
 		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte(query))}), parser.ParseOptions{})
+			Body: token.SourceBody([]byte(query)),
+		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(executor.PrepareParams{

@@ -21,8 +21,8 @@ import (
 	"github.com/botobag/artemis/graphql/token"
 )
 
-// ParseOptions contains configuration options to control parser behavior.
-type ParseOptions struct {
+// parseOptions configures parser behavior.
+type parseOptions struct {
 	// EXPERIMENTAL:
 	//
 	// If enabled, the parser will understand and parse variable definitions contained in a fragment
@@ -41,9 +41,29 @@ type ParseOptions struct {
 	ExperimentalFragmentVariables bool
 }
 
+// ParseOption // CORSOption represents a functional option for configuring the parser.
+type ParseOption func(*parseOptions)
+
+//
+// Functional options for configuring Parser
+//
+
+// EnableFragmentVariables enables the (experimental) feature which accepts variables in fragment
+// definition.
+func EnableFragmentVariables() ParseOption {
+	return func(options *parseOptions) {
+		options.ExperimentalFragmentVariables = true
+	}
+}
+
 // Parse parses the given GraphQL source into a Document.
-func Parse(source *token.Source, options ParseOptions) (ast.Document, error) {
-	parser, err := newParser(source, options)
+func Parse(source *token.Source, options ...ParseOption) (ast.Document, error) {
+	var opts parseOptions
+	for _, applyOption := range options {
+		applyOption(&opts)
+	}
+
+	parser, err := newParser(source, &opts)
 	if err != nil {
 		return ast.Document{}, err
 	}
@@ -52,7 +72,7 @@ func Parse(source *token.Source, options ParseOptions) (ast.Document, error) {
 
 // ParseValue parses the AST for string containing a GraphQL value (e.g., `[42]`).
 func ParseValue(source *token.Source) (ast.Value, error) {
-	parser, err := newParser(source, ParseOptions{})
+	parser, err := newParser(source, &parseOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +95,7 @@ func ParseValue(source *token.Source) (ast.Value, error) {
 
 // ParseType parses the AST for string containing a GraphQL Type (e.g., `[Int!]`).
 func ParseType(source *token.Source) (ast.Type, error) {
-	parser, err := newParser(source, ParseOptions{})
+	parser, err := newParser(source, &parseOptions{})
 	if err != nil {
 		return nil, err
 	}

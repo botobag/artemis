@@ -31,10 +31,10 @@ type parser struct {
 	lexer *lexer.Lexer
 
 	// The configuration options
-	options ParseOptions
+	options *parseOptions
 }
 
-func newParser(source *token.Source, options ParseOptions) (*parser, error) {
+func newParser(source *token.Source, options *parseOptions) (*parser, error) {
 	if source == nil {
 		return nil, graphql.NewError("Must provide Source. Received: nil")
 	}

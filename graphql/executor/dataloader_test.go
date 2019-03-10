@@ -295,7 +295,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 					name
 				}
 			}`)),
-		}), parser.ParseOptions{})
+		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(executor.PrepareParams{
@@ -335,7 +335,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 					}
 				}
 			}`)),
-		}), parser.ParseOptions{})
+		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(executor.PrepareParams{
@@ -403,7 +403,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 					}
 				}
 			}`)),
-		}), parser.ParseOptions{})
+		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(executor.PrepareParams{

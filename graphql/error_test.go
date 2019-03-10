@@ -360,7 +360,7 @@ var _ = Describe("Error", func() {
       mutation {
         mutationField
       }
-    `))}), parser.ParseOptions{})
+    `))}))
 			Expect(err).ShouldNot(HaveOccurred())
 
 			nodes := []ast.Node{document}

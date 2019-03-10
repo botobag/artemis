@@ -44,7 +44,7 @@ func BenchmarkSimpleHelloWorldQueryWithoutPreparedOperation(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		document, _ := parser.Parse(token.NewSource(&token.SourceConfig{
 			Body: token.SourceBody([]byte("{hello}")),
-		}), parser.ParseOptions{})
+		}))
 
 		operation, _ := executor.Prepare(executor.PrepareParams{
 			Schema:   helloWorldSchema,
@@ -58,7 +58,7 @@ func BenchmarkSimpleHelloWorldQueryWithoutPreparedOperation(b *testing.B) {
 func BenchmarkSimpleHelloWorldQueryWithPreparedOperation(b *testing.B) {
 	document, _ := parser.Parse(token.NewSource(&token.SourceConfig{
 		Body: token.SourceBody([]byte("{hello}")),
-	}), parser.ParseOptions{})
+	}))
 
 	operation, _ := executor.Prepare(executor.PrepareParams{
 		Schema:   helloWorldSchema,

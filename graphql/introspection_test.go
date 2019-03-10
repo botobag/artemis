@@ -1506,7 +1506,7 @@ var _ = Describe("Introspection", func() {
 
 		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
 			Body: token.SourceBody([]byte(query)),
-		}), parser.ParseOptions{})
+		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(executor.PrepareParams{

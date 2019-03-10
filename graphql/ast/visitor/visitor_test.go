@@ -32,7 +32,7 @@ import (
 func parse(s string) ast.Document {
 	doc, err := parser.Parse(token.NewSource(&token.SourceConfig{
 		Body: token.SourceBody([]byte(s)),
-	}), parser.ParseOptions{})
+	}))
 	Expect(err).ShouldNot(HaveOccurred(), "%s", s)
 	return doc
 }
@@ -268,9 +268,7 @@ var _ = Describe("Visitor", func() {
 
 		doc, err := parser.Parse(token.NewSource(&token.SourceConfig{
 			Body: token.SourceBody([]byte("fragment a($v: Boolean = false) on t { f }")),
-		}), parser.ParseOptions{
-			ExperimentalFragmentVariables: true,
-		})
+		}), parser.EnableFragmentVariables())
 		Expect(err).ShouldNot(HaveOccurred())
 
 		v := visitor.NewBuilder().
@@ -333,7 +331,7 @@ var _ = Describe("Visitor", func() {
 
 		doc, err := parser.Parse(token.NewSource(&token.SourceConfig{
 			Body: token.SourceBody(kitchenSink),
-		}), parser.ParseOptions{})
+		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		var visited [][3]interface{}
