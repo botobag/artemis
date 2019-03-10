@@ -269,23 +269,6 @@ func NewSchema(config *SchemaConfig) (Schema, error) {
 		return nil, err
 	}
 
-	// Add built-in types.
-	if err := typeMap.add(Int()); err != nil {
-		return nil, err
-	}
-	if err := typeMap.add(Float()); err != nil {
-		return nil, err
-	}
-	if err := typeMap.add(String()); err != nil {
-		return nil, err
-	}
-	if err := typeMap.add(Boolean()); err != nil {
-		return nil, err
-	}
-	if err := typeMap.add(ID()); err != nil {
-		return nil, err
-	}
-
 	// Visit all enumerated types in config.
 	for _, t := range config.Types {
 		if err := typeMap.add(t); err != nil {
