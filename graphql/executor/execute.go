@@ -295,6 +295,9 @@ func findFieldDef(
 			return typeMetaField{}
 		}
 	}
+	if fieldName == typenameMetaFieldName {
+		return typenameMetaField{}
+	}
 	return parentType.Fields()[fieldName]
 }
 

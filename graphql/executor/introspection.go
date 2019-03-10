@@ -37,7 +37,9 @@ var (
 		// FIXME: Should not use graphql.MockArgument.
 		graphql.MockArgument("name", "", graphql.MustNewNonNullOfType(graphql.String()), nil),
 	}
-	typeMetaFieldType = graphql.IntrospectionTypes.Type()
+	typeMetaFieldType     = graphql.IntrospectionTypes.Type()
+	typenameMetaFieldName = "__typename"
+	typenameMetaFieldType = graphql.MustNewNonNullOfType(graphql.String())
 )
 
 //===----------------------------------------------------------------------------------------====//
@@ -133,5 +135,51 @@ func (typeMetaField) Resolver() graphql.FieldResolver {
 
 // Deprecation is non-nil when the field is tagged as deprecated.
 func (typeMetaField) Deprecation() *graphql.Deprecation {
+	return nil
+}
+
+//===----------------------------------------------------------------------------------------====//
+// __typename
+//===----------------------------------------------------------------------------------------====//
+
+// typenameMetaField implemens __typename meta-field [0] to access the name of the object type being
+// queried.
+//
+// [0]: https://facebook.github.io/graphql/June2018/#sec-Type-Name-Introspection
+type typenameMetaField struct{}
+
+// Name implements graphql.Field.
+func (typenameMetaField) Name() string {
+	return typenameMetaFieldName
+}
+
+// Description implements graphql.Field.
+func (typenameMetaField) Description() string {
+	return "The name of the current Object type at runtime."
+}
+
+// Type implements graphql.Field.
+func (typenameMetaField) Type() graphql.Type {
+	return typenameMetaFieldType
+}
+
+// Args implements graphql.Field.
+func (typenameMetaField) Args() []graphql.Argument {
+	return nil
+}
+
+type typenameMetaFieldResolver struct{}
+
+func (typenameMetaFieldResolver) Resolve(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+	return info.Object().Name(), nil
+}
+
+// Resolver implements graphql.Field.
+func (typenameMetaField) Resolver() graphql.FieldResolver {
+	return typenameMetaFieldResolver{}
+}
+
+// Deprecation is non-nil when the field is tagged as deprecated.
+func (typenameMetaField) Deprecation() *graphql.Deprecation {
 	return nil
 }

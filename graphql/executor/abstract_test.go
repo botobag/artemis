@@ -29,22 +29,22 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type Dog struct {
-	Name  string
-	Woofs bool
-}
-
-type Cat struct {
-	Name  string
-	Meows bool
-}
-
-type Human struct {
-	Name string
-}
-
 // graphql-js/src/execution/__tests__/abstract-test.js
 var _ = DescribeExecute("Execute: Handles execution of abstract types", func(runner concurrent.Executor) {
+	type Dog struct {
+		Name  string
+		Woofs bool
+	}
+
+	type Cat struct {
+		Name  string
+		Meows bool
+	}
+
+	type Human struct {
+		Name string
+	}
+
 	It("resolveType on Interface yields useful error", func() {
 		petType := graphql.InterfaceConfig{
 			Name: "Pet",
