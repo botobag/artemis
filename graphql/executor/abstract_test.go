@@ -425,7 +425,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 	})
 
 	It("resolveType on Union without type resolver yields useful error", func() {
-		fooUnion := &graphql.InterfaceConfig{
+		fooUnion := &graphql.UnionConfig{
 			Name: "FooUnion",
 			/* TypeResolver: nil, */
 		}
@@ -473,6 +473,144 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 					"path": ["foo"]
 				}
 			]
+		}`))
+	})
+
+	It("returns runtime type from resolve info when accessing fields in Interface", func() {
+		fooInterface := &graphql.InterfaceConfig{
+			Name: "FooInterface",
+			Fields: graphql.Fields{
+				"bar": {
+					Type: graphql.T(graphql.String()),
+				},
+			},
+		}
+
+		fooObject := &graphql.ObjectConfig{
+			Name:       "FooObject",
+			Interfaces: []graphql.InterfaceTypeDefinition{fooInterface},
+			Fields: graphql.Fields{
+				"bar": {
+					Type: graphql.T(graphql.String()),
+					Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+						Expect(info.Object().Name()).Should(Equal("FooObject"))
+						return source, nil
+					}),
+				},
+			},
+		}
+
+		fooInterface.TypeResolver = graphql.TypeResolverFunc(func(ctx context.Context, value interface{}, info graphql.ResolveInfo) (graphql.Object, error) {
+			// Always resolve to FooObject.
+			return graphql.NewObject(fooObject)
+		})
+
+		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+			Name: "Query",
+			Fields: graphql.Fields{
+				"foo": {
+					Type: fooInterface,
+					Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+						return "dummy", nil
+					}),
+				},
+			},
+		})
+		Expect(err).ShouldNot(HaveOccurred())
+
+		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+			Query: queryType,
+			Types: []graphql.Type{graphql.MustNewObject(fooObject)},
+		})
+		Expect(err).ShouldNot(HaveOccurred())
+
+		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
+			Body: token.SourceBody([]byte("{ foo { bar } }"))}), parser.ParseOptions{})
+		Expect(err).ShouldNot(HaveOccurred())
+
+		operation, errs := executor.Prepare(executor.PrepareParams{
+			Schema:   schema,
+			Document: document,
+		})
+		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
+
+		result := operation.Execute(context.Background(), executor.ExecuteParams{})
+		Eventually(result).Should(MatchResultInJSON(`{
+			"data": {
+				"foo": {
+					"bar": "dummy"
+				}
+			}
+		}`))
+	})
+
+	It("returns runtime type from resolve info when accessing fields in Union", func() {
+		fooObject := &graphql.ObjectConfig{
+			Name: "FooObject",
+			Fields: graphql.Fields{
+				"bar": {
+					Type: graphql.T(graphql.String()),
+					Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+						Expect(info.Object().Name()).Should(Equal("FooObject"))
+						return source, nil
+					}),
+				},
+			},
+		}
+
+		fooUnion := &graphql.UnionConfig{
+			Name:          "FooUnion",
+			PossibleTypes: []graphql.ObjectTypeDefinition{fooObject},
+			TypeResolver: graphql.TypeResolverFunc(func(ctx context.Context, value interface{}, info graphql.ResolveInfo) (graphql.Object, error) {
+				// Always resolve to FooObject.
+				return graphql.NewObject(fooObject)
+			}),
+		}
+
+		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+			Name: "Query",
+			Fields: graphql.Fields{
+				"foo": {
+					Type: fooUnion,
+					Resolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+						return "dummy", nil
+					}),
+				},
+			},
+		})
+		Expect(err).ShouldNot(HaveOccurred())
+
+		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+			Query: queryType,
+			Types: []graphql.Type{graphql.MustNewObject(fooObject)},
+		})
+		Expect(err).ShouldNot(HaveOccurred())
+
+		query := `{
+			foo {
+				... on FooObject {
+					bar
+				}
+			}
+		}`
+
+		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
+			Body: token.SourceBody([]byte(query))}), parser.ParseOptions{})
+		Expect(err).ShouldNot(HaveOccurred())
+
+		operation, errs := executor.Prepare(executor.PrepareParams{
+			Schema:   schema,
+			Document: document,
+		})
+		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
+
+		result := operation.Execute(context.Background(), executor.ExecuteParams{})
+		Eventually(result).Should(MatchResultInJSON(`{
+			"data": {
+				"foo": {
+					"bar": "dummy"
+				}
+			}
 		}`))
 	})
 })

@@ -17,6 +17,8 @@
 package executor
 
 import (
+	"fmt"
+
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 )
@@ -82,7 +84,25 @@ func (info *ResolveInfo) ParentFieldSelection() graphql.FieldSelectionInfo {
 func parentFieldType(ctx *ExecutionContext, node *ExecutionNode) graphql.Object {
 	parent := node.Parent.Field
 	if parent != nil {
-		return graphql.NamedTypeOf(parent.Type()).(graphql.Object)
+		switch parentType := graphql.NamedTypeOf(parent.Type()).(type) {
+		case graphql.Object:
+			return parentType
+
+		case graphql.AbstractType:
+			// Search node.Parent.Children to find the runtime object type of the given node.
+			for runtimeType, nodes := range node.Parent.Children {
+				for _, n := range nodes {
+					if n == node {
+						return runtimeType
+					}
+				}
+			}
+			panic(fmt.Sprintf(`unable to determine runtime type for field "%s" within abstract type `+
+				`"%s"`, node.Field.Name(), parentType.Name()))
+
+		default:
+			panic(fmt.Sprintf("parent is unexpectedly a non-object type: %T", parentType))
+		}
 	}
 
 	var (
