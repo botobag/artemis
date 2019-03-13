@@ -52,7 +52,7 @@ type ASTNodeTypeInfo struct {
 	// The type definition
 	Type types.Type
 
-	// The type info of the children AST nodes; It has different meanings based on Type:
+	// The type ctx of the children AST nodes; It has different meanings based on Type:
 	//
 	//  * If this is an "abstract" AST node (see comments for abstractASTNodeNames), this holds
 	//    possible nodes for the node.
@@ -69,58 +69,81 @@ type ASTNodeTypeInfo struct {
 }
 
 // IsAbstract returns true if the type represented by ASTNodeTypeInfo is an abstract type.
-func (info *ASTNodeTypeInfo) IsAbstract() bool {
-	return types.IsInterface(info.Type)
+func (ctx *ASTNodeTypeInfo) IsAbstract() bool {
+	return types.IsInterface(ctx.Type)
 }
 
 // IsPointer returns true if the type represented by ASTNodeTypeInfo is a pointer type.
-func (info *ASTNodeTypeInfo) IsPointer() bool {
-	_, ok := info.Type.Underlying().(*types.Pointer)
+func (ctx *ASTNodeTypeInfo) IsPointer() bool {
+	_, ok := ctx.Type.Underlying().(*types.Pointer)
 	return ok
 }
 
 // IsArray returns true if the type represented by ASTNodeTypeInfo is an array type.
-func (info *ASTNodeTypeInfo) IsArray() bool {
-	_, ok := info.Type.Underlying().(*types.Slice)
+func (ctx *ASTNodeTypeInfo) IsArray() bool {
+	_, ok := ctx.Type.Underlying().(*types.Slice)
 	return ok
 }
 
 // IsStruct returns true if the type represented by ASTNodeTypeInfo is a struct type.
-func (info *ASTNodeTypeInfo) IsStruct() bool {
-	_, ok := info.Type.Underlying().(*types.Struct)
+func (ctx *ASTNodeTypeInfo) IsStruct() bool {
+	_, ok := ctx.Type.Underlying().(*types.Struct)
 	return ok
 }
 
 // TypeExpr returns the string for referencing the type of AST node in generated Go code.
-func (info *ASTNodeTypeInfo) TypeExpr() string {
-	if info.IsPointer() {
-		return "*ast." + info.Name
+func (ctx *ASTNodeTypeInfo) TypeExpr() string {
+	if ctx.IsPointer() {
+		return "*ast." + ctx.Name
 	}
-	return "ast." + info.Name
+	return "ast." + ctx.Name
 }
 
-// VisitorInstance returns the name of the visitor instance for visiting the node.
-func (info *ASTNodeTypeInfo) VisitorInstance() string {
-	return strings.ToLower(info.Name[:1]) + info.Name[1:] + "Visitor"
+// VisitActionInstance returns the name of the visitor instance for visiting the node.
+func (ctx *ASTNodeTypeInfo) VisitActionInstance() string {
+	return strings.ToLower(ctx.Name[:1]) + ctx.Name[1:] + "VisitAction"
 }
 
 // NilCheck generate tests for checking whether
-func (info *ASTNodeTypeInfo) NilCheck(field string) string {
-	if info.IsAbstract() || info.IsPointer() {
+func (ctx *ASTNodeTypeInfo) NilCheck(field string) string {
+	if ctx.IsAbstract() || ctx.IsPointer() {
 		return field + " != nil"
-	} else if info.IsArray() {
+	} else if ctx.IsArray() {
 		return "len(" + field + ") != 0"
 	} else {
-		switch info.Name {
+		switch ctx.Name {
 		case "Name":
 			return "!" + field + ".IsNil()"
 		case "NamedType":
 			return "!" + field + ".Name.IsNil()"
 		default:
 			panic(fmt.Sprintf(`unhandled nil check for optional field "%s" with type %s`,
-				field, info.Name))
+				field, ctx.Name))
 		}
 	}
+}
+
+// PossibleTypes returns list of possible concrete types for the type.
+func (ctx *ASTNodeTypeInfo) PossibleTypes() []*ASTNodeTypeInfo {
+	var result []*ASTNodeTypeInfo
+	possibleTypes := []*ASTNodeTypeInfo{ctx}
+	possibleTypeMap := map[*ASTNodeTypeInfo]bool{ctx: true}
+	for len(possibleTypes) > 0 {
+		var t *ASTNodeTypeInfo
+		t, possibleTypes = possibleTypes[len(possibleTypes)-1], possibleTypes[:len(possibleTypes)-1]
+		if !t.IsAbstract() {
+			result = append(result, t)
+		} else {
+			// Scan the child nodes.
+			for _, child := range t.Children {
+				if _, exists := possibleTypeMap[child]; !exists {
+					possibleTypeMap[child] = true
+					possibleTypes = append(possibleTypes, child)
+				}
+			}
+		}
+	}
+	return result
 }
 
 var astNodes []*ASTNodeTypeInfo
@@ -189,7 +212,7 @@ func discoverASTNodeTypes() error {
 			continue
 		}
 
-		// Create type info object in advance.
+		// Create type ctx object in advance.
 		typeInfo := &ASTNodeTypeInfo{
 			Name: name,
 			Type: typ,
@@ -291,7 +314,6 @@ func discoverASTNodeTypes() error {
 						hasChildren = true
 					}
 				}
-
 				node.Children = append(node.Children, fieldTypeInfo)
 			}
 
@@ -321,7 +343,7 @@ func discoverASTNodeTypes() error {
 
 func genHeader(w io.Writer) {
 	fmt.Fprintln(w, `/**
- * Copyright (c) 2018, The Artemis Authors.
+ * Copyright (c) 2019, The Artemis Authors.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -357,46 +379,22 @@ func genImports(w io.Writer) {
 	fmt.Fprintln(w, ")")
 }
 
-func genVisitorInterfaces(w io.Writer) {
+func genVisitActionInterfaces(w io.Writer) {
 	tmpl, err := template.New("visitor-interface").Parse(`
-// {{.Node}}Visitor implements visiting function for {{.Node}}.
-type {{.Node}}Visitor interface {
-	Enter{{.Node}}(node {{.Type}}, info *Info) Result
-	Leave{{.Node}}(node {{.Type}}, info *Info) Result
+// {{.Node}}VisitAction implements visiting function for {{.Node}}.
+type {{.Node}}VisitAction interface {
+	Visit{{.Node}}(node {{.Type}}, ctx interface{}) Result
 }
 
-// {{.Node}}VisitorFunc is an adapter to help define a {{.Node}}Visitor from a function which
-// specifies action when entering a node.
-type {{.Node}}VisitorFunc func(node {{.Type}}, info *Info) Result
+// {{.Node}}VisitActionFunc is an adapter to help define a {{.Node}}VisitAction from a function
+// which specifies action when traversing a node.
+type {{.Node}}VisitActionFunc func(node {{.Type}}, ctx interface{}) Result
 
-var _ {{.Node}}Visitor = ({{.Node}}VisitorFunc)(nil)
+var _ {{.Node}}VisitAction = ({{.Node}}VisitActionFunc)(nil)
 
-// Enter{{.Node}} implements {{.Node}}Visitor by calling f(node, info).
-func (f {{.Node}}VisitorFunc) Enter{{.Node}}(node {{.Type}}, info *Info) Result {
-	return f(node, info)
-}
-
-// Leave{{.Node}} implements {{.Node}}Visitor which takes no actions.
-func ({{.Node}}VisitorFunc) Leave{{.Node}}(node {{.Type}}, info *Info) Result {
-	return Continue
-}
-
-// {{.Node}}VisitorFuncs is an adapter to help define a {{.Node}}Visitor from functions.
-type {{.Node}}VisitorFuncs struct {
-	Enter func(node {{.Type}}, info *Info) Result
-	Leave func(node {{.Type}}, info *Info) Result
-}
-
-var _ {{.Node}}Visitor = (*{{.Node}}VisitorFuncs)(nil)
-
-// Enter{{.Node}} implements {{.Node}}Visitor by calling f.Enter.
-func (f *{{.Node}}VisitorFuncs) Enter{{.Node}}(node {{.Type}}, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// Leave{{.Node}} implements {{.Node}}Visitor by calling f.Leave.
-func (f *{{.Node}}VisitorFuncs) Leave{{.Node}}(node {{.Type}}, info *Info) Result {
-	return f.Leave(node, info)
+// Visit{{.Node}} implements {{.Node}}VisitAction by calling f(node, ctx).
+func (f {{.Node}}VisitActionFunc) Visit{{.Node}}(node {{.Type}}, ctx interface{}) Result {
+	return f(node, ctx)
 }
 `)
 	if err != nil {
@@ -414,130 +412,79 @@ func (f *{{.Node}}VisitorFuncs) Leave{{.Node}}(node {{.Type}}, info *Info) Resul
 	}
 }
 
-func genDefaultVisitors(w io.Writer) {
-	fmt.Fprintf(w, `
-// defaultVisitor takes no action when visiting a node.
-type defaultVisitor uint
-
-// Instance of default visitor that is shared among all newly created visitor.
-const defaultVisitorInstance defaultVisitor = 0
-`)
-
-	fmt.Fprintf(w, `
-var (`)
-
-	for _, node := range astNodes {
-		fmt.Fprintf(w, `
-	_ %-26s = defaultVisitorInstance`, node.Name+"Visitor")
-	}
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, ")")
-
-	for _, node := range astNodes {
-		fmt.Fprintf(w, `
-func (defaultVisitor) Enter%s(node %s, info *Info) Result {
-	return Continue
-}`, node.Name, node.TypeExpr())
-	}
-
-	for _, node := range astNodes {
-		fmt.Fprintf(w, `
-func (defaultVisitor) Leave%s(node %s, info *Info) Result {
-	return Continue
-}`, node.Name, node.TypeExpr())
-	}
-
-	fmt.Fprintln(w)
-}
-
 func genVisitor(w io.Writer) {
 	fmt.Fprintf(w, `
-// A Visitor is provided to visit an AST, it contains the collection of visitor to be executed
-// during the visitor's traversal.
-type Visitor interface {`)
+// A Visitor is provided to Walk to apply actions during AST traversal. It contains a collection of
+// actions to be executed for each type of node during the traversal.
+type Visitor struct {`)
 
 	for _, node := range astNodes {
-		// Use "Visit" instead of "VisitNode".
-		if node.Name == "Node" {
+		if !node.IsAbstract() {
 			fmt.Fprintf(w, `
-	Visit(node ast.Node, ctx interface{})`)
-		} else {
-			fmt.Fprintf(w, `
-	Visit%s(node %s, ctx interface{})`, node.Name, node.TypeExpr())
+	%s %19sVisitAction`, node.VisitActionInstance(), node.Name)
 		}
 	}
 
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "}")
+
+	for _, node := range astNodes {
+		if !node.IsAbstract() {
+			fmt.Fprintf(w, `
+// Visit%s applies actions on %s.
+func (v *Visitor) Visit%s(node %s, ctx interface{}) Result {
+	if v.%s != nil {
+		return v.%s.Visit%s(node, ctx)
+	}
+	return Continue
+}
+`, node.Name, node.Name, node.Name, node.TypeExpr(), node.VisitActionInstance(),
+				node.VisitActionInstance(), node.Name)
+		}
+	}
 }
 
-func genVisitorImpl(w io.Writer) {
-	fmt.Fprintf(w, `
-// A visitor is the actual implementation of Visitor.
-type visitor struct {`)
-
+func genNewVisitor(w io.Writer) {
 	for _, node := range astNodes {
-		if !node.IsAbstract() {
-			fmt.Fprintf(w, `
-	%s %19sVisitor`, node.VisitorInstance(), node.Name)
-		}
-	}
-
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, "}")
-
-	// VisitorNode initializes an Info object and calls visitNodeInternal.
-	for _, node := range astNodes {
-		if node.Name == "Node" {
-			fmt.Fprintf(w, `
-func (v *visitor) Visit(node ast.Node, ctx interface{}) {`)
+		fmt.Fprintf(w, `
+// New%sVisitor creates a visitor instance which performs the given action when encountering %s.
+func New%sVisitor(action %sVisitAction) *Visitor {
+	return &Visitor{`, node.Name, node.Name, node.Name, node.Name)
+		if node.IsAbstract() {
+			for _, possibleType := range node.PossibleTypes() {
+				fmt.Fprintf(w, `
+		%s: %sVisitActionFunc(func(node %s, ctx interface{}) Result {
+			return action.Visit%s(node, ctx)
+		}),`, possibleType.VisitActionInstance(), possibleType.Name, possibleType.TypeExpr(), node.Name)
+			}
 		} else {
 			fmt.Fprintf(w, `
-func (v *visitor) Visit%s(node %s, ctx interface{}) {`, node.Name, node.TypeExpr())
+		%s: action,`, node.VisitActionInstance())
 		}
-		fmt.Fprintf(w, `
-	v.visit%sInternal(node, &Info{
-		context: ctx,
-	})
-}`, node.Name)
-	}
-
-	fmt.Fprintf(w, `
-func newVisitor() *visitor {
-	return &visitor{`)
-
-	for _, node := range astNodes {
-		if !node.IsAbstract() {
-			fmt.Fprintf(w, `
-		%-27s defaultVisitorInstance,`, node.VisitorInstance()+":")
-		}
-	}
-
-	fmt.Fprintf(w, `
+		fmt.Fprintln(w, `
 	}
 }`)
+	}
+}
 
+func genWalk(w io.Writer, preorder bool) {
 	for _, node := range astNodes {
 		fmt.Fprintf(w, `
-func (v *visitor) visit%sInternal(node %s, info *Info) Result {`, node.Name, node.TypeExpr())
-
+func walk%s(node %s, ctx interface{}, v *Visitor) Result {`, node.Name, node.TypeExpr())
 		// Enter a node.
-		if !node.IsAbstract() {
+		if !node.IsAbstract() && preorder {
 			fmt.Fprintf(w, `
-	result := v.%s.Enter%s(node, info)
-	if result != Continue {
+	if result := v.Visit%s(node, ctx); result != Continue {
 		return result
-	}`, node.VisitorInstance(), node.Name)
-
-			fmt.Fprintln(w)
+	}
+`, node.Name)
 		}
 
 		// Special case: ListValue
 		if node.Name == "ListValue" {
 			fmt.Fprintf(w, `
-	childInfo := info.withParent(node)
 	for _, value := range node.Values() {
-		if result := v.visitValueInternal(value, childInfo); result == Break {
+		if result := walkValue(value, ctx, v); result == Break {
 			return result
 		}
 	}
@@ -547,9 +494,8 @@ func (v *visitor) visit%sInternal(node %s, info *Info) Result {`, node.Name, nod
 		// Special case: ObjectValue
 		if node.Name == "ObjectValue" {
 			fmt.Fprintf(w, `
-	childInfo := info.withParent(node)
 	for _, field := range node.Fields() {
-		if result := v.visitObjectFieldInternal(field, childInfo); result == Break {
+		if result := walkObjectField(field, ctx, v); result == Break {
 			return result
 		}
 	}
@@ -559,12 +505,12 @@ func (v *visitor) visit%sInternal(node %s, info *Info) Result {`, node.Name, nod
 		// Special case: NonNullType
 		if node.Name == "NonNullType" {
 			fmt.Fprintf(w, `
-	childInfo := info.withParent(node)
+	var result Result
 	switch t := node.Type.(type) {
 	case ast.NamedType:
-		result = v.visitNamedTypeInternal(t, childInfo)
+		result = walkNamedType(t, ctx, v)
 	case ast.ListType:
-		result = v.visitListTypeInternal(t, childInfo)
+		result = walkListType(t, ctx, v)
 	default:
 		panic(fmt.Sprintf("unhandled nullable type \"%%T\"", node.Type))
 	}
@@ -578,24 +524,27 @@ func (v *visitor) visit%sInternal(node %s, info *Info) Result {`, node.Name, nod
 		if len(node.Children) > 0 {
 			if node.IsAbstract() {
 				fmt.Fprintf(w, `
+	var result Result
 	switch node := node.(type) {`)
 				for _, possibleType := range node.Children {
 					fmt.Fprintf(w, `
 	case %s:
-		return v.visit%sInternal(node, info)`, possibleType.TypeExpr(), possibleType.Name)
+		result = walk%s(node, ctx, v)`, possibleType.TypeExpr(), possibleType.Name)
 				}
 
 				fmt.Fprintf(w, `
 	default:
 		panic(fmt.Sprintf("unexpected node type %%T when visiting %s", node))
+	}
+	if result == Break {
+		return result
 	}`, node.Name)
 
 			} else if node.IsArray() {
 				elementTypeInfo := node.Children[0]
 				fmt.Fprintf(w, `
-	childInfo := info.withParent(node)
 	for _, childNode := range node {
-		if result := v.visit%sInternal(childNode, childInfo); result == Break {
+		if result := walk%s(childNode, ctx, v); result == Break {
 			return result
 		}
 	}`, elementTypeInfo.Name)
@@ -609,9 +558,6 @@ func (v *visitor) visit%sInternal(node %s, info *Info) Result {`, node.Name, nod
 					structType = typ.(*types.Pointer).Elem().Underlying().(*types.Struct)
 				}
 
-				fmt.Fprintf(w, `
-	childInfo := info.withParent(node)`)
-
 				// Scan fields.
 				numFields := structType.NumFields()
 				for i := 0; i < numFields; i++ {
@@ -624,20 +570,19 @@ func (v *visitor) visit%sInternal(node %s, info *Info) Result {`, node.Name, nod
 					}
 
 					fmt.Fprintf(w, `
-
 	// Visit %s.`, field.Name())
 
 					isOptional := fieldTag.Get("ast") == "optional"
 					if isOptional {
 						fmt.Fprintf(w, `
 	if %s {
-		if result := v.visit%sInternal(node.%s, childInfo); result == Break {
+		if result := walk%s(node.%s, ctx, v); result == Break {
 			return result
 		}
 	}`, fieldTypeInfo.NilCheck("node."+field.Name()), fieldTypeInfo.Name, field.Name())
 					} else {
 						fmt.Fprintf(w, `
-	if result := v.visit%sInternal(node.%s, childInfo); result == Break {
+	if result := walk%s(node.%s, ctx, v); result == Break {
 		return result
 	}`, fieldTypeInfo.Name, field.Name())
 					}
@@ -650,74 +595,17 @@ func (v *visitor) visit%sInternal(node %s, info *Info) Result {`, node.Name, nod
 		}
 
 		// Leave node.
-		if !node.IsAbstract() {
+		if !node.IsAbstract() && !preorder {
 			fmt.Fprintf(w, `
-	return v.%s.Leave%s(node, info)
-`, node.VisitorInstance(), node.Name)
+	return v.Visit%s(node, ctx)
+`, node.Name)
+		} else {
+			fmt.Fprintf(w, `
+	return Continue
+`)
 		}
 
 		fmt.Fprintln(w, `}`)
-	}
-}
-
-func genVisitorBuilder(w io.Writer) {
-	fmt.Fprintf(w, `
-// Builder creates visitor.
-type Builder struct {
-	v *visitor
-}
-
-// NewBuilder creates a builder to builds a visitor.
-func NewBuilder() Builder {
-	return Builder{
-		v: newVisitor(),
-	}
-}
-
-// Build returns the visitor that is being built. Builder should not be used on return.
-func (builder Builder) Build() Visitor {
-	return builder.v
-}
-`)
-
-	for _, node := range astNodes {
-		fmt.Fprintf(w, `
-// Visit%sWith set a visitor for %s. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) Visit%sWith(visitor %sVisitor) Builder {`,
-			node.Name, node.Name, node.Name, node.Name)
-		if node.IsAbstract() {
-			possibleTypes := make([]*ASTNodeTypeInfo, len(node.Children))
-			copy(possibleTypes, node.Children)
-
-			for len(possibleTypes) > 0 {
-				possibleType := possibleTypes[len(possibleTypes)-1]
-				possibleTypes = possibleTypes[:len(possibleTypes)-1]
-				if possibleType.IsAbstract() {
-					possibleTypes = append(possibleTypes, possibleType.Children...)
-					continue
-				}
-
-				fmt.Fprintf(w, `
-	if builder.v.%s == defaultVisitorInstance {
-		builder.v.%s = &%sVisitorFuncs{
-			Enter: func(node %s, info *Info) Result {
-				return visitor.Enter%s(node, info)
-			},
-			Leave: func(node %s, info *Info) Result {
-				return visitor.Leave%s(node, info)
-			},
-		}
-	}`, possibleType.VisitorInstance(), possibleType.VisitorInstance(), possibleType.Name,
-					possibleType.TypeExpr(), node.Name, possibleType.TypeExpr(), node.Name)
-			}
-		} else {
-			fmt.Fprintf(w, `
-	builder.v.%s = visitor`, node.VisitorInstance())
-		}
-		fmt.Fprintln(w, `
-	return builder
-}`)
 	}
 }
 
@@ -734,9 +622,8 @@ func main() {
 
 	genHeader(w)
 	genImports(w)
-	genVisitorInterfaces(w)
-	genDefaultVisitors(w)
+	genVisitActionInterfaces(w)
 	genVisitor(w)
-	genVisitorImpl(w)
-	genVisitorBuilder(w)
+	genNewVisitor(w)
+	genWalk(w, true)
 }

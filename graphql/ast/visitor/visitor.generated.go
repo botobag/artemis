@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, The Artemis Authors.
+ * Copyright (c) 2019, The Artemis Authors.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,2285 +24,1588 @@ import (
 	"github.com/botobag/artemis/graphql/ast"
 )
 
-// NodeVisitor implements visiting function for Node.
-type NodeVisitor interface {
-	EnterNode(node ast.Node, info *Info) Result
-	LeaveNode(node ast.Node, info *Info) Result
+// NodeVisitAction implements visiting function for Node.
+type NodeVisitAction interface {
+	VisitNode(node ast.Node, ctx interface{}) Result
 }
 
-// NodeVisitorFunc is an adapter to help define a NodeVisitor from a function which
-// specifies action when entering a node.
-type NodeVisitorFunc func(node ast.Node, info *Info) Result
+// NodeVisitActionFunc is an adapter to help define a NodeVisitAction from a function
+// which specifies action when traversing a node.
+type NodeVisitActionFunc func(node ast.Node, ctx interface{}) Result
 
-var _ NodeVisitor = (NodeVisitorFunc)(nil)
+var _ NodeVisitAction = (NodeVisitActionFunc)(nil)
 
-// EnterNode implements NodeVisitor by calling f(node, info).
-func (f NodeVisitorFunc) EnterNode(node ast.Node, info *Info) Result {
-	return f(node, info)
+// VisitNode implements NodeVisitAction by calling f(node, ctx).
+func (f NodeVisitActionFunc) VisitNode(node ast.Node, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// LeaveNode implements NodeVisitor which takes no actions.
-func (NodeVisitorFunc) LeaveNode(node ast.Node, info *Info) Result {
-	return Continue
-}
-
-// NodeVisitorFuncs is an adapter to help define a NodeVisitor from functions.
-type NodeVisitorFuncs struct {
-	Enter func(node ast.Node, info *Info) Result
-	Leave func(node ast.Node, info *Info) Result
-}
-
-var _ NodeVisitor = (*NodeVisitorFuncs)(nil)
-
-// EnterNode implements NodeVisitor by calling f.Enter.
-func (f *NodeVisitorFuncs) EnterNode(node ast.Node, info *Info) Result {
-	return f.Enter(node, info)
+// TypeVisitAction implements visiting function for Type.
+type TypeVisitAction interface {
+	VisitType(node ast.Type, ctx interface{}) Result
 }
 
-// LeaveNode implements NodeVisitor by calling f.Leave.
-func (f *NodeVisitorFuncs) LeaveNode(node ast.Node, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// TypeVisitor implements visiting function for Type.
-type TypeVisitor interface {
-	EnterType(node ast.Type, info *Info) Result
-	LeaveType(node ast.Type, info *Info) Result
-}
+// TypeVisitActionFunc is an adapter to help define a TypeVisitAction from a function
+// which specifies action when traversing a node.
+type TypeVisitActionFunc func(node ast.Type, ctx interface{}) Result
 
-// TypeVisitorFunc is an adapter to help define a TypeVisitor from a function which
-// specifies action when entering a node.
-type TypeVisitorFunc func(node ast.Type, info *Info) Result
-
-var _ TypeVisitor = (TypeVisitorFunc)(nil)
-
-// EnterType implements TypeVisitor by calling f(node, info).
-func (f TypeVisitorFunc) EnterType(node ast.Type, info *Info) Result {
-	return f(node, info)
-}
+var _ TypeVisitAction = (TypeVisitActionFunc)(nil)
 
-// LeaveType implements TypeVisitor which takes no actions.
-func (TypeVisitorFunc) LeaveType(node ast.Type, info *Info) Result {
-	return Continue
+// VisitType implements TypeVisitAction by calling f(node, ctx).
+func (f TypeVisitActionFunc) VisitType(node ast.Type, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// TypeVisitorFuncs is an adapter to help define a TypeVisitor from functions.
-type TypeVisitorFuncs struct {
-	Enter func(node ast.Type, info *Info) Result
-	Leave func(node ast.Type, info *Info) Result
+// ValueVisitAction implements visiting function for Value.
+type ValueVisitAction interface {
+	VisitValue(node ast.Value, ctx interface{}) Result
 }
 
-var _ TypeVisitor = (*TypeVisitorFuncs)(nil)
+// ValueVisitActionFunc is an adapter to help define a ValueVisitAction from a function
+// which specifies action when traversing a node.
+type ValueVisitActionFunc func(node ast.Value, ctx interface{}) Result
 
-// EnterType implements TypeVisitor by calling f.Enter.
-func (f *TypeVisitorFuncs) EnterType(node ast.Type, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ ValueVisitAction = (ValueVisitActionFunc)(nil)
 
-// LeaveType implements TypeVisitor by calling f.Leave.
-func (f *TypeVisitorFuncs) LeaveType(node ast.Type, info *Info) Result {
-	return f.Leave(node, info)
+// VisitValue implements ValueVisitAction by calling f(node, ctx).
+func (f ValueVisitActionFunc) VisitValue(node ast.Value, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// ValueVisitor implements visiting function for Value.
-type ValueVisitor interface {
-	EnterValue(node ast.Value, info *Info) Result
-	LeaveValue(node ast.Value, info *Info) Result
+// DefinitionVisitAction implements visiting function for Definition.
+type DefinitionVisitAction interface {
+	VisitDefinition(node ast.Definition, ctx interface{}) Result
 }
-
-// ValueVisitorFunc is an adapter to help define a ValueVisitor from a function which
-// specifies action when entering a node.
-type ValueVisitorFunc func(node ast.Value, info *Info) Result
 
-var _ ValueVisitor = (ValueVisitorFunc)(nil)
+// DefinitionVisitActionFunc is an adapter to help define a DefinitionVisitAction from a function
+// which specifies action when traversing a node.
+type DefinitionVisitActionFunc func(node ast.Definition, ctx interface{}) Result
 
-// EnterValue implements ValueVisitor by calling f(node, info).
-func (f ValueVisitorFunc) EnterValue(node ast.Value, info *Info) Result {
-	return f(node, info)
-}
+var _ DefinitionVisitAction = (DefinitionVisitActionFunc)(nil)
 
-// LeaveValue implements ValueVisitor which takes no actions.
-func (ValueVisitorFunc) LeaveValue(node ast.Value, info *Info) Result {
-	return Continue
+// VisitDefinition implements DefinitionVisitAction by calling f(node, ctx).
+func (f DefinitionVisitActionFunc) VisitDefinition(node ast.Definition, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// ValueVisitorFuncs is an adapter to help define a ValueVisitor from functions.
-type ValueVisitorFuncs struct {
-	Enter func(node ast.Value, info *Info) Result
-	Leave func(node ast.Value, info *Info) Result
+// SelectionVisitAction implements visiting function for Selection.
+type SelectionVisitAction interface {
+	VisitSelection(node ast.Selection, ctx interface{}) Result
 }
 
-var _ ValueVisitor = (*ValueVisitorFuncs)(nil)
+// SelectionVisitActionFunc is an adapter to help define a SelectionVisitAction from a function
+// which specifies action when traversing a node.
+type SelectionVisitActionFunc func(node ast.Selection, ctx interface{}) Result
 
-// EnterValue implements ValueVisitor by calling f.Enter.
-func (f *ValueVisitorFuncs) EnterValue(node ast.Value, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ SelectionVisitAction = (SelectionVisitActionFunc)(nil)
 
-// LeaveValue implements ValueVisitor by calling f.Leave.
-func (f *ValueVisitorFuncs) LeaveValue(node ast.Value, info *Info) Result {
-	return f.Leave(node, info)
+// VisitSelection implements SelectionVisitAction by calling f(node, ctx).
+func (f SelectionVisitActionFunc) VisitSelection(node ast.Selection, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// DefinitionVisitor implements visiting function for Definition.
-type DefinitionVisitor interface {
-	EnterDefinition(node ast.Definition, info *Info) Result
-	LeaveDefinition(node ast.Definition, info *Info) Result
+// ArgumentVisitAction implements visiting function for Argument.
+type ArgumentVisitAction interface {
+	VisitArgument(node *ast.Argument, ctx interface{}) Result
 }
 
-// DefinitionVisitorFunc is an adapter to help define a DefinitionVisitor from a function which
-// specifies action when entering a node.
-type DefinitionVisitorFunc func(node ast.Definition, info *Info) Result
+// ArgumentVisitActionFunc is an adapter to help define a ArgumentVisitAction from a function
+// which specifies action when traversing a node.
+type ArgumentVisitActionFunc func(node *ast.Argument, ctx interface{}) Result
 
-var _ DefinitionVisitor = (DefinitionVisitorFunc)(nil)
+var _ ArgumentVisitAction = (ArgumentVisitActionFunc)(nil)
 
-// EnterDefinition implements DefinitionVisitor by calling f(node, info).
-func (f DefinitionVisitorFunc) EnterDefinition(node ast.Definition, info *Info) Result {
-	return f(node, info)
+// VisitArgument implements ArgumentVisitAction by calling f(node, ctx).
+func (f ArgumentVisitActionFunc) VisitArgument(node *ast.Argument, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// LeaveDefinition implements DefinitionVisitor which takes no actions.
-func (DefinitionVisitorFunc) LeaveDefinition(node ast.Definition, info *Info) Result {
-	return Continue
-}
-
-// DefinitionVisitorFuncs is an adapter to help define a DefinitionVisitor from functions.
-type DefinitionVisitorFuncs struct {
-	Enter func(node ast.Definition, info *Info) Result
-	Leave func(node ast.Definition, info *Info) Result
+// ArgumentsVisitAction implements visiting function for Arguments.
+type ArgumentsVisitAction interface {
+	VisitArguments(node ast.Arguments, ctx interface{}) Result
 }
 
-var _ DefinitionVisitor = (*DefinitionVisitorFuncs)(nil)
+// ArgumentsVisitActionFunc is an adapter to help define a ArgumentsVisitAction from a function
+// which specifies action when traversing a node.
+type ArgumentsVisitActionFunc func(node ast.Arguments, ctx interface{}) Result
 
-// EnterDefinition implements DefinitionVisitor by calling f.Enter.
-func (f *DefinitionVisitorFuncs) EnterDefinition(node ast.Definition, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ ArgumentsVisitAction = (ArgumentsVisitActionFunc)(nil)
 
-// LeaveDefinition implements DefinitionVisitor by calling f.Leave.
-func (f *DefinitionVisitorFuncs) LeaveDefinition(node ast.Definition, info *Info) Result {
-	return f.Leave(node, info)
+// VisitArguments implements ArgumentsVisitAction by calling f(node, ctx).
+func (f ArgumentsVisitActionFunc) VisitArguments(node ast.Arguments, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// SelectionVisitor implements visiting function for Selection.
-type SelectionVisitor interface {
-	EnterSelection(node ast.Selection, info *Info) Result
-	LeaveSelection(node ast.Selection, info *Info) Result
+// BooleanValueVisitAction implements visiting function for BooleanValue.
+type BooleanValueVisitAction interface {
+	VisitBooleanValue(node ast.BooleanValue, ctx interface{}) Result
 }
 
-// SelectionVisitorFunc is an adapter to help define a SelectionVisitor from a function which
-// specifies action when entering a node.
-type SelectionVisitorFunc func(node ast.Selection, info *Info) Result
+// BooleanValueVisitActionFunc is an adapter to help define a BooleanValueVisitAction from a function
+// which specifies action when traversing a node.
+type BooleanValueVisitActionFunc func(node ast.BooleanValue, ctx interface{}) Result
 
-var _ SelectionVisitor = (SelectionVisitorFunc)(nil)
-
-// EnterSelection implements SelectionVisitor by calling f(node, info).
-func (f SelectionVisitorFunc) EnterSelection(node ast.Selection, info *Info) Result {
-	return f(node, info)
-}
+var _ BooleanValueVisitAction = (BooleanValueVisitActionFunc)(nil)
 
-// LeaveSelection implements SelectionVisitor which takes no actions.
-func (SelectionVisitorFunc) LeaveSelection(node ast.Selection, info *Info) Result {
-	return Continue
+// VisitBooleanValue implements BooleanValueVisitAction by calling f(node, ctx).
+func (f BooleanValueVisitActionFunc) VisitBooleanValue(node ast.BooleanValue, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// SelectionVisitorFuncs is an adapter to help define a SelectionVisitor from functions.
-type SelectionVisitorFuncs struct {
-	Enter func(node ast.Selection, info *Info) Result
-	Leave func(node ast.Selection, info *Info) Result
+// DefinitionsVisitAction implements visiting function for Definitions.
+type DefinitionsVisitAction interface {
+	VisitDefinitions(node ast.Definitions, ctx interface{}) Result
 }
 
-var _ SelectionVisitor = (*SelectionVisitorFuncs)(nil)
+// DefinitionsVisitActionFunc is an adapter to help define a DefinitionsVisitAction from a function
+// which specifies action when traversing a node.
+type DefinitionsVisitActionFunc func(node ast.Definitions, ctx interface{}) Result
 
-// EnterSelection implements SelectionVisitor by calling f.Enter.
-func (f *SelectionVisitorFuncs) EnterSelection(node ast.Selection, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ DefinitionsVisitAction = (DefinitionsVisitActionFunc)(nil)
 
-// LeaveSelection implements SelectionVisitor by calling f.Leave.
-func (f *SelectionVisitorFuncs) LeaveSelection(node ast.Selection, info *Info) Result {
-	return f.Leave(node, info)
+// VisitDefinitions implements DefinitionsVisitAction by calling f(node, ctx).
+func (f DefinitionsVisitActionFunc) VisitDefinitions(node ast.Definitions, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// ArgumentVisitor implements visiting function for Argument.
-type ArgumentVisitor interface {
-	EnterArgument(node *ast.Argument, info *Info) Result
-	LeaveArgument(node *ast.Argument, info *Info) Result
+// DirectiveVisitAction implements visiting function for Directive.
+type DirectiveVisitAction interface {
+	VisitDirective(node *ast.Directive, ctx interface{}) Result
 }
-
-// ArgumentVisitorFunc is an adapter to help define a ArgumentVisitor from a function which
-// specifies action when entering a node.
-type ArgumentVisitorFunc func(node *ast.Argument, info *Info) Result
 
-var _ ArgumentVisitor = (ArgumentVisitorFunc)(nil)
+// DirectiveVisitActionFunc is an adapter to help define a DirectiveVisitAction from a function
+// which specifies action when traversing a node.
+type DirectiveVisitActionFunc func(node *ast.Directive, ctx interface{}) Result
 
-// EnterArgument implements ArgumentVisitor by calling f(node, info).
-func (f ArgumentVisitorFunc) EnterArgument(node *ast.Argument, info *Info) Result {
-	return f(node, info)
-}
+var _ DirectiveVisitAction = (DirectiveVisitActionFunc)(nil)
 
-// LeaveArgument implements ArgumentVisitor which takes no actions.
-func (ArgumentVisitorFunc) LeaveArgument(node *ast.Argument, info *Info) Result {
-	return Continue
+// VisitDirective implements DirectiveVisitAction by calling f(node, ctx).
+func (f DirectiveVisitActionFunc) VisitDirective(node *ast.Directive, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// ArgumentVisitorFuncs is an adapter to help define a ArgumentVisitor from functions.
-type ArgumentVisitorFuncs struct {
-	Enter func(node *ast.Argument, info *Info) Result
-	Leave func(node *ast.Argument, info *Info) Result
+// DirectivesVisitAction implements visiting function for Directives.
+type DirectivesVisitAction interface {
+	VisitDirectives(node ast.Directives, ctx interface{}) Result
 }
 
-var _ ArgumentVisitor = (*ArgumentVisitorFuncs)(nil)
+// DirectivesVisitActionFunc is an adapter to help define a DirectivesVisitAction from a function
+// which specifies action when traversing a node.
+type DirectivesVisitActionFunc func(node ast.Directives, ctx interface{}) Result
 
-// EnterArgument implements ArgumentVisitor by calling f.Enter.
-func (f *ArgumentVisitorFuncs) EnterArgument(node *ast.Argument, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ DirectivesVisitAction = (DirectivesVisitActionFunc)(nil)
 
-// LeaveArgument implements ArgumentVisitor by calling f.Leave.
-func (f *ArgumentVisitorFuncs) LeaveArgument(node *ast.Argument, info *Info) Result {
-	return f.Leave(node, info)
+// VisitDirectives implements DirectivesVisitAction by calling f(node, ctx).
+func (f DirectivesVisitActionFunc) VisitDirectives(node ast.Directives, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// ArgumentsVisitor implements visiting function for Arguments.
-type ArgumentsVisitor interface {
-	EnterArguments(node ast.Arguments, info *Info) Result
-	LeaveArguments(node ast.Arguments, info *Info) Result
+// DocumentVisitAction implements visiting function for Document.
+type DocumentVisitAction interface {
+	VisitDocument(node ast.Document, ctx interface{}) Result
 }
 
-// ArgumentsVisitorFunc is an adapter to help define a ArgumentsVisitor from a function which
-// specifies action when entering a node.
-type ArgumentsVisitorFunc func(node ast.Arguments, info *Info) Result
+// DocumentVisitActionFunc is an adapter to help define a DocumentVisitAction from a function
+// which specifies action when traversing a node.
+type DocumentVisitActionFunc func(node ast.Document, ctx interface{}) Result
 
-var _ ArgumentsVisitor = (ArgumentsVisitorFunc)(nil)
+var _ DocumentVisitAction = (DocumentVisitActionFunc)(nil)
 
-// EnterArguments implements ArgumentsVisitor by calling f(node, info).
-func (f ArgumentsVisitorFunc) EnterArguments(node ast.Arguments, info *Info) Result {
-	return f(node, info)
+// VisitDocument implements DocumentVisitAction by calling f(node, ctx).
+func (f DocumentVisitActionFunc) VisitDocument(node ast.Document, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// LeaveArguments implements ArgumentsVisitor which takes no actions.
-func (ArgumentsVisitorFunc) LeaveArguments(node ast.Arguments, info *Info) Result {
-	return Continue
-}
-
-// ArgumentsVisitorFuncs is an adapter to help define a ArgumentsVisitor from functions.
-type ArgumentsVisitorFuncs struct {
-	Enter func(node ast.Arguments, info *Info) Result
-	Leave func(node ast.Arguments, info *Info) Result
+// EnumValueVisitAction implements visiting function for EnumValue.
+type EnumValueVisitAction interface {
+	VisitEnumValue(node ast.EnumValue, ctx interface{}) Result
 }
 
-var _ ArgumentsVisitor = (*ArgumentsVisitorFuncs)(nil)
+// EnumValueVisitActionFunc is an adapter to help define a EnumValueVisitAction from a function
+// which specifies action when traversing a node.
+type EnumValueVisitActionFunc func(node ast.EnumValue, ctx interface{}) Result
 
-// EnterArguments implements ArgumentsVisitor by calling f.Enter.
-func (f *ArgumentsVisitorFuncs) EnterArguments(node ast.Arguments, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ EnumValueVisitAction = (EnumValueVisitActionFunc)(nil)
 
-// LeaveArguments implements ArgumentsVisitor by calling f.Leave.
-func (f *ArgumentsVisitorFuncs) LeaveArguments(node ast.Arguments, info *Info) Result {
-	return f.Leave(node, info)
+// VisitEnumValue implements EnumValueVisitAction by calling f(node, ctx).
+func (f EnumValueVisitActionFunc) VisitEnumValue(node ast.EnumValue, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// BooleanValueVisitor implements visiting function for BooleanValue.
-type BooleanValueVisitor interface {
-	EnterBooleanValue(node ast.BooleanValue, info *Info) Result
-	LeaveBooleanValue(node ast.BooleanValue, info *Info) Result
+// FieldVisitAction implements visiting function for Field.
+type FieldVisitAction interface {
+	VisitField(node *ast.Field, ctx interface{}) Result
 }
 
-// BooleanValueVisitorFunc is an adapter to help define a BooleanValueVisitor from a function which
-// specifies action when entering a node.
-type BooleanValueVisitorFunc func(node ast.BooleanValue, info *Info) Result
+// FieldVisitActionFunc is an adapter to help define a FieldVisitAction from a function
+// which specifies action when traversing a node.
+type FieldVisitActionFunc func(node *ast.Field, ctx interface{}) Result
 
-var _ BooleanValueVisitor = (BooleanValueVisitorFunc)(nil)
-
-// EnterBooleanValue implements BooleanValueVisitor by calling f(node, info).
-func (f BooleanValueVisitorFunc) EnterBooleanValue(node ast.BooleanValue, info *Info) Result {
-	return f(node, info)
-}
+var _ FieldVisitAction = (FieldVisitActionFunc)(nil)
 
-// LeaveBooleanValue implements BooleanValueVisitor which takes no actions.
-func (BooleanValueVisitorFunc) LeaveBooleanValue(node ast.BooleanValue, info *Info) Result {
-	return Continue
+// VisitField implements FieldVisitAction by calling f(node, ctx).
+func (f FieldVisitActionFunc) VisitField(node *ast.Field, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// BooleanValueVisitorFuncs is an adapter to help define a BooleanValueVisitor from functions.
-type BooleanValueVisitorFuncs struct {
-	Enter func(node ast.BooleanValue, info *Info) Result
-	Leave func(node ast.BooleanValue, info *Info) Result
+// FloatValueVisitAction implements visiting function for FloatValue.
+type FloatValueVisitAction interface {
+	VisitFloatValue(node ast.FloatValue, ctx interface{}) Result
 }
 
-var _ BooleanValueVisitor = (*BooleanValueVisitorFuncs)(nil)
+// FloatValueVisitActionFunc is an adapter to help define a FloatValueVisitAction from a function
+// which specifies action when traversing a node.
+type FloatValueVisitActionFunc func(node ast.FloatValue, ctx interface{}) Result
 
-// EnterBooleanValue implements BooleanValueVisitor by calling f.Enter.
-func (f *BooleanValueVisitorFuncs) EnterBooleanValue(node ast.BooleanValue, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ FloatValueVisitAction = (FloatValueVisitActionFunc)(nil)
 
-// LeaveBooleanValue implements BooleanValueVisitor by calling f.Leave.
-func (f *BooleanValueVisitorFuncs) LeaveBooleanValue(node ast.BooleanValue, info *Info) Result {
-	return f.Leave(node, info)
+// VisitFloatValue implements FloatValueVisitAction by calling f(node, ctx).
+func (f FloatValueVisitActionFunc) VisitFloatValue(node ast.FloatValue, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// DefinitionsVisitor implements visiting function for Definitions.
-type DefinitionsVisitor interface {
-	EnterDefinitions(node ast.Definitions, info *Info) Result
-	LeaveDefinitions(node ast.Definitions, info *Info) Result
+// FragmentDefinitionVisitAction implements visiting function for FragmentDefinition.
+type FragmentDefinitionVisitAction interface {
+	VisitFragmentDefinition(node *ast.FragmentDefinition, ctx interface{}) Result
 }
-
-// DefinitionsVisitorFunc is an adapter to help define a DefinitionsVisitor from a function which
-// specifies action when entering a node.
-type DefinitionsVisitorFunc func(node ast.Definitions, info *Info) Result
 
-var _ DefinitionsVisitor = (DefinitionsVisitorFunc)(nil)
+// FragmentDefinitionVisitActionFunc is an adapter to help define a FragmentDefinitionVisitAction from a function
+// which specifies action when traversing a node.
+type FragmentDefinitionVisitActionFunc func(node *ast.FragmentDefinition, ctx interface{}) Result
 
-// EnterDefinitions implements DefinitionsVisitor by calling f(node, info).
-func (f DefinitionsVisitorFunc) EnterDefinitions(node ast.Definitions, info *Info) Result {
-	return f(node, info)
-}
+var _ FragmentDefinitionVisitAction = (FragmentDefinitionVisitActionFunc)(nil)
 
-// LeaveDefinitions implements DefinitionsVisitor which takes no actions.
-func (DefinitionsVisitorFunc) LeaveDefinitions(node ast.Definitions, info *Info) Result {
-	return Continue
+// VisitFragmentDefinition implements FragmentDefinitionVisitAction by calling f(node, ctx).
+func (f FragmentDefinitionVisitActionFunc) VisitFragmentDefinition(node *ast.FragmentDefinition, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// DefinitionsVisitorFuncs is an adapter to help define a DefinitionsVisitor from functions.
-type DefinitionsVisitorFuncs struct {
-	Enter func(node ast.Definitions, info *Info) Result
-	Leave func(node ast.Definitions, info *Info) Result
+// FragmentSpreadVisitAction implements visiting function for FragmentSpread.
+type FragmentSpreadVisitAction interface {
+	VisitFragmentSpread(node *ast.FragmentSpread, ctx interface{}) Result
 }
 
-var _ DefinitionsVisitor = (*DefinitionsVisitorFuncs)(nil)
+// FragmentSpreadVisitActionFunc is an adapter to help define a FragmentSpreadVisitAction from a function
+// which specifies action when traversing a node.
+type FragmentSpreadVisitActionFunc func(node *ast.FragmentSpread, ctx interface{}) Result
 
-// EnterDefinitions implements DefinitionsVisitor by calling f.Enter.
-func (f *DefinitionsVisitorFuncs) EnterDefinitions(node ast.Definitions, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ FragmentSpreadVisitAction = (FragmentSpreadVisitActionFunc)(nil)
 
-// LeaveDefinitions implements DefinitionsVisitor by calling f.Leave.
-func (f *DefinitionsVisitorFuncs) LeaveDefinitions(node ast.Definitions, info *Info) Result {
-	return f.Leave(node, info)
+// VisitFragmentSpread implements FragmentSpreadVisitAction by calling f(node, ctx).
+func (f FragmentSpreadVisitActionFunc) VisitFragmentSpread(node *ast.FragmentSpread, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// DirectiveVisitor implements visiting function for Directive.
-type DirectiveVisitor interface {
-	EnterDirective(node *ast.Directive, info *Info) Result
-	LeaveDirective(node *ast.Directive, info *Info) Result
+// InlineFragmentVisitAction implements visiting function for InlineFragment.
+type InlineFragmentVisitAction interface {
+	VisitInlineFragment(node *ast.InlineFragment, ctx interface{}) Result
 }
 
-// DirectiveVisitorFunc is an adapter to help define a DirectiveVisitor from a function which
-// specifies action when entering a node.
-type DirectiveVisitorFunc func(node *ast.Directive, info *Info) Result
+// InlineFragmentVisitActionFunc is an adapter to help define a InlineFragmentVisitAction from a function
+// which specifies action when traversing a node.
+type InlineFragmentVisitActionFunc func(node *ast.InlineFragment, ctx interface{}) Result
 
-var _ DirectiveVisitor = (DirectiveVisitorFunc)(nil)
+var _ InlineFragmentVisitAction = (InlineFragmentVisitActionFunc)(nil)
 
-// EnterDirective implements DirectiveVisitor by calling f(node, info).
-func (f DirectiveVisitorFunc) EnterDirective(node *ast.Directive, info *Info) Result {
-	return f(node, info)
+// VisitInlineFragment implements InlineFragmentVisitAction by calling f(node, ctx).
+func (f InlineFragmentVisitActionFunc) VisitInlineFragment(node *ast.InlineFragment, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// LeaveDirective implements DirectiveVisitor which takes no actions.
-func (DirectiveVisitorFunc) LeaveDirective(node *ast.Directive, info *Info) Result {
-	return Continue
-}
-
-// DirectiveVisitorFuncs is an adapter to help define a DirectiveVisitor from functions.
-type DirectiveVisitorFuncs struct {
-	Enter func(node *ast.Directive, info *Info) Result
-	Leave func(node *ast.Directive, info *Info) Result
+// IntValueVisitAction implements visiting function for IntValue.
+type IntValueVisitAction interface {
+	VisitIntValue(node ast.IntValue, ctx interface{}) Result
 }
 
-var _ DirectiveVisitor = (*DirectiveVisitorFuncs)(nil)
+// IntValueVisitActionFunc is an adapter to help define a IntValueVisitAction from a function
+// which specifies action when traversing a node.
+type IntValueVisitActionFunc func(node ast.IntValue, ctx interface{}) Result
 
-// EnterDirective implements DirectiveVisitor by calling f.Enter.
-func (f *DirectiveVisitorFuncs) EnterDirective(node *ast.Directive, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ IntValueVisitAction = (IntValueVisitActionFunc)(nil)
 
-// LeaveDirective implements DirectiveVisitor by calling f.Leave.
-func (f *DirectiveVisitorFuncs) LeaveDirective(node *ast.Directive, info *Info) Result {
-	return f.Leave(node, info)
+// VisitIntValue implements IntValueVisitAction by calling f(node, ctx).
+func (f IntValueVisitActionFunc) VisitIntValue(node ast.IntValue, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// DirectivesVisitor implements visiting function for Directives.
-type DirectivesVisitor interface {
-	EnterDirectives(node ast.Directives, info *Info) Result
-	LeaveDirectives(node ast.Directives, info *Info) Result
+// ListTypeVisitAction implements visiting function for ListType.
+type ListTypeVisitAction interface {
+	VisitListType(node ast.ListType, ctx interface{}) Result
 }
-
-// DirectivesVisitorFunc is an adapter to help define a DirectivesVisitor from a function which
-// specifies action when entering a node.
-type DirectivesVisitorFunc func(node ast.Directives, info *Info) Result
 
-var _ DirectivesVisitor = (DirectivesVisitorFunc)(nil)
+// ListTypeVisitActionFunc is an adapter to help define a ListTypeVisitAction from a function
+// which specifies action when traversing a node.
+type ListTypeVisitActionFunc func(node ast.ListType, ctx interface{}) Result
 
-// EnterDirectives implements DirectivesVisitor by calling f(node, info).
-func (f DirectivesVisitorFunc) EnterDirectives(node ast.Directives, info *Info) Result {
-	return f(node, info)
-}
+var _ ListTypeVisitAction = (ListTypeVisitActionFunc)(nil)
 
-// LeaveDirectives implements DirectivesVisitor which takes no actions.
-func (DirectivesVisitorFunc) LeaveDirectives(node ast.Directives, info *Info) Result {
-	return Continue
+// VisitListType implements ListTypeVisitAction by calling f(node, ctx).
+func (f ListTypeVisitActionFunc) VisitListType(node ast.ListType, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// DirectivesVisitorFuncs is an adapter to help define a DirectivesVisitor from functions.
-type DirectivesVisitorFuncs struct {
-	Enter func(node ast.Directives, info *Info) Result
-	Leave func(node ast.Directives, info *Info) Result
+// ListValueVisitAction implements visiting function for ListValue.
+type ListValueVisitAction interface {
+	VisitListValue(node ast.ListValue, ctx interface{}) Result
 }
 
-var _ DirectivesVisitor = (*DirectivesVisitorFuncs)(nil)
+// ListValueVisitActionFunc is an adapter to help define a ListValueVisitAction from a function
+// which specifies action when traversing a node.
+type ListValueVisitActionFunc func(node ast.ListValue, ctx interface{}) Result
 
-// EnterDirectives implements DirectivesVisitor by calling f.Enter.
-func (f *DirectivesVisitorFuncs) EnterDirectives(node ast.Directives, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ ListValueVisitAction = (ListValueVisitActionFunc)(nil)
 
-// LeaveDirectives implements DirectivesVisitor by calling f.Leave.
-func (f *DirectivesVisitorFuncs) LeaveDirectives(node ast.Directives, info *Info) Result {
-	return f.Leave(node, info)
+// VisitListValue implements ListValueVisitAction by calling f(node, ctx).
+func (f ListValueVisitActionFunc) VisitListValue(node ast.ListValue, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// DocumentVisitor implements visiting function for Document.
-type DocumentVisitor interface {
-	EnterDocument(node ast.Document, info *Info) Result
-	LeaveDocument(node ast.Document, info *Info) Result
+// NameVisitAction implements visiting function for Name.
+type NameVisitAction interface {
+	VisitName(node ast.Name, ctx interface{}) Result
 }
 
-// DocumentVisitorFunc is an adapter to help define a DocumentVisitor from a function which
-// specifies action when entering a node.
-type DocumentVisitorFunc func(node ast.Document, info *Info) Result
+// NameVisitActionFunc is an adapter to help define a NameVisitAction from a function
+// which specifies action when traversing a node.
+type NameVisitActionFunc func(node ast.Name, ctx interface{}) Result
 
-var _ DocumentVisitor = (DocumentVisitorFunc)(nil)
-
-// EnterDocument implements DocumentVisitor by calling f(node, info).
-func (f DocumentVisitorFunc) EnterDocument(node ast.Document, info *Info) Result {
-	return f(node, info)
-}
+var _ NameVisitAction = (NameVisitActionFunc)(nil)
 
-// LeaveDocument implements DocumentVisitor which takes no actions.
-func (DocumentVisitorFunc) LeaveDocument(node ast.Document, info *Info) Result {
-	return Continue
+// VisitName implements NameVisitAction by calling f(node, ctx).
+func (f NameVisitActionFunc) VisitName(node ast.Name, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// DocumentVisitorFuncs is an adapter to help define a DocumentVisitor from functions.
-type DocumentVisitorFuncs struct {
-	Enter func(node ast.Document, info *Info) Result
-	Leave func(node ast.Document, info *Info) Result
+// NamedTypeVisitAction implements visiting function for NamedType.
+type NamedTypeVisitAction interface {
+	VisitNamedType(node ast.NamedType, ctx interface{}) Result
 }
 
-var _ DocumentVisitor = (*DocumentVisitorFuncs)(nil)
+// NamedTypeVisitActionFunc is an adapter to help define a NamedTypeVisitAction from a function
+// which specifies action when traversing a node.
+type NamedTypeVisitActionFunc func(node ast.NamedType, ctx interface{}) Result
 
-// EnterDocument implements DocumentVisitor by calling f.Enter.
-func (f *DocumentVisitorFuncs) EnterDocument(node ast.Document, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ NamedTypeVisitAction = (NamedTypeVisitActionFunc)(nil)
 
-// LeaveDocument implements DocumentVisitor by calling f.Leave.
-func (f *DocumentVisitorFuncs) LeaveDocument(node ast.Document, info *Info) Result {
-	return f.Leave(node, info)
+// VisitNamedType implements NamedTypeVisitAction by calling f(node, ctx).
+func (f NamedTypeVisitActionFunc) VisitNamedType(node ast.NamedType, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// EnumValueVisitor implements visiting function for EnumValue.
-type EnumValueVisitor interface {
-	EnterEnumValue(node ast.EnumValue, info *Info) Result
-	LeaveEnumValue(node ast.EnumValue, info *Info) Result
+// NonNullTypeVisitAction implements visiting function for NonNullType.
+type NonNullTypeVisitAction interface {
+	VisitNonNullType(node ast.NonNullType, ctx interface{}) Result
 }
-
-// EnumValueVisitorFunc is an adapter to help define a EnumValueVisitor from a function which
-// specifies action when entering a node.
-type EnumValueVisitorFunc func(node ast.EnumValue, info *Info) Result
 
-var _ EnumValueVisitor = (EnumValueVisitorFunc)(nil)
+// NonNullTypeVisitActionFunc is an adapter to help define a NonNullTypeVisitAction from a function
+// which specifies action when traversing a node.
+type NonNullTypeVisitActionFunc func(node ast.NonNullType, ctx interface{}) Result
 
-// EnterEnumValue implements EnumValueVisitor by calling f(node, info).
-func (f EnumValueVisitorFunc) EnterEnumValue(node ast.EnumValue, info *Info) Result {
-	return f(node, info)
-}
+var _ NonNullTypeVisitAction = (NonNullTypeVisitActionFunc)(nil)
 
-// LeaveEnumValue implements EnumValueVisitor which takes no actions.
-func (EnumValueVisitorFunc) LeaveEnumValue(node ast.EnumValue, info *Info) Result {
-	return Continue
+// VisitNonNullType implements NonNullTypeVisitAction by calling f(node, ctx).
+func (f NonNullTypeVisitActionFunc) VisitNonNullType(node ast.NonNullType, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// EnumValueVisitorFuncs is an adapter to help define a EnumValueVisitor from functions.
-type EnumValueVisitorFuncs struct {
-	Enter func(node ast.EnumValue, info *Info) Result
-	Leave func(node ast.EnumValue, info *Info) Result
+// NullValueVisitAction implements visiting function for NullValue.
+type NullValueVisitAction interface {
+	VisitNullValue(node ast.NullValue, ctx interface{}) Result
 }
 
-var _ EnumValueVisitor = (*EnumValueVisitorFuncs)(nil)
+// NullValueVisitActionFunc is an adapter to help define a NullValueVisitAction from a function
+// which specifies action when traversing a node.
+type NullValueVisitActionFunc func(node ast.NullValue, ctx interface{}) Result
 
-// EnterEnumValue implements EnumValueVisitor by calling f.Enter.
-func (f *EnumValueVisitorFuncs) EnterEnumValue(node ast.EnumValue, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ NullValueVisitAction = (NullValueVisitActionFunc)(nil)
 
-// LeaveEnumValue implements EnumValueVisitor by calling f.Leave.
-func (f *EnumValueVisitorFuncs) LeaveEnumValue(node ast.EnumValue, info *Info) Result {
-	return f.Leave(node, info)
+// VisitNullValue implements NullValueVisitAction by calling f(node, ctx).
+func (f NullValueVisitActionFunc) VisitNullValue(node ast.NullValue, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// FieldVisitor implements visiting function for Field.
-type FieldVisitor interface {
-	EnterField(node *ast.Field, info *Info) Result
-	LeaveField(node *ast.Field, info *Info) Result
+// ObjectFieldVisitAction implements visiting function for ObjectField.
+type ObjectFieldVisitAction interface {
+	VisitObjectField(node *ast.ObjectField, ctx interface{}) Result
 }
 
-// FieldVisitorFunc is an adapter to help define a FieldVisitor from a function which
-// specifies action when entering a node.
-type FieldVisitorFunc func(node *ast.Field, info *Info) Result
+// ObjectFieldVisitActionFunc is an adapter to help define a ObjectFieldVisitAction from a function
+// which specifies action when traversing a node.
+type ObjectFieldVisitActionFunc func(node *ast.ObjectField, ctx interface{}) Result
 
-var _ FieldVisitor = (FieldVisitorFunc)(nil)
+var _ ObjectFieldVisitAction = (ObjectFieldVisitActionFunc)(nil)
 
-// EnterField implements FieldVisitor by calling f(node, info).
-func (f FieldVisitorFunc) EnterField(node *ast.Field, info *Info) Result {
-	return f(node, info)
-}
-
-// LeaveField implements FieldVisitor which takes no actions.
-func (FieldVisitorFunc) LeaveField(node *ast.Field, info *Info) Result {
-	return Continue
+// VisitObjectField implements ObjectFieldVisitAction by calling f(node, ctx).
+func (f ObjectFieldVisitActionFunc) VisitObjectField(node *ast.ObjectField, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// FieldVisitorFuncs is an adapter to help define a FieldVisitor from functions.
-type FieldVisitorFuncs struct {
-	Enter func(node *ast.Field, info *Info) Result
-	Leave func(node *ast.Field, info *Info) Result
+// ObjectValueVisitAction implements visiting function for ObjectValue.
+type ObjectValueVisitAction interface {
+	VisitObjectValue(node ast.ObjectValue, ctx interface{}) Result
 }
 
-var _ FieldVisitor = (*FieldVisitorFuncs)(nil)
+// ObjectValueVisitActionFunc is an adapter to help define a ObjectValueVisitAction from a function
+// which specifies action when traversing a node.
+type ObjectValueVisitActionFunc func(node ast.ObjectValue, ctx interface{}) Result
 
-// EnterField implements FieldVisitor by calling f.Enter.
-func (f *FieldVisitorFuncs) EnterField(node *ast.Field, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ ObjectValueVisitAction = (ObjectValueVisitActionFunc)(nil)
 
-// LeaveField implements FieldVisitor by calling f.Leave.
-func (f *FieldVisitorFuncs) LeaveField(node *ast.Field, info *Info) Result {
-	return f.Leave(node, info)
+// VisitObjectValue implements ObjectValueVisitAction by calling f(node, ctx).
+func (f ObjectValueVisitActionFunc) VisitObjectValue(node ast.ObjectValue, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// FloatValueVisitor implements visiting function for FloatValue.
-type FloatValueVisitor interface {
-	EnterFloatValue(node ast.FloatValue, info *Info) Result
-	LeaveFloatValue(node ast.FloatValue, info *Info) Result
+// OperationDefinitionVisitAction implements visiting function for OperationDefinition.
+type OperationDefinitionVisitAction interface {
+	VisitOperationDefinition(node *ast.OperationDefinition, ctx interface{}) Result
 }
 
-// FloatValueVisitorFunc is an adapter to help define a FloatValueVisitor from a function which
-// specifies action when entering a node.
-type FloatValueVisitorFunc func(node ast.FloatValue, info *Info) Result
+// OperationDefinitionVisitActionFunc is an adapter to help define a OperationDefinitionVisitAction from a function
+// which specifies action when traversing a node.
+type OperationDefinitionVisitActionFunc func(node *ast.OperationDefinition, ctx interface{}) Result
 
-var _ FloatValueVisitor = (FloatValueVisitorFunc)(nil)
-
-// EnterFloatValue implements FloatValueVisitor by calling f(node, info).
-func (f FloatValueVisitorFunc) EnterFloatValue(node ast.FloatValue, info *Info) Result {
-	return f(node, info)
-}
+var _ OperationDefinitionVisitAction = (OperationDefinitionVisitActionFunc)(nil)
 
-// LeaveFloatValue implements FloatValueVisitor which takes no actions.
-func (FloatValueVisitorFunc) LeaveFloatValue(node ast.FloatValue, info *Info) Result {
-	return Continue
+// VisitOperationDefinition implements OperationDefinitionVisitAction by calling f(node, ctx).
+func (f OperationDefinitionVisitActionFunc) VisitOperationDefinition(node *ast.OperationDefinition, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// FloatValueVisitorFuncs is an adapter to help define a FloatValueVisitor from functions.
-type FloatValueVisitorFuncs struct {
-	Enter func(node ast.FloatValue, info *Info) Result
-	Leave func(node ast.FloatValue, info *Info) Result
+// SelectionSetVisitAction implements visiting function for SelectionSet.
+type SelectionSetVisitAction interface {
+	VisitSelectionSet(node ast.SelectionSet, ctx interface{}) Result
 }
 
-var _ FloatValueVisitor = (*FloatValueVisitorFuncs)(nil)
+// SelectionSetVisitActionFunc is an adapter to help define a SelectionSetVisitAction from a function
+// which specifies action when traversing a node.
+type SelectionSetVisitActionFunc func(node ast.SelectionSet, ctx interface{}) Result
 
-// EnterFloatValue implements FloatValueVisitor by calling f.Enter.
-func (f *FloatValueVisitorFuncs) EnterFloatValue(node ast.FloatValue, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ SelectionSetVisitAction = (SelectionSetVisitActionFunc)(nil)
 
-// LeaveFloatValue implements FloatValueVisitor by calling f.Leave.
-func (f *FloatValueVisitorFuncs) LeaveFloatValue(node ast.FloatValue, info *Info) Result {
-	return f.Leave(node, info)
+// VisitSelectionSet implements SelectionSetVisitAction by calling f(node, ctx).
+func (f SelectionSetVisitActionFunc) VisitSelectionSet(node ast.SelectionSet, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// FragmentDefinitionVisitor implements visiting function for FragmentDefinition.
-type FragmentDefinitionVisitor interface {
-	EnterFragmentDefinition(node *ast.FragmentDefinition, info *Info) Result
-	LeaveFragmentDefinition(node *ast.FragmentDefinition, info *Info) Result
+// StringValueVisitAction implements visiting function for StringValue.
+type StringValueVisitAction interface {
+	VisitStringValue(node ast.StringValue, ctx interface{}) Result
 }
-
-// FragmentDefinitionVisitorFunc is an adapter to help define a FragmentDefinitionVisitor from a function which
-// specifies action when entering a node.
-type FragmentDefinitionVisitorFunc func(node *ast.FragmentDefinition, info *Info) Result
 
-var _ FragmentDefinitionVisitor = (FragmentDefinitionVisitorFunc)(nil)
+// StringValueVisitActionFunc is an adapter to help define a StringValueVisitAction from a function
+// which specifies action when traversing a node.
+type StringValueVisitActionFunc func(node ast.StringValue, ctx interface{}) Result
 
-// EnterFragmentDefinition implements FragmentDefinitionVisitor by calling f(node, info).
-func (f FragmentDefinitionVisitorFunc) EnterFragmentDefinition(node *ast.FragmentDefinition, info *Info) Result {
-	return f(node, info)
-}
+var _ StringValueVisitAction = (StringValueVisitActionFunc)(nil)
 
-// LeaveFragmentDefinition implements FragmentDefinitionVisitor which takes no actions.
-func (FragmentDefinitionVisitorFunc) LeaveFragmentDefinition(node *ast.FragmentDefinition, info *Info) Result {
-	return Continue
+// VisitStringValue implements StringValueVisitAction by calling f(node, ctx).
+func (f StringValueVisitActionFunc) VisitStringValue(node ast.StringValue, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// FragmentDefinitionVisitorFuncs is an adapter to help define a FragmentDefinitionVisitor from functions.
-type FragmentDefinitionVisitorFuncs struct {
-	Enter func(node *ast.FragmentDefinition, info *Info) Result
-	Leave func(node *ast.FragmentDefinition, info *Info) Result
+// VariableVisitAction implements visiting function for Variable.
+type VariableVisitAction interface {
+	VisitVariable(node ast.Variable, ctx interface{}) Result
 }
 
-var _ FragmentDefinitionVisitor = (*FragmentDefinitionVisitorFuncs)(nil)
+// VariableVisitActionFunc is an adapter to help define a VariableVisitAction from a function
+// which specifies action when traversing a node.
+type VariableVisitActionFunc func(node ast.Variable, ctx interface{}) Result
 
-// EnterFragmentDefinition implements FragmentDefinitionVisitor by calling f.Enter.
-func (f *FragmentDefinitionVisitorFuncs) EnterFragmentDefinition(node *ast.FragmentDefinition, info *Info) Result {
-	return f.Enter(node, info)
-}
+var _ VariableVisitAction = (VariableVisitActionFunc)(nil)
 
-// LeaveFragmentDefinition implements FragmentDefinitionVisitor by calling f.Leave.
-func (f *FragmentDefinitionVisitorFuncs) LeaveFragmentDefinition(node *ast.FragmentDefinition, info *Info) Result {
-	return f.Leave(node, info)
+// VisitVariable implements VariableVisitAction by calling f(node, ctx).
+func (f VariableVisitActionFunc) VisitVariable(node ast.Variable, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// FragmentSpreadVisitor implements visiting function for FragmentSpread.
-type FragmentSpreadVisitor interface {
-	EnterFragmentSpread(node *ast.FragmentSpread, info *Info) Result
-	LeaveFragmentSpread(node *ast.FragmentSpread, info *Info) Result
+// VariableDefinitionVisitAction implements visiting function for VariableDefinition.
+type VariableDefinitionVisitAction interface {
+	VisitVariableDefinition(node *ast.VariableDefinition, ctx interface{}) Result
 }
 
-// FragmentSpreadVisitorFunc is an adapter to help define a FragmentSpreadVisitor from a function which
-// specifies action when entering a node.
-type FragmentSpreadVisitorFunc func(node *ast.FragmentSpread, info *Info) Result
+// VariableDefinitionVisitActionFunc is an adapter to help define a VariableDefinitionVisitAction from a function
+// which specifies action when traversing a node.
+type VariableDefinitionVisitActionFunc func(node *ast.VariableDefinition, ctx interface{}) Result
 
-var _ FragmentSpreadVisitor = (FragmentSpreadVisitorFunc)(nil)
+var _ VariableDefinitionVisitAction = (VariableDefinitionVisitActionFunc)(nil)
 
-// EnterFragmentSpread implements FragmentSpreadVisitor by calling f(node, info).
-func (f FragmentSpreadVisitorFunc) EnterFragmentSpread(node *ast.FragmentSpread, info *Info) Result {
-	return f(node, info)
-}
-
-// LeaveFragmentSpread implements FragmentSpreadVisitor which takes no actions.
-func (FragmentSpreadVisitorFunc) LeaveFragmentSpread(node *ast.FragmentSpread, info *Info) Result {
-	return Continue
+// VisitVariableDefinition implements VariableDefinitionVisitAction by calling f(node, ctx).
+func (f VariableDefinitionVisitActionFunc) VisitVariableDefinition(node *ast.VariableDefinition, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// FragmentSpreadVisitorFuncs is an adapter to help define a FragmentSpreadVisitor from functions.
-type FragmentSpreadVisitorFuncs struct {
-	Enter func(node *ast.FragmentSpread, info *Info) Result
-	Leave func(node *ast.FragmentSpread, info *Info) Result
+// VariableDefinitionsVisitAction implements visiting function for VariableDefinitions.
+type VariableDefinitionsVisitAction interface {
+	VisitVariableDefinitions(node ast.VariableDefinitions, ctx interface{}) Result
 }
 
-var _ FragmentSpreadVisitor = (*FragmentSpreadVisitorFuncs)(nil)
+// VariableDefinitionsVisitActionFunc is an adapter to help define a VariableDefinitionsVisitAction from a function
+// which specifies action when traversing a node.
+type VariableDefinitionsVisitActionFunc func(node ast.VariableDefinitions, ctx interface{}) Result
 
-// EnterFragmentSpread implements FragmentSpreadVisitor by calling f.Enter.
-func (f *FragmentSpreadVisitorFuncs) EnterFragmentSpread(node *ast.FragmentSpread, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveFragmentSpread implements FragmentSpreadVisitor by calling f.Leave.
-func (f *FragmentSpreadVisitorFuncs) LeaveFragmentSpread(node *ast.FragmentSpread, info *Info) Result {
-	return f.Leave(node, info)
-}
+var _ VariableDefinitionsVisitAction = (VariableDefinitionsVisitActionFunc)(nil)
 
-// InlineFragmentVisitor implements visiting function for InlineFragment.
-type InlineFragmentVisitor interface {
-	EnterInlineFragment(node *ast.InlineFragment, info *Info) Result
-	LeaveInlineFragment(node *ast.InlineFragment, info *Info) Result
+// VisitVariableDefinitions implements VariableDefinitionsVisitAction by calling f(node, ctx).
+func (f VariableDefinitionsVisitActionFunc) VisitVariableDefinitions(node ast.VariableDefinitions, ctx interface{}) Result {
+	return f(node, ctx)
 }
 
-// InlineFragmentVisitorFunc is an adapter to help define a InlineFragmentVisitor from a function which
-// specifies action when entering a node.
-type InlineFragmentVisitorFunc func(node *ast.InlineFragment, info *Info) Result
-
-var _ InlineFragmentVisitor = (InlineFragmentVisitorFunc)(nil)
-
-// EnterInlineFragment implements InlineFragmentVisitor by calling f(node, info).
-func (f InlineFragmentVisitorFunc) EnterInlineFragment(node *ast.InlineFragment, info *Info) Result {
-	return f(node, info)
+// A Visitor is provided to Walk to apply actions during AST traversal. It contains a collection of
+// actions to be executed for each type of node during the traversal.
+type Visitor struct {
+	argumentVisitAction            ArgumentVisitAction
+	argumentsVisitAction           ArgumentsVisitAction
+	booleanValueVisitAction        BooleanValueVisitAction
+	definitionsVisitAction         DefinitionsVisitAction
+	directiveVisitAction           DirectiveVisitAction
+	directivesVisitAction          DirectivesVisitAction
+	documentVisitAction            DocumentVisitAction
+	enumValueVisitAction           EnumValueVisitAction
+	fieldVisitAction               FieldVisitAction
+	floatValueVisitAction          FloatValueVisitAction
+	fragmentDefinitionVisitAction  FragmentDefinitionVisitAction
+	fragmentSpreadVisitAction      FragmentSpreadVisitAction
+	inlineFragmentVisitAction      InlineFragmentVisitAction
+	intValueVisitAction            IntValueVisitAction
+	listTypeVisitAction            ListTypeVisitAction
+	listValueVisitAction           ListValueVisitAction
+	nameVisitAction                NameVisitAction
+	namedTypeVisitAction           NamedTypeVisitAction
+	nonNullTypeVisitAction         NonNullTypeVisitAction
+	nullValueVisitAction           NullValueVisitAction
+	objectFieldVisitAction         ObjectFieldVisitAction
+	objectValueVisitAction         ObjectValueVisitAction
+	operationDefinitionVisitAction OperationDefinitionVisitAction
+	selectionSetVisitAction        SelectionSetVisitAction
+	stringValueVisitAction         StringValueVisitAction
+	variableVisitAction            VariableVisitAction
+	variableDefinitionVisitAction  VariableDefinitionVisitAction
+	variableDefinitionsVisitAction VariableDefinitionsVisitAction
 }
 
-// LeaveInlineFragment implements InlineFragmentVisitor which takes no actions.
-func (InlineFragmentVisitorFunc) LeaveInlineFragment(node *ast.InlineFragment, info *Info) Result {
+// VisitArgument applies actions on Argument.
+func (v *Visitor) VisitArgument(node *ast.Argument, ctx interface{}) Result {
+	if v.argumentVisitAction != nil {
+		return v.argumentVisitAction.VisitArgument(node, ctx)
+	}
 	return Continue
-}
-
-// InlineFragmentVisitorFuncs is an adapter to help define a InlineFragmentVisitor from functions.
-type InlineFragmentVisitorFuncs struct {
-	Enter func(node *ast.InlineFragment, info *Info) Result
-	Leave func(node *ast.InlineFragment, info *Info) Result
-}
-
-var _ InlineFragmentVisitor = (*InlineFragmentVisitorFuncs)(nil)
-
-// EnterInlineFragment implements InlineFragmentVisitor by calling f.Enter.
-func (f *InlineFragmentVisitorFuncs) EnterInlineFragment(node *ast.InlineFragment, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveInlineFragment implements InlineFragmentVisitor by calling f.Leave.
-func (f *InlineFragmentVisitorFuncs) LeaveInlineFragment(node *ast.InlineFragment, info *Info) Result {
-	return f.Leave(node, info)
 }
 
-// IntValueVisitor implements visiting function for IntValue.
-type IntValueVisitor interface {
-	EnterIntValue(node ast.IntValue, info *Info) Result
-	LeaveIntValue(node ast.IntValue, info *Info) Result
-}
-
-// IntValueVisitorFunc is an adapter to help define a IntValueVisitor from a function which
-// specifies action when entering a node.
-type IntValueVisitorFunc func(node ast.IntValue, info *Info) Result
-
-var _ IntValueVisitor = (IntValueVisitorFunc)(nil)
-
-// EnterIntValue implements IntValueVisitor by calling f(node, info).
-func (f IntValueVisitorFunc) EnterIntValue(node ast.IntValue, info *Info) Result {
-	return f(node, info)
-}
-
-// LeaveIntValue implements IntValueVisitor which takes no actions.
-func (IntValueVisitorFunc) LeaveIntValue(node ast.IntValue, info *Info) Result {
+// VisitArguments applies actions on Arguments.
+func (v *Visitor) VisitArguments(node ast.Arguments, ctx interface{}) Result {
+	if v.argumentsVisitAction != nil {
+		return v.argumentsVisitAction.VisitArguments(node, ctx)
+	}
 	return Continue
-}
-
-// IntValueVisitorFuncs is an adapter to help define a IntValueVisitor from functions.
-type IntValueVisitorFuncs struct {
-	Enter func(node ast.IntValue, info *Info) Result
-	Leave func(node ast.IntValue, info *Info) Result
-}
-
-var _ IntValueVisitor = (*IntValueVisitorFuncs)(nil)
-
-// EnterIntValue implements IntValueVisitor by calling f.Enter.
-func (f *IntValueVisitorFuncs) EnterIntValue(node ast.IntValue, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveIntValue implements IntValueVisitor by calling f.Leave.
-func (f *IntValueVisitorFuncs) LeaveIntValue(node ast.IntValue, info *Info) Result {
-	return f.Leave(node, info)
 }
 
-// ListTypeVisitor implements visiting function for ListType.
-type ListTypeVisitor interface {
-	EnterListType(node ast.ListType, info *Info) Result
-	LeaveListType(node ast.ListType, info *Info) Result
-}
-
-// ListTypeVisitorFunc is an adapter to help define a ListTypeVisitor from a function which
-// specifies action when entering a node.
-type ListTypeVisitorFunc func(node ast.ListType, info *Info) Result
-
-var _ ListTypeVisitor = (ListTypeVisitorFunc)(nil)
-
-// EnterListType implements ListTypeVisitor by calling f(node, info).
-func (f ListTypeVisitorFunc) EnterListType(node ast.ListType, info *Info) Result {
-	return f(node, info)
-}
-
-// LeaveListType implements ListTypeVisitor which takes no actions.
-func (ListTypeVisitorFunc) LeaveListType(node ast.ListType, info *Info) Result {
+// VisitBooleanValue applies actions on BooleanValue.
+func (v *Visitor) VisitBooleanValue(node ast.BooleanValue, ctx interface{}) Result {
+	if v.booleanValueVisitAction != nil {
+		return v.booleanValueVisitAction.VisitBooleanValue(node, ctx)
+	}
 	return Continue
-}
-
-// ListTypeVisitorFuncs is an adapter to help define a ListTypeVisitor from functions.
-type ListTypeVisitorFuncs struct {
-	Enter func(node ast.ListType, info *Info) Result
-	Leave func(node ast.ListType, info *Info) Result
-}
-
-var _ ListTypeVisitor = (*ListTypeVisitorFuncs)(nil)
-
-// EnterListType implements ListTypeVisitor by calling f.Enter.
-func (f *ListTypeVisitorFuncs) EnterListType(node ast.ListType, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveListType implements ListTypeVisitor by calling f.Leave.
-func (f *ListTypeVisitorFuncs) LeaveListType(node ast.ListType, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// ListValueVisitor implements visiting function for ListValue.
-type ListValueVisitor interface {
-	EnterListValue(node ast.ListValue, info *Info) Result
-	LeaveListValue(node ast.ListValue, info *Info) Result
-}
-
-// ListValueVisitorFunc is an adapter to help define a ListValueVisitor from a function which
-// specifies action when entering a node.
-type ListValueVisitorFunc func(node ast.ListValue, info *Info) Result
-
-var _ ListValueVisitor = (ListValueVisitorFunc)(nil)
-
-// EnterListValue implements ListValueVisitor by calling f(node, info).
-func (f ListValueVisitorFunc) EnterListValue(node ast.ListValue, info *Info) Result {
-	return f(node, info)
 }
 
-// LeaveListValue implements ListValueVisitor which takes no actions.
-func (ListValueVisitorFunc) LeaveListValue(node ast.ListValue, info *Info) Result {
+// VisitDefinitions applies actions on Definitions.
+func (v *Visitor) VisitDefinitions(node ast.Definitions, ctx interface{}) Result {
+	if v.definitionsVisitAction != nil {
+		return v.definitionsVisitAction.VisitDefinitions(node, ctx)
+	}
 	return Continue
-}
-
-// ListValueVisitorFuncs is an adapter to help define a ListValueVisitor from functions.
-type ListValueVisitorFuncs struct {
-	Enter func(node ast.ListValue, info *Info) Result
-	Leave func(node ast.ListValue, info *Info) Result
-}
-
-var _ ListValueVisitor = (*ListValueVisitorFuncs)(nil)
-
-// EnterListValue implements ListValueVisitor by calling f.Enter.
-func (f *ListValueVisitorFuncs) EnterListValue(node ast.ListValue, info *Info) Result {
-	return f.Enter(node, info)
 }
 
-// LeaveListValue implements ListValueVisitor by calling f.Leave.
-func (f *ListValueVisitorFuncs) LeaveListValue(node ast.ListValue, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// NameVisitor implements visiting function for Name.
-type NameVisitor interface {
-	EnterName(node ast.Name, info *Info) Result
-	LeaveName(node ast.Name, info *Info) Result
-}
-
-// NameVisitorFunc is an adapter to help define a NameVisitor from a function which
-// specifies action when entering a node.
-type NameVisitorFunc func(node ast.Name, info *Info) Result
-
-var _ NameVisitor = (NameVisitorFunc)(nil)
-
-// EnterName implements NameVisitor by calling f(node, info).
-func (f NameVisitorFunc) EnterName(node ast.Name, info *Info) Result {
-	return f(node, info)
-}
-
-// LeaveName implements NameVisitor which takes no actions.
-func (NameVisitorFunc) LeaveName(node ast.Name, info *Info) Result {
+// VisitDirective applies actions on Directive.
+func (v *Visitor) VisitDirective(node *ast.Directive, ctx interface{}) Result {
+	if v.directiveVisitAction != nil {
+		return v.directiveVisitAction.VisitDirective(node, ctx)
+	}
 	return Continue
-}
-
-// NameVisitorFuncs is an adapter to help define a NameVisitor from functions.
-type NameVisitorFuncs struct {
-	Enter func(node ast.Name, info *Info) Result
-	Leave func(node ast.Name, info *Info) Result
-}
-
-var _ NameVisitor = (*NameVisitorFuncs)(nil)
-
-// EnterName implements NameVisitor by calling f.Enter.
-func (f *NameVisitorFuncs) EnterName(node ast.Name, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveName implements NameVisitor by calling f.Leave.
-func (f *NameVisitorFuncs) LeaveName(node ast.Name, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// NamedTypeVisitor implements visiting function for NamedType.
-type NamedTypeVisitor interface {
-	EnterNamedType(node ast.NamedType, info *Info) Result
-	LeaveNamedType(node ast.NamedType, info *Info) Result
-}
-
-// NamedTypeVisitorFunc is an adapter to help define a NamedTypeVisitor from a function which
-// specifies action when entering a node.
-type NamedTypeVisitorFunc func(node ast.NamedType, info *Info) Result
-
-var _ NamedTypeVisitor = (NamedTypeVisitorFunc)(nil)
-
-// EnterNamedType implements NamedTypeVisitor by calling f(node, info).
-func (f NamedTypeVisitorFunc) EnterNamedType(node ast.NamedType, info *Info) Result {
-	return f(node, info)
 }
 
-// LeaveNamedType implements NamedTypeVisitor which takes no actions.
-func (NamedTypeVisitorFunc) LeaveNamedType(node ast.NamedType, info *Info) Result {
+// VisitDirectives applies actions on Directives.
+func (v *Visitor) VisitDirectives(node ast.Directives, ctx interface{}) Result {
+	if v.directivesVisitAction != nil {
+		return v.directivesVisitAction.VisitDirectives(node, ctx)
+	}
 	return Continue
-}
-
-// NamedTypeVisitorFuncs is an adapter to help define a NamedTypeVisitor from functions.
-type NamedTypeVisitorFuncs struct {
-	Enter func(node ast.NamedType, info *Info) Result
-	Leave func(node ast.NamedType, info *Info) Result
-}
-
-var _ NamedTypeVisitor = (*NamedTypeVisitorFuncs)(nil)
-
-// EnterNamedType implements NamedTypeVisitor by calling f.Enter.
-func (f *NamedTypeVisitorFuncs) EnterNamedType(node ast.NamedType, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveNamedType implements NamedTypeVisitor by calling f.Leave.
-func (f *NamedTypeVisitorFuncs) LeaveNamedType(node ast.NamedType, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// NonNullTypeVisitor implements visiting function for NonNullType.
-type NonNullTypeVisitor interface {
-	EnterNonNullType(node ast.NonNullType, info *Info) Result
-	LeaveNonNullType(node ast.NonNullType, info *Info) Result
-}
-
-// NonNullTypeVisitorFunc is an adapter to help define a NonNullTypeVisitor from a function which
-// specifies action when entering a node.
-type NonNullTypeVisitorFunc func(node ast.NonNullType, info *Info) Result
-
-var _ NonNullTypeVisitor = (NonNullTypeVisitorFunc)(nil)
-
-// EnterNonNullType implements NonNullTypeVisitor by calling f(node, info).
-func (f NonNullTypeVisitorFunc) EnterNonNullType(node ast.NonNullType, info *Info) Result {
-	return f(node, info)
 }
 
-// LeaveNonNullType implements NonNullTypeVisitor which takes no actions.
-func (NonNullTypeVisitorFunc) LeaveNonNullType(node ast.NonNullType, info *Info) Result {
+// VisitDocument applies actions on Document.
+func (v *Visitor) VisitDocument(node ast.Document, ctx interface{}) Result {
+	if v.documentVisitAction != nil {
+		return v.documentVisitAction.VisitDocument(node, ctx)
+	}
 	return Continue
-}
-
-// NonNullTypeVisitorFuncs is an adapter to help define a NonNullTypeVisitor from functions.
-type NonNullTypeVisitorFuncs struct {
-	Enter func(node ast.NonNullType, info *Info) Result
-	Leave func(node ast.NonNullType, info *Info) Result
-}
-
-var _ NonNullTypeVisitor = (*NonNullTypeVisitorFuncs)(nil)
-
-// EnterNonNullType implements NonNullTypeVisitor by calling f.Enter.
-func (f *NonNullTypeVisitorFuncs) EnterNonNullType(node ast.NonNullType, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveNonNullType implements NonNullTypeVisitor by calling f.Leave.
-func (f *NonNullTypeVisitorFuncs) LeaveNonNullType(node ast.NonNullType, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// NullValueVisitor implements visiting function for NullValue.
-type NullValueVisitor interface {
-	EnterNullValue(node ast.NullValue, info *Info) Result
-	LeaveNullValue(node ast.NullValue, info *Info) Result
 }
 
-// NullValueVisitorFunc is an adapter to help define a NullValueVisitor from a function which
-// specifies action when entering a node.
-type NullValueVisitorFunc func(node ast.NullValue, info *Info) Result
-
-var _ NullValueVisitor = (NullValueVisitorFunc)(nil)
-
-// EnterNullValue implements NullValueVisitor by calling f(node, info).
-func (f NullValueVisitorFunc) EnterNullValue(node ast.NullValue, info *Info) Result {
-	return f(node, info)
-}
-
-// LeaveNullValue implements NullValueVisitor which takes no actions.
-func (NullValueVisitorFunc) LeaveNullValue(node ast.NullValue, info *Info) Result {
+// VisitEnumValue applies actions on EnumValue.
+func (v *Visitor) VisitEnumValue(node ast.EnumValue, ctx interface{}) Result {
+	if v.enumValueVisitAction != nil {
+		return v.enumValueVisitAction.VisitEnumValue(node, ctx)
+	}
 	return Continue
-}
-
-// NullValueVisitorFuncs is an adapter to help define a NullValueVisitor from functions.
-type NullValueVisitorFuncs struct {
-	Enter func(node ast.NullValue, info *Info) Result
-	Leave func(node ast.NullValue, info *Info) Result
 }
 
-var _ NullValueVisitor = (*NullValueVisitorFuncs)(nil)
-
-// EnterNullValue implements NullValueVisitor by calling f.Enter.
-func (f *NullValueVisitorFuncs) EnterNullValue(node ast.NullValue, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveNullValue implements NullValueVisitor by calling f.Leave.
-func (f *NullValueVisitorFuncs) LeaveNullValue(node ast.NullValue, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// ObjectFieldVisitor implements visiting function for ObjectField.
-type ObjectFieldVisitor interface {
-	EnterObjectField(node *ast.ObjectField, info *Info) Result
-	LeaveObjectField(node *ast.ObjectField, info *Info) Result
-}
-
-// ObjectFieldVisitorFunc is an adapter to help define a ObjectFieldVisitor from a function which
-// specifies action when entering a node.
-type ObjectFieldVisitorFunc func(node *ast.ObjectField, info *Info) Result
-
-var _ ObjectFieldVisitor = (ObjectFieldVisitorFunc)(nil)
-
-// EnterObjectField implements ObjectFieldVisitor by calling f(node, info).
-func (f ObjectFieldVisitorFunc) EnterObjectField(node *ast.ObjectField, info *Info) Result {
-	return f(node, info)
-}
-
-// LeaveObjectField implements ObjectFieldVisitor which takes no actions.
-func (ObjectFieldVisitorFunc) LeaveObjectField(node *ast.ObjectField, info *Info) Result {
+// VisitField applies actions on Field.
+func (v *Visitor) VisitField(node *ast.Field, ctx interface{}) Result {
+	if v.fieldVisitAction != nil {
+		return v.fieldVisitAction.VisitField(node, ctx)
+	}
 	return Continue
-}
-
-// ObjectFieldVisitorFuncs is an adapter to help define a ObjectFieldVisitor from functions.
-type ObjectFieldVisitorFuncs struct {
-	Enter func(node *ast.ObjectField, info *Info) Result
-	Leave func(node *ast.ObjectField, info *Info) Result
-}
-
-var _ ObjectFieldVisitor = (*ObjectFieldVisitorFuncs)(nil)
-
-// EnterObjectField implements ObjectFieldVisitor by calling f.Enter.
-func (f *ObjectFieldVisitorFuncs) EnterObjectField(node *ast.ObjectField, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveObjectField implements ObjectFieldVisitor by calling f.Leave.
-func (f *ObjectFieldVisitorFuncs) LeaveObjectField(node *ast.ObjectField, info *Info) Result {
-	return f.Leave(node, info)
 }
 
-// ObjectValueVisitor implements visiting function for ObjectValue.
-type ObjectValueVisitor interface {
-	EnterObjectValue(node ast.ObjectValue, info *Info) Result
-	LeaveObjectValue(node ast.ObjectValue, info *Info) Result
-}
-
-// ObjectValueVisitorFunc is an adapter to help define a ObjectValueVisitor from a function which
-// specifies action when entering a node.
-type ObjectValueVisitorFunc func(node ast.ObjectValue, info *Info) Result
-
-var _ ObjectValueVisitor = (ObjectValueVisitorFunc)(nil)
-
-// EnterObjectValue implements ObjectValueVisitor by calling f(node, info).
-func (f ObjectValueVisitorFunc) EnterObjectValue(node ast.ObjectValue, info *Info) Result {
-	return f(node, info)
-}
-
-// LeaveObjectValue implements ObjectValueVisitor which takes no actions.
-func (ObjectValueVisitorFunc) LeaveObjectValue(node ast.ObjectValue, info *Info) Result {
+// VisitFloatValue applies actions on FloatValue.
+func (v *Visitor) VisitFloatValue(node ast.FloatValue, ctx interface{}) Result {
+	if v.floatValueVisitAction != nil {
+		return v.floatValueVisitAction.VisitFloatValue(node, ctx)
+	}
 	return Continue
-}
-
-// ObjectValueVisitorFuncs is an adapter to help define a ObjectValueVisitor from functions.
-type ObjectValueVisitorFuncs struct {
-	Enter func(node ast.ObjectValue, info *Info) Result
-	Leave func(node ast.ObjectValue, info *Info) Result
-}
-
-var _ ObjectValueVisitor = (*ObjectValueVisitorFuncs)(nil)
-
-// EnterObjectValue implements ObjectValueVisitor by calling f.Enter.
-func (f *ObjectValueVisitorFuncs) EnterObjectValue(node ast.ObjectValue, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveObjectValue implements ObjectValueVisitor by calling f.Leave.
-func (f *ObjectValueVisitorFuncs) LeaveObjectValue(node ast.ObjectValue, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// OperationDefinitionVisitor implements visiting function for OperationDefinition.
-type OperationDefinitionVisitor interface {
-	EnterOperationDefinition(node *ast.OperationDefinition, info *Info) Result
-	LeaveOperationDefinition(node *ast.OperationDefinition, info *Info) Result
-}
-
-// OperationDefinitionVisitorFunc is an adapter to help define a OperationDefinitionVisitor from a function which
-// specifies action when entering a node.
-type OperationDefinitionVisitorFunc func(node *ast.OperationDefinition, info *Info) Result
-
-var _ OperationDefinitionVisitor = (OperationDefinitionVisitorFunc)(nil)
-
-// EnterOperationDefinition implements OperationDefinitionVisitor by calling f(node, info).
-func (f OperationDefinitionVisitorFunc) EnterOperationDefinition(node *ast.OperationDefinition, info *Info) Result {
-	return f(node, info)
 }
 
-// LeaveOperationDefinition implements OperationDefinitionVisitor which takes no actions.
-func (OperationDefinitionVisitorFunc) LeaveOperationDefinition(node *ast.OperationDefinition, info *Info) Result {
+// VisitFragmentDefinition applies actions on FragmentDefinition.
+func (v *Visitor) VisitFragmentDefinition(node *ast.FragmentDefinition, ctx interface{}) Result {
+	if v.fragmentDefinitionVisitAction != nil {
+		return v.fragmentDefinitionVisitAction.VisitFragmentDefinition(node, ctx)
+	}
 	return Continue
-}
-
-// OperationDefinitionVisitorFuncs is an adapter to help define a OperationDefinitionVisitor from functions.
-type OperationDefinitionVisitorFuncs struct {
-	Enter func(node *ast.OperationDefinition, info *Info) Result
-	Leave func(node *ast.OperationDefinition, info *Info) Result
-}
-
-var _ OperationDefinitionVisitor = (*OperationDefinitionVisitorFuncs)(nil)
-
-// EnterOperationDefinition implements OperationDefinitionVisitor by calling f.Enter.
-func (f *OperationDefinitionVisitorFuncs) EnterOperationDefinition(node *ast.OperationDefinition, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveOperationDefinition implements OperationDefinitionVisitor by calling f.Leave.
-func (f *OperationDefinitionVisitorFuncs) LeaveOperationDefinition(node *ast.OperationDefinition, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// SelectionSetVisitor implements visiting function for SelectionSet.
-type SelectionSetVisitor interface {
-	EnterSelectionSet(node ast.SelectionSet, info *Info) Result
-	LeaveSelectionSet(node ast.SelectionSet, info *Info) Result
-}
-
-// SelectionSetVisitorFunc is an adapter to help define a SelectionSetVisitor from a function which
-// specifies action when entering a node.
-type SelectionSetVisitorFunc func(node ast.SelectionSet, info *Info) Result
-
-var _ SelectionSetVisitor = (SelectionSetVisitorFunc)(nil)
-
-// EnterSelectionSet implements SelectionSetVisitor by calling f(node, info).
-func (f SelectionSetVisitorFunc) EnterSelectionSet(node ast.SelectionSet, info *Info) Result {
-	return f(node, info)
 }
 
-// LeaveSelectionSet implements SelectionSetVisitor which takes no actions.
-func (SelectionSetVisitorFunc) LeaveSelectionSet(node ast.SelectionSet, info *Info) Result {
+// VisitFragmentSpread applies actions on FragmentSpread.
+func (v *Visitor) VisitFragmentSpread(node *ast.FragmentSpread, ctx interface{}) Result {
+	if v.fragmentSpreadVisitAction != nil {
+		return v.fragmentSpreadVisitAction.VisitFragmentSpread(node, ctx)
+	}
 	return Continue
-}
-
-// SelectionSetVisitorFuncs is an adapter to help define a SelectionSetVisitor from functions.
-type SelectionSetVisitorFuncs struct {
-	Enter func(node ast.SelectionSet, info *Info) Result
-	Leave func(node ast.SelectionSet, info *Info) Result
-}
-
-var _ SelectionSetVisitor = (*SelectionSetVisitorFuncs)(nil)
-
-// EnterSelectionSet implements SelectionSetVisitor by calling f.Enter.
-func (f *SelectionSetVisitorFuncs) EnterSelectionSet(node ast.SelectionSet, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveSelectionSet implements SelectionSetVisitor by calling f.Leave.
-func (f *SelectionSetVisitorFuncs) LeaveSelectionSet(node ast.SelectionSet, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// StringValueVisitor implements visiting function for StringValue.
-type StringValueVisitor interface {
-	EnterStringValue(node ast.StringValue, info *Info) Result
-	LeaveStringValue(node ast.StringValue, info *Info) Result
-}
-
-// StringValueVisitorFunc is an adapter to help define a StringValueVisitor from a function which
-// specifies action when entering a node.
-type StringValueVisitorFunc func(node ast.StringValue, info *Info) Result
-
-var _ StringValueVisitor = (StringValueVisitorFunc)(nil)
-
-// EnterStringValue implements StringValueVisitor by calling f(node, info).
-func (f StringValueVisitorFunc) EnterStringValue(node ast.StringValue, info *Info) Result {
-	return f(node, info)
 }
 
-// LeaveStringValue implements StringValueVisitor which takes no actions.
-func (StringValueVisitorFunc) LeaveStringValue(node ast.StringValue, info *Info) Result {
+// VisitInlineFragment applies actions on InlineFragment.
+func (v *Visitor) VisitInlineFragment(node *ast.InlineFragment, ctx interface{}) Result {
+	if v.inlineFragmentVisitAction != nil {
+		return v.inlineFragmentVisitAction.VisitInlineFragment(node, ctx)
+	}
 	return Continue
-}
-
-// StringValueVisitorFuncs is an adapter to help define a StringValueVisitor from functions.
-type StringValueVisitorFuncs struct {
-	Enter func(node ast.StringValue, info *Info) Result
-	Leave func(node ast.StringValue, info *Info) Result
-}
-
-var _ StringValueVisitor = (*StringValueVisitorFuncs)(nil)
-
-// EnterStringValue implements StringValueVisitor by calling f.Enter.
-func (f *StringValueVisitorFuncs) EnterStringValue(node ast.StringValue, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveStringValue implements StringValueVisitor by calling f.Leave.
-func (f *StringValueVisitorFuncs) LeaveStringValue(node ast.StringValue, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// VariableVisitor implements visiting function for Variable.
-type VariableVisitor interface {
-	EnterVariable(node ast.Variable, info *Info) Result
-	LeaveVariable(node ast.Variable, info *Info) Result
-}
-
-// VariableVisitorFunc is an adapter to help define a VariableVisitor from a function which
-// specifies action when entering a node.
-type VariableVisitorFunc func(node ast.Variable, info *Info) Result
-
-var _ VariableVisitor = (VariableVisitorFunc)(nil)
-
-// EnterVariable implements VariableVisitor by calling f(node, info).
-func (f VariableVisitorFunc) EnterVariable(node ast.Variable, info *Info) Result {
-	return f(node, info)
 }
 
-// LeaveVariable implements VariableVisitor which takes no actions.
-func (VariableVisitorFunc) LeaveVariable(node ast.Variable, info *Info) Result {
+// VisitIntValue applies actions on IntValue.
+func (v *Visitor) VisitIntValue(node ast.IntValue, ctx interface{}) Result {
+	if v.intValueVisitAction != nil {
+		return v.intValueVisitAction.VisitIntValue(node, ctx)
+	}
 	return Continue
-}
-
-// VariableVisitorFuncs is an adapter to help define a VariableVisitor from functions.
-type VariableVisitorFuncs struct {
-	Enter func(node ast.Variable, info *Info) Result
-	Leave func(node ast.Variable, info *Info) Result
-}
-
-var _ VariableVisitor = (*VariableVisitorFuncs)(nil)
-
-// EnterVariable implements VariableVisitor by calling f.Enter.
-func (f *VariableVisitorFuncs) EnterVariable(node ast.Variable, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveVariable implements VariableVisitor by calling f.Leave.
-func (f *VariableVisitorFuncs) LeaveVariable(node ast.Variable, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// VariableDefinitionVisitor implements visiting function for VariableDefinition.
-type VariableDefinitionVisitor interface {
-	EnterVariableDefinition(node *ast.VariableDefinition, info *Info) Result
-	LeaveVariableDefinition(node *ast.VariableDefinition, info *Info) Result
-}
-
-// VariableDefinitionVisitorFunc is an adapter to help define a VariableDefinitionVisitor from a function which
-// specifies action when entering a node.
-type VariableDefinitionVisitorFunc func(node *ast.VariableDefinition, info *Info) Result
-
-var _ VariableDefinitionVisitor = (VariableDefinitionVisitorFunc)(nil)
-
-// EnterVariableDefinition implements VariableDefinitionVisitor by calling f(node, info).
-func (f VariableDefinitionVisitorFunc) EnterVariableDefinition(node *ast.VariableDefinition, info *Info) Result {
-	return f(node, info)
 }
 
-// LeaveVariableDefinition implements VariableDefinitionVisitor which takes no actions.
-func (VariableDefinitionVisitorFunc) LeaveVariableDefinition(node *ast.VariableDefinition, info *Info) Result {
+// VisitListType applies actions on ListType.
+func (v *Visitor) VisitListType(node ast.ListType, ctx interface{}) Result {
+	if v.listTypeVisitAction != nil {
+		return v.listTypeVisitAction.VisitListType(node, ctx)
+	}
 	return Continue
-}
-
-// VariableDefinitionVisitorFuncs is an adapter to help define a VariableDefinitionVisitor from functions.
-type VariableDefinitionVisitorFuncs struct {
-	Enter func(node *ast.VariableDefinition, info *Info) Result
-	Leave func(node *ast.VariableDefinition, info *Info) Result
-}
-
-var _ VariableDefinitionVisitor = (*VariableDefinitionVisitorFuncs)(nil)
-
-// EnterVariableDefinition implements VariableDefinitionVisitor by calling f.Enter.
-func (f *VariableDefinitionVisitorFuncs) EnterVariableDefinition(node *ast.VariableDefinition, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveVariableDefinition implements VariableDefinitionVisitor by calling f.Leave.
-func (f *VariableDefinitionVisitorFuncs) LeaveVariableDefinition(node *ast.VariableDefinition, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// VariableDefinitionsVisitor implements visiting function for VariableDefinitions.
-type VariableDefinitionsVisitor interface {
-	EnterVariableDefinitions(node ast.VariableDefinitions, info *Info) Result
-	LeaveVariableDefinitions(node ast.VariableDefinitions, info *Info) Result
 }
 
-// VariableDefinitionsVisitorFunc is an adapter to help define a VariableDefinitionsVisitor from a function which
-// specifies action when entering a node.
-type VariableDefinitionsVisitorFunc func(node ast.VariableDefinitions, info *Info) Result
-
-var _ VariableDefinitionsVisitor = (VariableDefinitionsVisitorFunc)(nil)
-
-// EnterVariableDefinitions implements VariableDefinitionsVisitor by calling f(node, info).
-func (f VariableDefinitionsVisitorFunc) EnterVariableDefinitions(node ast.VariableDefinitions, info *Info) Result {
-	return f(node, info)
-}
-
-// LeaveVariableDefinitions implements VariableDefinitionsVisitor which takes no actions.
-func (VariableDefinitionsVisitorFunc) LeaveVariableDefinitions(node ast.VariableDefinitions, info *Info) Result {
+// VisitListValue applies actions on ListValue.
+func (v *Visitor) VisitListValue(node ast.ListValue, ctx interface{}) Result {
+	if v.listValueVisitAction != nil {
+		return v.listValueVisitAction.VisitListValue(node, ctx)
+	}
 	return Continue
 }
 
-// VariableDefinitionsVisitorFuncs is an adapter to help define a VariableDefinitionsVisitor from functions.
-type VariableDefinitionsVisitorFuncs struct {
-	Enter func(node ast.VariableDefinitions, info *Info) Result
-	Leave func(node ast.VariableDefinitions, info *Info) Result
-}
-
-var _ VariableDefinitionsVisitor = (*VariableDefinitionsVisitorFuncs)(nil)
-
-// EnterVariableDefinitions implements VariableDefinitionsVisitor by calling f.Enter.
-func (f *VariableDefinitionsVisitorFuncs) EnterVariableDefinitions(node ast.VariableDefinitions, info *Info) Result {
-	return f.Enter(node, info)
-}
-
-// LeaveVariableDefinitions implements VariableDefinitionsVisitor by calling f.Leave.
-func (f *VariableDefinitionsVisitorFuncs) LeaveVariableDefinitions(node ast.VariableDefinitions, info *Info) Result {
-	return f.Leave(node, info)
-}
-
-// defaultVisitor takes no action when visiting a node.
-type defaultVisitor uint
-
-// Instance of default visitor that is shared among all newly created visitor.
-const defaultVisitorInstance defaultVisitor = 0
-
-var (
-	_ NodeVisitor                = defaultVisitorInstance
-	_ TypeVisitor                = defaultVisitorInstance
-	_ ValueVisitor               = defaultVisitorInstance
-	_ DefinitionVisitor          = defaultVisitorInstance
-	_ SelectionVisitor           = defaultVisitorInstance
-	_ ArgumentVisitor            = defaultVisitorInstance
-	_ ArgumentsVisitor           = defaultVisitorInstance
-	_ BooleanValueVisitor        = defaultVisitorInstance
-	_ DefinitionsVisitor         = defaultVisitorInstance
-	_ DirectiveVisitor           = defaultVisitorInstance
-	_ DirectivesVisitor          = defaultVisitorInstance
-	_ DocumentVisitor            = defaultVisitorInstance
-	_ EnumValueVisitor           = defaultVisitorInstance
-	_ FieldVisitor               = defaultVisitorInstance
-	_ FloatValueVisitor          = defaultVisitorInstance
-	_ FragmentDefinitionVisitor  = defaultVisitorInstance
-	_ FragmentSpreadVisitor      = defaultVisitorInstance
-	_ InlineFragmentVisitor      = defaultVisitorInstance
-	_ IntValueVisitor            = defaultVisitorInstance
-	_ ListTypeVisitor            = defaultVisitorInstance
-	_ ListValueVisitor           = defaultVisitorInstance
-	_ NameVisitor                = defaultVisitorInstance
-	_ NamedTypeVisitor           = defaultVisitorInstance
-	_ NonNullTypeVisitor         = defaultVisitorInstance
-	_ NullValueVisitor           = defaultVisitorInstance
-	_ ObjectFieldVisitor         = defaultVisitorInstance
-	_ ObjectValueVisitor         = defaultVisitorInstance
-	_ OperationDefinitionVisitor = defaultVisitorInstance
-	_ SelectionSetVisitor        = defaultVisitorInstance
-	_ StringValueVisitor         = defaultVisitorInstance
-	_ VariableVisitor            = defaultVisitorInstance
-	_ VariableDefinitionVisitor  = defaultVisitorInstance
-	_ VariableDefinitionsVisitor = defaultVisitorInstance
-)
-
-func (defaultVisitor) EnterNode(node ast.Node, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterType(node ast.Type, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterValue(node ast.Value, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterDefinition(node ast.Definition, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterSelection(node ast.Selection, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterArgument(node *ast.Argument, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterArguments(node ast.Arguments, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterBooleanValue(node ast.BooleanValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterDefinitions(node ast.Definitions, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterDirective(node *ast.Directive, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterDirectives(node ast.Directives, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterDocument(node ast.Document, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterEnumValue(node ast.EnumValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterField(node *ast.Field, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterFloatValue(node ast.FloatValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterFragmentDefinition(node *ast.FragmentDefinition, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterFragmentSpread(node *ast.FragmentSpread, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterInlineFragment(node *ast.InlineFragment, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterIntValue(node ast.IntValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterListType(node ast.ListType, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterListValue(node ast.ListValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterName(node ast.Name, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterNamedType(node ast.NamedType, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterNonNullType(node ast.NonNullType, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterNullValue(node ast.NullValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterObjectField(node *ast.ObjectField, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterObjectValue(node ast.ObjectValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterOperationDefinition(node *ast.OperationDefinition, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterSelectionSet(node ast.SelectionSet, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterStringValue(node ast.StringValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterVariable(node ast.Variable, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterVariableDefinition(node *ast.VariableDefinition, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) EnterVariableDefinitions(node ast.VariableDefinitions, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveNode(node ast.Node, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveType(node ast.Type, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveValue(node ast.Value, info *Info) Result {
+// VisitName applies actions on Name.
+func (v *Visitor) VisitName(node ast.Name, ctx interface{}) Result {
+	if v.nameVisitAction != nil {
+		return v.nameVisitAction.VisitName(node, ctx)
+	}
 	return Continue
 }
-func (defaultVisitor) LeaveDefinition(node ast.Definition, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveSelection(node ast.Selection, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveArgument(node *ast.Argument, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveArguments(node ast.Arguments, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveBooleanValue(node ast.BooleanValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveDefinitions(node ast.Definitions, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveDirective(node *ast.Directive, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveDirectives(node ast.Directives, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveDocument(node ast.Document, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveEnumValue(node ast.EnumValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveField(node *ast.Field, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveFloatValue(node ast.FloatValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveFragmentDefinition(node *ast.FragmentDefinition, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveFragmentSpread(node *ast.FragmentSpread, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveInlineFragment(node *ast.InlineFragment, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveIntValue(node ast.IntValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveListType(node ast.ListType, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveListValue(node ast.ListValue, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveName(node ast.Name, info *Info) Result {
-	return Continue
-}
-func (defaultVisitor) LeaveNamedType(node ast.NamedType, info *Info) Result {
+
+// VisitNamedType applies actions on NamedType.
+func (v *Visitor) VisitNamedType(node ast.NamedType, ctx interface{}) Result {
+	if v.namedTypeVisitAction != nil {
+		return v.namedTypeVisitAction.VisitNamedType(node, ctx)
+	}
 	return Continue
 }
-func (defaultVisitor) LeaveNonNullType(node ast.NonNullType, info *Info) Result {
+
+// VisitNonNullType applies actions on NonNullType.
+func (v *Visitor) VisitNonNullType(node ast.NonNullType, ctx interface{}) Result {
+	if v.nonNullTypeVisitAction != nil {
+		return v.nonNullTypeVisitAction.VisitNonNullType(node, ctx)
+	}
 	return Continue
 }
-func (defaultVisitor) LeaveNullValue(node ast.NullValue, info *Info) Result {
+
+// VisitNullValue applies actions on NullValue.
+func (v *Visitor) VisitNullValue(node ast.NullValue, ctx interface{}) Result {
+	if v.nullValueVisitAction != nil {
+		return v.nullValueVisitAction.VisitNullValue(node, ctx)
+	}
 	return Continue
 }
-func (defaultVisitor) LeaveObjectField(node *ast.ObjectField, info *Info) Result {
+
+// VisitObjectField applies actions on ObjectField.
+func (v *Visitor) VisitObjectField(node *ast.ObjectField, ctx interface{}) Result {
+	if v.objectFieldVisitAction != nil {
+		return v.objectFieldVisitAction.VisitObjectField(node, ctx)
+	}
 	return Continue
 }
-func (defaultVisitor) LeaveObjectValue(node ast.ObjectValue, info *Info) Result {
+
+// VisitObjectValue applies actions on ObjectValue.
+func (v *Visitor) VisitObjectValue(node ast.ObjectValue, ctx interface{}) Result {
+	if v.objectValueVisitAction != nil {
+		return v.objectValueVisitAction.VisitObjectValue(node, ctx)
+	}
 	return Continue
 }
-func (defaultVisitor) LeaveOperationDefinition(node *ast.OperationDefinition, info *Info) Result {
+
+// VisitOperationDefinition applies actions on OperationDefinition.
+func (v *Visitor) VisitOperationDefinition(node *ast.OperationDefinition, ctx interface{}) Result {
+	if v.operationDefinitionVisitAction != nil {
+		return v.operationDefinitionVisitAction.VisitOperationDefinition(node, ctx)
+	}
 	return Continue
 }
-func (defaultVisitor) LeaveSelectionSet(node ast.SelectionSet, info *Info) Result {
+
+// VisitSelectionSet applies actions on SelectionSet.
+func (v *Visitor) VisitSelectionSet(node ast.SelectionSet, ctx interface{}) Result {
+	if v.selectionSetVisitAction != nil {
+		return v.selectionSetVisitAction.VisitSelectionSet(node, ctx)
+	}
 	return Continue
 }
-func (defaultVisitor) LeaveStringValue(node ast.StringValue, info *Info) Result {
+
+// VisitStringValue applies actions on StringValue.
+func (v *Visitor) VisitStringValue(node ast.StringValue, ctx interface{}) Result {
+	if v.stringValueVisitAction != nil {
+		return v.stringValueVisitAction.VisitStringValue(node, ctx)
+	}
 	return Continue
 }
-func (defaultVisitor) LeaveVariable(node ast.Variable, info *Info) Result {
+
+// VisitVariable applies actions on Variable.
+func (v *Visitor) VisitVariable(node ast.Variable, ctx interface{}) Result {
+	if v.variableVisitAction != nil {
+		return v.variableVisitAction.VisitVariable(node, ctx)
+	}
 	return Continue
 }
-func (defaultVisitor) LeaveVariableDefinition(node *ast.VariableDefinition, info *Info) Result {
+
+// VisitVariableDefinition applies actions on VariableDefinition.
+func (v *Visitor) VisitVariableDefinition(node *ast.VariableDefinition, ctx interface{}) Result {
+	if v.variableDefinitionVisitAction != nil {
+		return v.variableDefinitionVisitAction.VisitVariableDefinition(node, ctx)
+	}
 	return Continue
 }
-func (defaultVisitor) LeaveVariableDefinitions(node ast.VariableDefinitions, info *Info) Result {
+
+// VisitVariableDefinitions applies actions on VariableDefinitions.
+func (v *Visitor) VisitVariableDefinitions(node ast.VariableDefinitions, ctx interface{}) Result {
+	if v.variableDefinitionsVisitAction != nil {
+		return v.variableDefinitionsVisitAction.VisitVariableDefinitions(node, ctx)
+	}
 	return Continue
 }
 
-// A Visitor is provided to visit an AST, it contains the collection of visitor to be executed
-// during the visitor's traversal.
-type Visitor interface {
-	Visit(node ast.Node, ctx interface{})
-	VisitType(node ast.Type, ctx interface{})
-	VisitValue(node ast.Value, ctx interface{})
-	VisitDefinition(node ast.Definition, ctx interface{})
-	VisitSelection(node ast.Selection, ctx interface{})
-	VisitArgument(node *ast.Argument, ctx interface{})
-	VisitArguments(node ast.Arguments, ctx interface{})
-	VisitBooleanValue(node ast.BooleanValue, ctx interface{})
-	VisitDefinitions(node ast.Definitions, ctx interface{})
-	VisitDirective(node *ast.Directive, ctx interface{})
-	VisitDirectives(node ast.Directives, ctx interface{})
-	VisitDocument(node ast.Document, ctx interface{})
-	VisitEnumValue(node ast.EnumValue, ctx interface{})
-	VisitField(node *ast.Field, ctx interface{})
-	VisitFloatValue(node ast.FloatValue, ctx interface{})
-	VisitFragmentDefinition(node *ast.FragmentDefinition, ctx interface{})
-	VisitFragmentSpread(node *ast.FragmentSpread, ctx interface{})
-	VisitInlineFragment(node *ast.InlineFragment, ctx interface{})
-	VisitIntValue(node ast.IntValue, ctx interface{})
-	VisitListType(node ast.ListType, ctx interface{})
-	VisitListValue(node ast.ListValue, ctx interface{})
-	VisitName(node ast.Name, ctx interface{})
-	VisitNamedType(node ast.NamedType, ctx interface{})
-	VisitNonNullType(node ast.NonNullType, ctx interface{})
-	VisitNullValue(node ast.NullValue, ctx interface{})
-	VisitObjectField(node *ast.ObjectField, ctx interface{})
-	VisitObjectValue(node ast.ObjectValue, ctx interface{})
-	VisitOperationDefinition(node *ast.OperationDefinition, ctx interface{})
-	VisitSelectionSet(node ast.SelectionSet, ctx interface{})
-	VisitStringValue(node ast.StringValue, ctx interface{})
-	VisitVariable(node ast.Variable, ctx interface{})
-	VisitVariableDefinition(node *ast.VariableDefinition, ctx interface{})
-	VisitVariableDefinitions(node ast.VariableDefinitions, ctx interface{})
-}
-
-// A visitor is the actual implementation of Visitor.
-type visitor struct {
-	argumentVisitor            ArgumentVisitor
-	argumentsVisitor           ArgumentsVisitor
-	booleanValueVisitor        BooleanValueVisitor
-	definitionsVisitor         DefinitionsVisitor
-	directiveVisitor           DirectiveVisitor
-	directivesVisitor          DirectivesVisitor
-	documentVisitor            DocumentVisitor
-	enumValueVisitor           EnumValueVisitor
-	fieldVisitor               FieldVisitor
-	floatValueVisitor          FloatValueVisitor
-	fragmentDefinitionVisitor  FragmentDefinitionVisitor
-	fragmentSpreadVisitor      FragmentSpreadVisitor
-	inlineFragmentVisitor      InlineFragmentVisitor
-	intValueVisitor            IntValueVisitor
-	listTypeVisitor            ListTypeVisitor
-	listValueVisitor           ListValueVisitor
-	nameVisitor                NameVisitor
-	namedTypeVisitor           NamedTypeVisitor
-	nonNullTypeVisitor         NonNullTypeVisitor
-	nullValueVisitor           NullValueVisitor
-	objectFieldVisitor         ObjectFieldVisitor
-	objectValueVisitor         ObjectValueVisitor
-	operationDefinitionVisitor OperationDefinitionVisitor
-	selectionSetVisitor        SelectionSetVisitor
-	stringValueVisitor         StringValueVisitor
-	variableVisitor            VariableVisitor
-	variableDefinitionVisitor  VariableDefinitionVisitor
-	variableDefinitionsVisitor VariableDefinitionsVisitor
-}
-
-func (v *visitor) Visit(node ast.Node, ctx interface{}) {
-	v.visitNodeInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitType(node ast.Type, ctx interface{}) {
-	v.visitTypeInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitValue(node ast.Value, ctx interface{}) {
-	v.visitValueInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitDefinition(node ast.Definition, ctx interface{}) {
-	v.visitDefinitionInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitSelection(node ast.Selection, ctx interface{}) {
-	v.visitSelectionInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitArgument(node *ast.Argument, ctx interface{}) {
-	v.visitArgumentInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitArguments(node ast.Arguments, ctx interface{}) {
-	v.visitArgumentsInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitBooleanValue(node ast.BooleanValue, ctx interface{}) {
-	v.visitBooleanValueInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitDefinitions(node ast.Definitions, ctx interface{}) {
-	v.visitDefinitionsInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitDirective(node *ast.Directive, ctx interface{}) {
-	v.visitDirectiveInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitDirectives(node ast.Directives, ctx interface{}) {
-	v.visitDirectivesInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitDocument(node ast.Document, ctx interface{}) {
-	v.visitDocumentInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitEnumValue(node ast.EnumValue, ctx interface{}) {
-	v.visitEnumValueInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitField(node *ast.Field, ctx interface{}) {
-	v.visitFieldInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitFloatValue(node ast.FloatValue, ctx interface{}) {
-	v.visitFloatValueInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitFragmentDefinition(node *ast.FragmentDefinition, ctx interface{}) {
-	v.visitFragmentDefinitionInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitFragmentSpread(node *ast.FragmentSpread, ctx interface{}) {
-	v.visitFragmentSpreadInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitInlineFragment(node *ast.InlineFragment, ctx interface{}) {
-	v.visitInlineFragmentInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitIntValue(node ast.IntValue, ctx interface{}) {
-	v.visitIntValueInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitListType(node ast.ListType, ctx interface{}) {
-	v.visitListTypeInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitListValue(node ast.ListValue, ctx interface{}) {
-	v.visitListValueInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitName(node ast.Name, ctx interface{}) {
-	v.visitNameInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitNamedType(node ast.NamedType, ctx interface{}) {
-	v.visitNamedTypeInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitNonNullType(node ast.NonNullType, ctx interface{}) {
-	v.visitNonNullTypeInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitNullValue(node ast.NullValue, ctx interface{}) {
-	v.visitNullValueInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitObjectField(node *ast.ObjectField, ctx interface{}) {
-	v.visitObjectFieldInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitObjectValue(node ast.ObjectValue, ctx interface{}) {
-	v.visitObjectValueInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitOperationDefinition(node *ast.OperationDefinition, ctx interface{}) {
-	v.visitOperationDefinitionInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitSelectionSet(node ast.SelectionSet, ctx interface{}) {
-	v.visitSelectionSetInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitStringValue(node ast.StringValue, ctx interface{}) {
-	v.visitStringValueInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitVariable(node ast.Variable, ctx interface{}) {
-	v.visitVariableInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitVariableDefinition(node *ast.VariableDefinition, ctx interface{}) {
-	v.visitVariableDefinitionInternal(node, &Info{
-		context: ctx,
-	})
-}
-func (v *visitor) VisitVariableDefinitions(node ast.VariableDefinitions, ctx interface{}) {
-	v.visitVariableDefinitionsInternal(node, &Info{
-		context: ctx,
-	})
-}
-func newVisitor() *visitor {
-	return &visitor{
-		argumentVisitor:            defaultVisitorInstance,
-		argumentsVisitor:           defaultVisitorInstance,
-		booleanValueVisitor:        defaultVisitorInstance,
-		definitionsVisitor:         defaultVisitorInstance,
-		directiveVisitor:           defaultVisitorInstance,
-		directivesVisitor:          defaultVisitorInstance,
-		documentVisitor:            defaultVisitorInstance,
-		enumValueVisitor:           defaultVisitorInstance,
-		fieldVisitor:               defaultVisitorInstance,
-		floatValueVisitor:          defaultVisitorInstance,
-		fragmentDefinitionVisitor:  defaultVisitorInstance,
-		fragmentSpreadVisitor:      defaultVisitorInstance,
-		inlineFragmentVisitor:      defaultVisitorInstance,
-		intValueVisitor:            defaultVisitorInstance,
-		listTypeVisitor:            defaultVisitorInstance,
-		listValueVisitor:           defaultVisitorInstance,
-		nameVisitor:                defaultVisitorInstance,
-		namedTypeVisitor:           defaultVisitorInstance,
-		nonNullTypeVisitor:         defaultVisitorInstance,
-		nullValueVisitor:           defaultVisitorInstance,
-		objectFieldVisitor:         defaultVisitorInstance,
-		objectValueVisitor:         defaultVisitorInstance,
-		operationDefinitionVisitor: defaultVisitorInstance,
-		selectionSetVisitor:        defaultVisitorInstance,
-		stringValueVisitor:         defaultVisitorInstance,
-		variableVisitor:            defaultVisitorInstance,
-		variableDefinitionVisitor:  defaultVisitorInstance,
-		variableDefinitionsVisitor: defaultVisitorInstance,
+// NewNodeVisitor creates a visitor instance which performs the given action when encountering Node.
+func NewNodeVisitor(action NodeVisitAction) *Visitor {
+	return &Visitor{
+		inlineFragmentVisitAction: InlineFragmentVisitActionFunc(func(node *ast.InlineFragment, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		fragmentSpreadVisitAction: FragmentSpreadVisitActionFunc(func(node *ast.FragmentSpread, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		fieldVisitAction: FieldVisitActionFunc(func(node *ast.Field, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		operationDefinitionVisitAction: OperationDefinitionVisitActionFunc(func(node *ast.OperationDefinition, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		fragmentDefinitionVisitAction: FragmentDefinitionVisitActionFunc(func(node *ast.FragmentDefinition, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		variableVisitAction: VariableVisitActionFunc(func(node ast.Variable, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		stringValueVisitAction: StringValueVisitActionFunc(func(node ast.StringValue, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		objectValueVisitAction: ObjectValueVisitActionFunc(func(node ast.ObjectValue, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		nullValueVisitAction: NullValueVisitActionFunc(func(node ast.NullValue, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		listValueVisitAction: ListValueVisitActionFunc(func(node ast.ListValue, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		intValueVisitAction: IntValueVisitActionFunc(func(node ast.IntValue, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		floatValueVisitAction: FloatValueVisitActionFunc(func(node ast.FloatValue, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		enumValueVisitAction: EnumValueVisitActionFunc(func(node ast.EnumValue, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		booleanValueVisitAction: BooleanValueVisitActionFunc(func(node ast.BooleanValue, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		nonNullTypeVisitAction: NonNullTypeVisitActionFunc(func(node ast.NonNullType, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		namedTypeVisitAction: NamedTypeVisitActionFunc(func(node ast.NamedType, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		listTypeVisitAction: ListTypeVisitActionFunc(func(node ast.ListType, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		variableDefinitionsVisitAction: VariableDefinitionsVisitActionFunc(func(node ast.VariableDefinitions, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		variableDefinitionVisitAction: VariableDefinitionVisitActionFunc(func(node *ast.VariableDefinition, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		selectionSetVisitAction: SelectionSetVisitActionFunc(func(node ast.SelectionSet, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		objectFieldVisitAction: ObjectFieldVisitActionFunc(func(node *ast.ObjectField, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		nameVisitAction: NameVisitActionFunc(func(node ast.Name, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		documentVisitAction: DocumentVisitActionFunc(func(node ast.Document, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		directivesVisitAction: DirectivesVisitActionFunc(func(node ast.Directives, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		directiveVisitAction: DirectiveVisitActionFunc(func(node *ast.Directive, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		definitionsVisitAction: DefinitionsVisitActionFunc(func(node ast.Definitions, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		argumentsVisitAction: ArgumentsVisitActionFunc(func(node ast.Arguments, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
+		argumentVisitAction: ArgumentVisitActionFunc(func(node *ast.Argument, ctx interface{}) Result {
+			return action.VisitNode(node, ctx)
+		}),
 	}
 }
-func (v *visitor) visitNodeInternal(node ast.Node, info *Info) Result {
+
+// NewTypeVisitor creates a visitor instance which performs the given action when encountering Type.
+func NewTypeVisitor(action TypeVisitAction) *Visitor {
+	return &Visitor{
+		nonNullTypeVisitAction: NonNullTypeVisitActionFunc(func(node ast.NonNullType, ctx interface{}) Result {
+			return action.VisitType(node, ctx)
+		}),
+		namedTypeVisitAction: NamedTypeVisitActionFunc(func(node ast.NamedType, ctx interface{}) Result {
+			return action.VisitType(node, ctx)
+		}),
+		listTypeVisitAction: ListTypeVisitActionFunc(func(node ast.ListType, ctx interface{}) Result {
+			return action.VisitType(node, ctx)
+		}),
+	}
+}
+
+// NewValueVisitor creates a visitor instance which performs the given action when encountering Value.
+func NewValueVisitor(action ValueVisitAction) *Visitor {
+	return &Visitor{
+		variableVisitAction: VariableVisitActionFunc(func(node ast.Variable, ctx interface{}) Result {
+			return action.VisitValue(node, ctx)
+		}),
+		stringValueVisitAction: StringValueVisitActionFunc(func(node ast.StringValue, ctx interface{}) Result {
+			return action.VisitValue(node, ctx)
+		}),
+		objectValueVisitAction: ObjectValueVisitActionFunc(func(node ast.ObjectValue, ctx interface{}) Result {
+			return action.VisitValue(node, ctx)
+		}),
+		nullValueVisitAction: NullValueVisitActionFunc(func(node ast.NullValue, ctx interface{}) Result {
+			return action.VisitValue(node, ctx)
+		}),
+		listValueVisitAction: ListValueVisitActionFunc(func(node ast.ListValue, ctx interface{}) Result {
+			return action.VisitValue(node, ctx)
+		}),
+		intValueVisitAction: IntValueVisitActionFunc(func(node ast.IntValue, ctx interface{}) Result {
+			return action.VisitValue(node, ctx)
+		}),
+		floatValueVisitAction: FloatValueVisitActionFunc(func(node ast.FloatValue, ctx interface{}) Result {
+			return action.VisitValue(node, ctx)
+		}),
+		enumValueVisitAction: EnumValueVisitActionFunc(func(node ast.EnumValue, ctx interface{}) Result {
+			return action.VisitValue(node, ctx)
+		}),
+		booleanValueVisitAction: BooleanValueVisitActionFunc(func(node ast.BooleanValue, ctx interface{}) Result {
+			return action.VisitValue(node, ctx)
+		}),
+	}
+}
+
+// NewDefinitionVisitor creates a visitor instance which performs the given action when encountering Definition.
+func NewDefinitionVisitor(action DefinitionVisitAction) *Visitor {
+	return &Visitor{
+		inlineFragmentVisitAction: InlineFragmentVisitActionFunc(func(node *ast.InlineFragment, ctx interface{}) Result {
+			return action.VisitDefinition(node, ctx)
+		}),
+		fragmentSpreadVisitAction: FragmentSpreadVisitActionFunc(func(node *ast.FragmentSpread, ctx interface{}) Result {
+			return action.VisitDefinition(node, ctx)
+		}),
+		fieldVisitAction: FieldVisitActionFunc(func(node *ast.Field, ctx interface{}) Result {
+			return action.VisitDefinition(node, ctx)
+		}),
+		operationDefinitionVisitAction: OperationDefinitionVisitActionFunc(func(node *ast.OperationDefinition, ctx interface{}) Result {
+			return action.VisitDefinition(node, ctx)
+		}),
+		fragmentDefinitionVisitAction: FragmentDefinitionVisitActionFunc(func(node *ast.FragmentDefinition, ctx interface{}) Result {
+			return action.VisitDefinition(node, ctx)
+		}),
+	}
+}
+
+// NewSelectionVisitor creates a visitor instance which performs the given action when encountering Selection.
+func NewSelectionVisitor(action SelectionVisitAction) *Visitor {
+	return &Visitor{
+		inlineFragmentVisitAction: InlineFragmentVisitActionFunc(func(node *ast.InlineFragment, ctx interface{}) Result {
+			return action.VisitSelection(node, ctx)
+		}),
+		fragmentSpreadVisitAction: FragmentSpreadVisitActionFunc(func(node *ast.FragmentSpread, ctx interface{}) Result {
+			return action.VisitSelection(node, ctx)
+		}),
+		fieldVisitAction: FieldVisitActionFunc(func(node *ast.Field, ctx interface{}) Result {
+			return action.VisitSelection(node, ctx)
+		}),
+	}
+}
+
+// NewArgumentVisitor creates a visitor instance which performs the given action when encountering Argument.
+func NewArgumentVisitor(action ArgumentVisitAction) *Visitor {
+	return &Visitor{
+		argumentVisitAction: action,
+	}
+}
+
+// NewArgumentsVisitor creates a visitor instance which performs the given action when encountering Arguments.
+func NewArgumentsVisitor(action ArgumentsVisitAction) *Visitor {
+	return &Visitor{
+		argumentsVisitAction: action,
+	}
+}
+
+// NewBooleanValueVisitor creates a visitor instance which performs the given action when encountering BooleanValue.
+func NewBooleanValueVisitor(action BooleanValueVisitAction) *Visitor {
+	return &Visitor{
+		booleanValueVisitAction: action,
+	}
+}
+
+// NewDefinitionsVisitor creates a visitor instance which performs the given action when encountering Definitions.
+func NewDefinitionsVisitor(action DefinitionsVisitAction) *Visitor {
+	return &Visitor{
+		definitionsVisitAction: action,
+	}
+}
+
+// NewDirectiveVisitor creates a visitor instance which performs the given action when encountering Directive.
+func NewDirectiveVisitor(action DirectiveVisitAction) *Visitor {
+	return &Visitor{
+		directiveVisitAction: action,
+	}
+}
+
+// NewDirectivesVisitor creates a visitor instance which performs the given action when encountering Directives.
+func NewDirectivesVisitor(action DirectivesVisitAction) *Visitor {
+	return &Visitor{
+		directivesVisitAction: action,
+	}
+}
+
+// NewDocumentVisitor creates a visitor instance which performs the given action when encountering Document.
+func NewDocumentVisitor(action DocumentVisitAction) *Visitor {
+	return &Visitor{
+		documentVisitAction: action,
+	}
+}
+
+// NewEnumValueVisitor creates a visitor instance which performs the given action when encountering EnumValue.
+func NewEnumValueVisitor(action EnumValueVisitAction) *Visitor {
+	return &Visitor{
+		enumValueVisitAction: action,
+	}
+}
+
+// NewFieldVisitor creates a visitor instance which performs the given action when encountering Field.
+func NewFieldVisitor(action FieldVisitAction) *Visitor {
+	return &Visitor{
+		fieldVisitAction: action,
+	}
+}
+
+// NewFloatValueVisitor creates a visitor instance which performs the given action when encountering FloatValue.
+func NewFloatValueVisitor(action FloatValueVisitAction) *Visitor {
+	return &Visitor{
+		floatValueVisitAction: action,
+	}
+}
+
+// NewFragmentDefinitionVisitor creates a visitor instance which performs the given action when encountering FragmentDefinition.
+func NewFragmentDefinitionVisitor(action FragmentDefinitionVisitAction) *Visitor {
+	return &Visitor{
+		fragmentDefinitionVisitAction: action,
+	}
+}
+
+// NewFragmentSpreadVisitor creates a visitor instance which performs the given action when encountering FragmentSpread.
+func NewFragmentSpreadVisitor(action FragmentSpreadVisitAction) *Visitor {
+	return &Visitor{
+		fragmentSpreadVisitAction: action,
+	}
+}
+
+// NewInlineFragmentVisitor creates a visitor instance which performs the given action when encountering InlineFragment.
+func NewInlineFragmentVisitor(action InlineFragmentVisitAction) *Visitor {
+	return &Visitor{
+		inlineFragmentVisitAction: action,
+	}
+}
+
+// NewIntValueVisitor creates a visitor instance which performs the given action when encountering IntValue.
+func NewIntValueVisitor(action IntValueVisitAction) *Visitor {
+	return &Visitor{
+		intValueVisitAction: action,
+	}
+}
+
+// NewListTypeVisitor creates a visitor instance which performs the given action when encountering ListType.
+func NewListTypeVisitor(action ListTypeVisitAction) *Visitor {
+	return &Visitor{
+		listTypeVisitAction: action,
+	}
+}
+
+// NewListValueVisitor creates a visitor instance which performs the given action when encountering ListValue.
+func NewListValueVisitor(action ListValueVisitAction) *Visitor {
+	return &Visitor{
+		listValueVisitAction: action,
+	}
+}
+
+// NewNameVisitor creates a visitor instance which performs the given action when encountering Name.
+func NewNameVisitor(action NameVisitAction) *Visitor {
+	return &Visitor{
+		nameVisitAction: action,
+	}
+}
+
+// NewNamedTypeVisitor creates a visitor instance which performs the given action when encountering NamedType.
+func NewNamedTypeVisitor(action NamedTypeVisitAction) *Visitor {
+	return &Visitor{
+		namedTypeVisitAction: action,
+	}
+}
+
+// NewNonNullTypeVisitor creates a visitor instance which performs the given action when encountering NonNullType.
+func NewNonNullTypeVisitor(action NonNullTypeVisitAction) *Visitor {
+	return &Visitor{
+		nonNullTypeVisitAction: action,
+	}
+}
+
+// NewNullValueVisitor creates a visitor instance which performs the given action when encountering NullValue.
+func NewNullValueVisitor(action NullValueVisitAction) *Visitor {
+	return &Visitor{
+		nullValueVisitAction: action,
+	}
+}
+
+// NewObjectFieldVisitor creates a visitor instance which performs the given action when encountering ObjectField.
+func NewObjectFieldVisitor(action ObjectFieldVisitAction) *Visitor {
+	return &Visitor{
+		objectFieldVisitAction: action,
+	}
+}
+
+// NewObjectValueVisitor creates a visitor instance which performs the given action when encountering ObjectValue.
+func NewObjectValueVisitor(action ObjectValueVisitAction) *Visitor {
+	return &Visitor{
+		objectValueVisitAction: action,
+	}
+}
+
+// NewOperationDefinitionVisitor creates a visitor instance which performs the given action when encountering OperationDefinition.
+func NewOperationDefinitionVisitor(action OperationDefinitionVisitAction) *Visitor {
+	return &Visitor{
+		operationDefinitionVisitAction: action,
+	}
+}
+
+// NewSelectionSetVisitor creates a visitor instance which performs the given action when encountering SelectionSet.
+func NewSelectionSetVisitor(action SelectionSetVisitAction) *Visitor {
+	return &Visitor{
+		selectionSetVisitAction: action,
+	}
+}
+
+// NewStringValueVisitor creates a visitor instance which performs the given action when encountering StringValue.
+func NewStringValueVisitor(action StringValueVisitAction) *Visitor {
+	return &Visitor{
+		stringValueVisitAction: action,
+	}
+}
+
+// NewVariableVisitor creates a visitor instance which performs the given action when encountering Variable.
+func NewVariableVisitor(action VariableVisitAction) *Visitor {
+	return &Visitor{
+		variableVisitAction: action,
+	}
+}
+
+// NewVariableDefinitionVisitor creates a visitor instance which performs the given action when encountering VariableDefinition.
+func NewVariableDefinitionVisitor(action VariableDefinitionVisitAction) *Visitor {
+	return &Visitor{
+		variableDefinitionVisitAction: action,
+	}
+}
+
+// NewVariableDefinitionsVisitor creates a visitor instance which performs the given action when encountering VariableDefinitions.
+func NewVariableDefinitionsVisitor(action VariableDefinitionsVisitAction) *Visitor {
+	return &Visitor{
+		variableDefinitionsVisitAction: action,
+	}
+}
+
+func walkNode(node ast.Node, ctx interface{}, v *Visitor) Result {
+	var result Result
 	switch node := node.(type) {
 	case *ast.Argument:
-		return v.visitArgumentInternal(node, info)
+		result = walkArgument(node, ctx, v)
 	case ast.Arguments:
-		return v.visitArgumentsInternal(node, info)
+		result = walkArguments(node, ctx, v)
 	case ast.Definitions:
-		return v.visitDefinitionsInternal(node, info)
+		result = walkDefinitions(node, ctx, v)
 	case *ast.Directive:
-		return v.visitDirectiveInternal(node, info)
+		result = walkDirective(node, ctx, v)
 	case ast.Directives:
-		return v.visitDirectivesInternal(node, info)
+		result = walkDirectives(node, ctx, v)
 	case ast.Document:
-		return v.visitDocumentInternal(node, info)
+		result = walkDocument(node, ctx, v)
 	case ast.Name:
-		return v.visitNameInternal(node, info)
+		result = walkName(node, ctx, v)
 	case *ast.ObjectField:
-		return v.visitObjectFieldInternal(node, info)
+		result = walkObjectField(node, ctx, v)
 	case ast.SelectionSet:
-		return v.visitSelectionSetInternal(node, info)
+		result = walkSelectionSet(node, ctx, v)
 	case *ast.VariableDefinition:
-		return v.visitVariableDefinitionInternal(node, info)
+		result = walkVariableDefinition(node, ctx, v)
 	case ast.VariableDefinitions:
-		return v.visitVariableDefinitionsInternal(node, info)
+		result = walkVariableDefinitions(node, ctx, v)
 	case ast.Type:
-		return v.visitTypeInternal(node, info)
+		result = walkType(node, ctx, v)
 	case ast.Value:
-		return v.visitValueInternal(node, info)
+		result = walkValue(node, ctx, v)
 	case ast.Definition:
-		return v.visitDefinitionInternal(node, info)
+		result = walkDefinition(node, ctx, v)
 	case ast.Selection:
-		return v.visitSelectionInternal(node, info)
+		result = walkSelection(node, ctx, v)
 	default:
 		panic(fmt.Sprintf("unexpected node type %T when visiting Node", node))
 	}
+	if result == Break {
+		return result
+	}
+
+	return Continue
 }
 
-func (v *visitor) visitTypeInternal(node ast.Type, info *Info) Result {
+func walkType(node ast.Type, ctx interface{}, v *Visitor) Result {
+	var result Result
 	switch node := node.(type) {
 	case ast.ListType:
-		return v.visitListTypeInternal(node, info)
+		result = walkListType(node, ctx, v)
 	case ast.NamedType:
-		return v.visitNamedTypeInternal(node, info)
+		result = walkNamedType(node, ctx, v)
 	case ast.NonNullType:
-		return v.visitNonNullTypeInternal(node, info)
+		result = walkNonNullType(node, ctx, v)
 	default:
 		panic(fmt.Sprintf("unexpected node type %T when visiting Type", node))
 	}
+	if result == Break {
+		return result
+	}
+
+	return Continue
 }
 
-func (v *visitor) visitValueInternal(node ast.Value, info *Info) Result {
+func walkValue(node ast.Value, ctx interface{}, v *Visitor) Result {
+	var result Result
 	switch node := node.(type) {
 	case ast.BooleanValue:
-		return v.visitBooleanValueInternal(node, info)
+		result = walkBooleanValue(node, ctx, v)
 	case ast.EnumValue:
-		return v.visitEnumValueInternal(node, info)
+		result = walkEnumValue(node, ctx, v)
 	case ast.FloatValue:
-		return v.visitFloatValueInternal(node, info)
+		result = walkFloatValue(node, ctx, v)
 	case ast.IntValue:
-		return v.visitIntValueInternal(node, info)
+		result = walkIntValue(node, ctx, v)
 	case ast.ListValue:
-		return v.visitListValueInternal(node, info)
+		result = walkListValue(node, ctx, v)
 	case ast.NullValue:
-		return v.visitNullValueInternal(node, info)
+		result = walkNullValue(node, ctx, v)
 	case ast.ObjectValue:
-		return v.visitObjectValueInternal(node, info)
+		result = walkObjectValue(node, ctx, v)
 	case ast.StringValue:
-		return v.visitStringValueInternal(node, info)
+		result = walkStringValue(node, ctx, v)
 	case ast.Variable:
-		return v.visitVariableInternal(node, info)
+		result = walkVariable(node, ctx, v)
 	default:
 		panic(fmt.Sprintf("unexpected node type %T when visiting Value", node))
 	}
+	if result == Break {
+		return result
+	}
+
+	return Continue
 }
 
-func (v *visitor) visitDefinitionInternal(node ast.Definition, info *Info) Result {
+func walkDefinition(node ast.Definition, ctx interface{}, v *Visitor) Result {
+	var result Result
 	switch node := node.(type) {
 	case *ast.FragmentDefinition:
-		return v.visitFragmentDefinitionInternal(node, info)
+		result = walkFragmentDefinition(node, ctx, v)
 	case *ast.OperationDefinition:
-		return v.visitOperationDefinitionInternal(node, info)
+		result = walkOperationDefinition(node, ctx, v)
 	case ast.Selection:
-		return v.visitSelectionInternal(node, info)
+		result = walkSelection(node, ctx, v)
 	default:
 		panic(fmt.Sprintf("unexpected node type %T when visiting Definition", node))
 	}
+	if result == Break {
+		return result
+	}
+
+	return Continue
 }
 
-func (v *visitor) visitSelectionInternal(node ast.Selection, info *Info) Result {
+func walkSelection(node ast.Selection, ctx interface{}, v *Visitor) Result {
+	var result Result
 	switch node := node.(type) {
 	case *ast.Field:
-		return v.visitFieldInternal(node, info)
+		result = walkField(node, ctx, v)
 	case *ast.FragmentSpread:
-		return v.visitFragmentSpreadInternal(node, info)
+		result = walkFragmentSpread(node, ctx, v)
 	case *ast.InlineFragment:
-		return v.visitInlineFragmentInternal(node, info)
+		result = walkInlineFragment(node, ctx, v)
 	default:
 		panic(fmt.Sprintf("unexpected node type %T when visiting Selection", node))
 	}
+	if result == Break {
+		return result
+	}
+
+	return Continue
 }
 
-func (v *visitor) visitArgumentInternal(node *ast.Argument, info *Info) Result {
-	result := v.argumentVisitor.EnterArgument(node, info)
-	if result != Continue {
+func walkArgument(node *ast.Argument, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitArgument(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit Name.
-	if result := v.visitNameInternal(node.Name, childInfo); result == Break {
+	if result := walkName(node.Name, ctx, v); result == Break {
 		return result
 	}
-
 	// Visit Value.
-	if result := v.visitValueInternal(node.Value, childInfo); result == Break {
+	if result := walkValue(node.Value, ctx, v); result == Break {
 		return result
 	}
 
-	return v.argumentVisitor.LeaveArgument(node, info)
+	return Continue
 }
 
-func (v *visitor) visitArgumentsInternal(node ast.Arguments, info *Info) Result {
-	result := v.argumentsVisitor.EnterArguments(node, info)
-	if result != Continue {
+func walkArguments(node ast.Arguments, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitArguments(node, ctx); result != Continue {
 		return result
 	}
 
-	childInfo := info.withParent(node)
 	for _, childNode := range node {
-		if result := v.visitArgumentInternal(childNode, childInfo); result == Break {
+		if result := walkArgument(childNode, ctx, v); result == Break {
 			return result
 		}
 	}
 
-	return v.argumentsVisitor.LeaveArguments(node, info)
+	return Continue
 }
 
-func (v *visitor) visitBooleanValueInternal(node ast.BooleanValue, info *Info) Result {
-	result := v.booleanValueVisitor.EnterBooleanValue(node, info)
-	if result != Continue {
+func walkBooleanValue(node ast.BooleanValue, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitBooleanValue(node, ctx); result != Continue {
 		return result
 	}
 
-	return v.booleanValueVisitor.LeaveBooleanValue(node, info)
+	return Continue
 }
 
-func (v *visitor) visitDefinitionsInternal(node ast.Definitions, info *Info) Result {
-	result := v.definitionsVisitor.EnterDefinitions(node, info)
-	if result != Continue {
+func walkDefinitions(node ast.Definitions, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitDefinitions(node, ctx); result != Continue {
 		return result
 	}
 
-	childInfo := info.withParent(node)
 	for _, childNode := range node {
-		if result := v.visitDefinitionInternal(childNode, childInfo); result == Break {
+		if result := walkDefinition(childNode, ctx, v); result == Break {
 			return result
 		}
 	}
 
-	return v.definitionsVisitor.LeaveDefinitions(node, info)
+	return Continue
 }
 
-func (v *visitor) visitDirectiveInternal(node *ast.Directive, info *Info) Result {
-	result := v.directiveVisitor.EnterDirective(node, info)
-	if result != Continue {
+func walkDirective(node *ast.Directive, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitDirective(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit Name.
-	if result := v.visitNameInternal(node.Name, childInfo); result == Break {
+	if result := walkName(node.Name, ctx, v); result == Break {
 		return result
 	}
-
 	// Visit Arguments.
 	if len(node.Arguments) != 0 {
-		if result := v.visitArgumentsInternal(node.Arguments, childInfo); result == Break {
+		if result := walkArguments(node.Arguments, ctx, v); result == Break {
 			return result
 		}
 	}
 
-	return v.directiveVisitor.LeaveDirective(node, info)
+	return Continue
 }
 
-func (v *visitor) visitDirectivesInternal(node ast.Directives, info *Info) Result {
-	result := v.directivesVisitor.EnterDirectives(node, info)
-	if result != Continue {
+func walkDirectives(node ast.Directives, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitDirectives(node, ctx); result != Continue {
 		return result
 	}
 
-	childInfo := info.withParent(node)
 	for _, childNode := range node {
-		if result := v.visitDirectiveInternal(childNode, childInfo); result == Break {
+		if result := walkDirective(childNode, ctx, v); result == Break {
 			return result
 		}
 	}
 
-	return v.directivesVisitor.LeaveDirectives(node, info)
+	return Continue
 }
 
-func (v *visitor) visitDocumentInternal(node ast.Document, info *Info) Result {
-	result := v.documentVisitor.EnterDocument(node, info)
-	if result != Continue {
+func walkDocument(node ast.Document, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitDocument(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit Definitions.
-	if result := v.visitDefinitionsInternal(node.Definitions, childInfo); result == Break {
+	if result := walkDefinitions(node.Definitions, ctx, v); result == Break {
 		return result
 	}
 
-	return v.documentVisitor.LeaveDocument(node, info)
+	return Continue
 }
 
-func (v *visitor) visitEnumValueInternal(node ast.EnumValue, info *Info) Result {
-	result := v.enumValueVisitor.EnterEnumValue(node, info)
-	if result != Continue {
+func walkEnumValue(node ast.EnumValue, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitEnumValue(node, ctx); result != Continue {
 		return result
 	}
 
-	return v.enumValueVisitor.LeaveEnumValue(node, info)
+	return Continue
 }
 
-func (v *visitor) visitFieldInternal(node *ast.Field, info *Info) Result {
-	result := v.fieldVisitor.EnterField(node, info)
-	if result != Continue {
+func walkField(node *ast.Field, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitField(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit Alias.
 	if !node.Alias.IsNil() {
-		if result := v.visitNameInternal(node.Alias, childInfo); result == Break {
+		if result := walkName(node.Alias, ctx, v); result == Break {
 			return result
 		}
 	}
-
 	// Visit Name.
-	if result := v.visitNameInternal(node.Name, childInfo); result == Break {
+	if result := walkName(node.Name, ctx, v); result == Break {
 		return result
 	}
-
 	// Visit Arguments.
 	if len(node.Arguments) != 0 {
-		if result := v.visitArgumentsInternal(node.Arguments, childInfo); result == Break {
+		if result := walkArguments(node.Arguments, ctx, v); result == Break {
 			return result
 		}
 	}
-
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := v.visitDirectivesInternal(node.Directives, childInfo); result == Break {
+		if result := walkDirectives(node.Directives, ctx, v); result == Break {
 			return result
 		}
 	}
-
 	// Visit SelectionSet.
 	if len(node.SelectionSet) != 0 {
-		if result := v.visitSelectionSetInternal(node.SelectionSet, childInfo); result == Break {
+		if result := walkSelectionSet(node.SelectionSet, ctx, v); result == Break {
 			return result
 		}
 	}
 
-	return v.fieldVisitor.LeaveField(node, info)
+	return Continue
 }
 
-func (v *visitor) visitFloatValueInternal(node ast.FloatValue, info *Info) Result {
-	result := v.floatValueVisitor.EnterFloatValue(node, info)
-	if result != Continue {
+func walkFloatValue(node ast.FloatValue, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitFloatValue(node, ctx); result != Continue {
 		return result
 	}
 
-	return v.floatValueVisitor.LeaveFloatValue(node, info)
+	return Continue
 }
 
-func (v *visitor) visitFragmentDefinitionInternal(node *ast.FragmentDefinition, info *Info) Result {
-	result := v.fragmentDefinitionVisitor.EnterFragmentDefinition(node, info)
-	if result != Continue {
+func walkFragmentDefinition(node *ast.FragmentDefinition, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitFragmentDefinition(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit Name.
-	if result := v.visitNameInternal(node.Name, childInfo); result == Break {
+	if result := walkName(node.Name, ctx, v); result == Break {
 		return result
 	}
-
 	// Visit VariableDefinitions.
 	if len(node.VariableDefinitions) != 0 {
-		if result := v.visitVariableDefinitionsInternal(node.VariableDefinitions, childInfo); result == Break {
+		if result := walkVariableDefinitions(node.VariableDefinitions, ctx, v); result == Break {
 			return result
 		}
 	}
-
 	// Visit TypeCondition.
-	if result := v.visitNamedTypeInternal(node.TypeCondition, childInfo); result == Break {
+	if result := walkNamedType(node.TypeCondition, ctx, v); result == Break {
 		return result
 	}
-
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := v.visitDirectivesInternal(node.Directives, childInfo); result == Break {
+		if result := walkDirectives(node.Directives, ctx, v); result == Break {
 			return result
 		}
 	}
-
 	// Visit SelectionSet.
-	if result := v.visitSelectionSetInternal(node.SelectionSet, childInfo); result == Break {
+	if result := walkSelectionSet(node.SelectionSet, ctx, v); result == Break {
 		return result
 	}
 
-	return v.fragmentDefinitionVisitor.LeaveFragmentDefinition(node, info)
+	return Continue
 }
 
-func (v *visitor) visitFragmentSpreadInternal(node *ast.FragmentSpread, info *Info) Result {
-	result := v.fragmentSpreadVisitor.EnterFragmentSpread(node, info)
-	if result != Continue {
+func walkFragmentSpread(node *ast.FragmentSpread, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitFragmentSpread(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit Name.
-	if result := v.visitNameInternal(node.Name, childInfo); result == Break {
+	if result := walkName(node.Name, ctx, v); result == Break {
 		return result
 	}
-
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := v.visitDirectivesInternal(node.Directives, childInfo); result == Break {
+		if result := walkDirectives(node.Directives, ctx, v); result == Break {
 			return result
 		}
 	}
 
-	return v.fragmentSpreadVisitor.LeaveFragmentSpread(node, info)
+	return Continue
 }
 
-func (v *visitor) visitInlineFragmentInternal(node *ast.InlineFragment, info *Info) Result {
-	result := v.inlineFragmentVisitor.EnterInlineFragment(node, info)
-	if result != Continue {
+func walkInlineFragment(node *ast.InlineFragment, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitInlineFragment(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit TypeCondition.
 	if !node.TypeCondition.Name.IsNil() {
-		if result := v.visitNamedTypeInternal(node.TypeCondition, childInfo); result == Break {
+		if result := walkNamedType(node.TypeCondition, ctx, v); result == Break {
 			return result
 		}
 	}
-
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := v.visitDirectivesInternal(node.Directives, childInfo); result == Break {
+		if result := walkDirectives(node.Directives, ctx, v); result == Break {
 			return result
 		}
 	}
-
 	// Visit SelectionSet.
-	if result := v.visitSelectionSetInternal(node.SelectionSet, childInfo); result == Break {
+	if result := walkSelectionSet(node.SelectionSet, ctx, v); result == Break {
 		return result
 	}
 
-	return v.inlineFragmentVisitor.LeaveInlineFragment(node, info)
+	return Continue
 }
 
-func (v *visitor) visitIntValueInternal(node ast.IntValue, info *Info) Result {
-	result := v.intValueVisitor.EnterIntValue(node, info)
-	if result != Continue {
+func walkIntValue(node ast.IntValue, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitIntValue(node, ctx); result != Continue {
 		return result
 	}
 
-	return v.intValueVisitor.LeaveIntValue(node, info)
+	return Continue
 }
 
-func (v *visitor) visitListTypeInternal(node ast.ListType, info *Info) Result {
-	result := v.listTypeVisitor.EnterListType(node, info)
-	if result != Continue {
+func walkListType(node ast.ListType, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitListType(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit ItemType.
-	if result := v.visitTypeInternal(node.ItemType, childInfo); result == Break {
+	if result := walkType(node.ItemType, ctx, v); result == Break {
 		return result
 	}
 
-	return v.listTypeVisitor.LeaveListType(node, info)
+	return Continue
 }
 
-func (v *visitor) visitListValueInternal(node ast.ListValue, info *Info) Result {
-	result := v.listValueVisitor.EnterListValue(node, info)
-	if result != Continue {
+func walkListValue(node ast.ListValue, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitListValue(node, ctx); result != Continue {
 		return result
 	}
 
-	childInfo := info.withParent(node)
 	for _, value := range node.Values() {
-		if result := v.visitValueInternal(value, childInfo); result == Break {
+		if result := walkValue(value, ctx, v); result == Break {
 			return result
 		}
 	}
 
-	return v.listValueVisitor.LeaveListValue(node, info)
+	return Continue
 }
 
-func (v *visitor) visitNameInternal(node ast.Name, info *Info) Result {
-	result := v.nameVisitor.EnterName(node, info)
-	if result != Continue {
+func walkName(node ast.Name, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitName(node, ctx); result != Continue {
 		return result
 	}
 
-	return v.nameVisitor.LeaveName(node, info)
+	return Continue
 }
 
-func (v *visitor) visitNamedTypeInternal(node ast.NamedType, info *Info) Result {
-	result := v.namedTypeVisitor.EnterNamedType(node, info)
-	if result != Continue {
+func walkNamedType(node ast.NamedType, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitNamedType(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit Name.
-	if result := v.visitNameInternal(node.Name, childInfo); result == Break {
+	if result := walkName(node.Name, ctx, v); result == Break {
 		return result
 	}
 
-	return v.namedTypeVisitor.LeaveNamedType(node, info)
+	return Continue
 }
 
-func (v *visitor) visitNonNullTypeInternal(node ast.NonNullType, info *Info) Result {
-	result := v.nonNullTypeVisitor.EnterNonNullType(node, info)
-	if result != Continue {
+func walkNonNullType(node ast.NonNullType, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitNonNullType(node, ctx); result != Continue {
 		return result
 	}
 
-	childInfo := info.withParent(node)
+	var result Result
 	switch t := node.Type.(type) {
 	case ast.NamedType:
-		result = v.visitNamedTypeInternal(t, childInfo)
+		result = walkNamedType(t, ctx, v)
 	case ast.ListType:
-		result = v.visitListTypeInternal(t, childInfo)
+		result = walkListType(t, ctx, v)
 	default:
 		panic(fmt.Sprintf("unhandled nullable type \"%T\"", node.Type))
 	}
@@ -2310,933 +1613,153 @@ func (v *visitor) visitNonNullTypeInternal(node ast.NonNullType, info *Info) Res
 		return result
 	}
 
-	return v.nonNullTypeVisitor.LeaveNonNullType(node, info)
+	return Continue
 }
 
-func (v *visitor) visitNullValueInternal(node ast.NullValue, info *Info) Result {
-	result := v.nullValueVisitor.EnterNullValue(node, info)
-	if result != Continue {
+func walkNullValue(node ast.NullValue, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitNullValue(node, ctx); result != Continue {
 		return result
 	}
 
-	return v.nullValueVisitor.LeaveNullValue(node, info)
+	return Continue
 }
 
-func (v *visitor) visitObjectFieldInternal(node *ast.ObjectField, info *Info) Result {
-	result := v.objectFieldVisitor.EnterObjectField(node, info)
-	if result != Continue {
+func walkObjectField(node *ast.ObjectField, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitObjectField(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit Name.
-	if result := v.visitNameInternal(node.Name, childInfo); result == Break {
+	if result := walkName(node.Name, ctx, v); result == Break {
 		return result
 	}
-
 	// Visit Value.
-	if result := v.visitValueInternal(node.Value, childInfo); result == Break {
+	if result := walkValue(node.Value, ctx, v); result == Break {
 		return result
 	}
 
-	return v.objectFieldVisitor.LeaveObjectField(node, info)
+	return Continue
 }
 
-func (v *visitor) visitObjectValueInternal(node ast.ObjectValue, info *Info) Result {
-	result := v.objectValueVisitor.EnterObjectValue(node, info)
-	if result != Continue {
+func walkObjectValue(node ast.ObjectValue, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitObjectValue(node, ctx); result != Continue {
 		return result
 	}
 
-	childInfo := info.withParent(node)
 	for _, field := range node.Fields() {
-		if result := v.visitObjectFieldInternal(field, childInfo); result == Break {
+		if result := walkObjectField(field, ctx, v); result == Break {
 			return result
 		}
 	}
 
-	return v.objectValueVisitor.LeaveObjectValue(node, info)
+	return Continue
 }
 
-func (v *visitor) visitOperationDefinitionInternal(node *ast.OperationDefinition, info *Info) Result {
-	result := v.operationDefinitionVisitor.EnterOperationDefinition(node, info)
-	if result != Continue {
+func walkOperationDefinition(node *ast.OperationDefinition, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitOperationDefinition(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit Name.
 	if !node.Name.IsNil() {
-		if result := v.visitNameInternal(node.Name, childInfo); result == Break {
+		if result := walkName(node.Name, ctx, v); result == Break {
 			return result
 		}
 	}
-
 	// Visit VariableDefinitions.
 	if len(node.VariableDefinitions) != 0 {
-		if result := v.visitVariableDefinitionsInternal(node.VariableDefinitions, childInfo); result == Break {
+		if result := walkVariableDefinitions(node.VariableDefinitions, ctx, v); result == Break {
 			return result
 		}
 	}
-
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := v.visitDirectivesInternal(node.Directives, childInfo); result == Break {
+		if result := walkDirectives(node.Directives, ctx, v); result == Break {
 			return result
 		}
 	}
-
 	// Visit SelectionSet.
-	if result := v.visitSelectionSetInternal(node.SelectionSet, childInfo); result == Break {
+	if result := walkSelectionSet(node.SelectionSet, ctx, v); result == Break {
 		return result
 	}
 
-	return v.operationDefinitionVisitor.LeaveOperationDefinition(node, info)
+	return Continue
 }
 
-func (v *visitor) visitSelectionSetInternal(node ast.SelectionSet, info *Info) Result {
-	result := v.selectionSetVisitor.EnterSelectionSet(node, info)
-	if result != Continue {
+func walkSelectionSet(node ast.SelectionSet, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitSelectionSet(node, ctx); result != Continue {
 		return result
 	}
 
-	childInfo := info.withParent(node)
 	for _, childNode := range node {
-		if result := v.visitSelectionInternal(childNode, childInfo); result == Break {
+		if result := walkSelection(childNode, ctx, v); result == Break {
 			return result
 		}
 	}
 
-	return v.selectionSetVisitor.LeaveSelectionSet(node, info)
+	return Continue
 }
 
-func (v *visitor) visitStringValueInternal(node ast.StringValue, info *Info) Result {
-	result := v.stringValueVisitor.EnterStringValue(node, info)
-	if result != Continue {
+func walkStringValue(node ast.StringValue, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitStringValue(node, ctx); result != Continue {
 		return result
 	}
 
-	return v.stringValueVisitor.LeaveStringValue(node, info)
+	return Continue
 }
 
-func (v *visitor) visitVariableInternal(node ast.Variable, info *Info) Result {
-	result := v.variableVisitor.EnterVariable(node, info)
-	if result != Continue {
+func walkVariable(node ast.Variable, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitVariable(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit Name.
-	if result := v.visitNameInternal(node.Name, childInfo); result == Break {
+	if result := walkName(node.Name, ctx, v); result == Break {
 		return result
 	}
 
-	return v.variableVisitor.LeaveVariable(node, info)
+	return Continue
 }
 
-func (v *visitor) visitVariableDefinitionInternal(node *ast.VariableDefinition, info *Info) Result {
-	result := v.variableDefinitionVisitor.EnterVariableDefinition(node, info)
-	if result != Continue {
+func walkVariableDefinition(node *ast.VariableDefinition, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitVariableDefinition(node, ctx); result != Continue {
 		return result
 	}
-
-	childInfo := info.withParent(node)
 
 	// Visit Variable.
-	if result := v.visitVariableInternal(node.Variable, childInfo); result == Break {
+	if result := walkVariable(node.Variable, ctx, v); result == Break {
 		return result
 	}
-
 	// Visit Type.
-	if result := v.visitTypeInternal(node.Type, childInfo); result == Break {
+	if result := walkType(node.Type, ctx, v); result == Break {
 		return result
 	}
-
 	// Visit DefaultValue.
 	if node.DefaultValue != nil {
-		if result := v.visitValueInternal(node.DefaultValue, childInfo); result == Break {
+		if result := walkValue(node.DefaultValue, ctx, v); result == Break {
 			return result
 		}
 	}
-
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := v.visitDirectivesInternal(node.Directives, childInfo); result == Break {
+		if result := walkDirectives(node.Directives, ctx, v); result == Break {
 			return result
 		}
 	}
 
-	return v.variableDefinitionVisitor.LeaveVariableDefinition(node, info)
+	return Continue
 }
 
-func (v *visitor) visitVariableDefinitionsInternal(node ast.VariableDefinitions, info *Info) Result {
-	result := v.variableDefinitionsVisitor.EnterVariableDefinitions(node, info)
-	if result != Continue {
+func walkVariableDefinitions(node ast.VariableDefinitions, ctx interface{}, v *Visitor) Result {
+	if result := v.VisitVariableDefinitions(node, ctx); result != Continue {
 		return result
 	}
 
-	childInfo := info.withParent(node)
 	for _, childNode := range node {
-		if result := v.visitVariableDefinitionInternal(childNode, childInfo); result == Break {
+		if result := walkVariableDefinition(childNode, ctx, v); result == Break {
 			return result
 		}
 	}
 
-	return v.variableDefinitionsVisitor.LeaveVariableDefinitions(node, info)
-}
-
-// Builder creates visitor.
-type Builder struct {
-	v *visitor
-}
-
-// NewBuilder creates a builder to builds a visitor.
-func NewBuilder() Builder {
-	return Builder{
-		v: newVisitor(),
-	}
-}
-
-// Build returns the visitor that is being built. Builder should not be used on return.
-func (builder Builder) Build() Visitor {
-	return builder.v
-}
-
-// VisitNodeWith set a visitor for Node. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitNodeWith(visitor NodeVisitor) Builder {
-	if builder.v.inlineFragmentVisitor == defaultVisitorInstance {
-		builder.v.inlineFragmentVisitor = &InlineFragmentVisitorFuncs{
-			Enter: func(node *ast.InlineFragment, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.InlineFragment, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.fragmentSpreadVisitor == defaultVisitorInstance {
-		builder.v.fragmentSpreadVisitor = &FragmentSpreadVisitorFuncs{
-			Enter: func(node *ast.FragmentSpread, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.FragmentSpread, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.fieldVisitor == defaultVisitorInstance {
-		builder.v.fieldVisitor = &FieldVisitorFuncs{
-			Enter: func(node *ast.Field, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.Field, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.inlineFragmentVisitor == defaultVisitorInstance {
-		builder.v.inlineFragmentVisitor = &InlineFragmentVisitorFuncs{
-			Enter: func(node *ast.InlineFragment, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.InlineFragment, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.fragmentSpreadVisitor == defaultVisitorInstance {
-		builder.v.fragmentSpreadVisitor = &FragmentSpreadVisitorFuncs{
-			Enter: func(node *ast.FragmentSpread, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.FragmentSpread, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.fieldVisitor == defaultVisitorInstance {
-		builder.v.fieldVisitor = &FieldVisitorFuncs{
-			Enter: func(node *ast.Field, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.Field, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.operationDefinitionVisitor == defaultVisitorInstance {
-		builder.v.operationDefinitionVisitor = &OperationDefinitionVisitorFuncs{
-			Enter: func(node *ast.OperationDefinition, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.OperationDefinition, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.fragmentDefinitionVisitor == defaultVisitorInstance {
-		builder.v.fragmentDefinitionVisitor = &FragmentDefinitionVisitorFuncs{
-			Enter: func(node *ast.FragmentDefinition, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.FragmentDefinition, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.variableVisitor == defaultVisitorInstance {
-		builder.v.variableVisitor = &VariableVisitorFuncs{
-			Enter: func(node ast.Variable, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.Variable, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.stringValueVisitor == defaultVisitorInstance {
-		builder.v.stringValueVisitor = &StringValueVisitorFuncs{
-			Enter: func(node ast.StringValue, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.StringValue, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.objectValueVisitor == defaultVisitorInstance {
-		builder.v.objectValueVisitor = &ObjectValueVisitorFuncs{
-			Enter: func(node ast.ObjectValue, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.ObjectValue, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.nullValueVisitor == defaultVisitorInstance {
-		builder.v.nullValueVisitor = &NullValueVisitorFuncs{
-			Enter: func(node ast.NullValue, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.NullValue, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.listValueVisitor == defaultVisitorInstance {
-		builder.v.listValueVisitor = &ListValueVisitorFuncs{
-			Enter: func(node ast.ListValue, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.ListValue, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.intValueVisitor == defaultVisitorInstance {
-		builder.v.intValueVisitor = &IntValueVisitorFuncs{
-			Enter: func(node ast.IntValue, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.IntValue, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.floatValueVisitor == defaultVisitorInstance {
-		builder.v.floatValueVisitor = &FloatValueVisitorFuncs{
-			Enter: func(node ast.FloatValue, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.FloatValue, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.enumValueVisitor == defaultVisitorInstance {
-		builder.v.enumValueVisitor = &EnumValueVisitorFuncs{
-			Enter: func(node ast.EnumValue, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.EnumValue, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.booleanValueVisitor == defaultVisitorInstance {
-		builder.v.booleanValueVisitor = &BooleanValueVisitorFuncs{
-			Enter: func(node ast.BooleanValue, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.BooleanValue, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.nonNullTypeVisitor == defaultVisitorInstance {
-		builder.v.nonNullTypeVisitor = &NonNullTypeVisitorFuncs{
-			Enter: func(node ast.NonNullType, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.NonNullType, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.namedTypeVisitor == defaultVisitorInstance {
-		builder.v.namedTypeVisitor = &NamedTypeVisitorFuncs{
-			Enter: func(node ast.NamedType, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.NamedType, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.listTypeVisitor == defaultVisitorInstance {
-		builder.v.listTypeVisitor = &ListTypeVisitorFuncs{
-			Enter: func(node ast.ListType, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.ListType, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.variableDefinitionsVisitor == defaultVisitorInstance {
-		builder.v.variableDefinitionsVisitor = &VariableDefinitionsVisitorFuncs{
-			Enter: func(node ast.VariableDefinitions, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.VariableDefinitions, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.variableDefinitionVisitor == defaultVisitorInstance {
-		builder.v.variableDefinitionVisitor = &VariableDefinitionVisitorFuncs{
-			Enter: func(node *ast.VariableDefinition, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.VariableDefinition, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.selectionSetVisitor == defaultVisitorInstance {
-		builder.v.selectionSetVisitor = &SelectionSetVisitorFuncs{
-			Enter: func(node ast.SelectionSet, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.SelectionSet, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.objectFieldVisitor == defaultVisitorInstance {
-		builder.v.objectFieldVisitor = &ObjectFieldVisitorFuncs{
-			Enter: func(node *ast.ObjectField, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.ObjectField, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.nameVisitor == defaultVisitorInstance {
-		builder.v.nameVisitor = &NameVisitorFuncs{
-			Enter: func(node ast.Name, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.Name, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.documentVisitor == defaultVisitorInstance {
-		builder.v.documentVisitor = &DocumentVisitorFuncs{
-			Enter: func(node ast.Document, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.Document, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.directivesVisitor == defaultVisitorInstance {
-		builder.v.directivesVisitor = &DirectivesVisitorFuncs{
-			Enter: func(node ast.Directives, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.Directives, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.directiveVisitor == defaultVisitorInstance {
-		builder.v.directiveVisitor = &DirectiveVisitorFuncs{
-			Enter: func(node *ast.Directive, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.Directive, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.definitionsVisitor == defaultVisitorInstance {
-		builder.v.definitionsVisitor = &DefinitionsVisitorFuncs{
-			Enter: func(node ast.Definitions, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.Definitions, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.argumentsVisitor == defaultVisitorInstance {
-		builder.v.argumentsVisitor = &ArgumentsVisitorFuncs{
-			Enter: func(node ast.Arguments, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node ast.Arguments, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	if builder.v.argumentVisitor == defaultVisitorInstance {
-		builder.v.argumentVisitor = &ArgumentVisitorFuncs{
-			Enter: func(node *ast.Argument, info *Info) Result {
-				return visitor.EnterNode(node, info)
-			},
-			Leave: func(node *ast.Argument, info *Info) Result {
-				return visitor.LeaveNode(node, info)
-			},
-		}
-	}
-	return builder
-}
-
-// VisitTypeWith set a visitor for Type. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitTypeWith(visitor TypeVisitor) Builder {
-	if builder.v.nonNullTypeVisitor == defaultVisitorInstance {
-		builder.v.nonNullTypeVisitor = &NonNullTypeVisitorFuncs{
-			Enter: func(node ast.NonNullType, info *Info) Result {
-				return visitor.EnterType(node, info)
-			},
-			Leave: func(node ast.NonNullType, info *Info) Result {
-				return visitor.LeaveType(node, info)
-			},
-		}
-	}
-	if builder.v.namedTypeVisitor == defaultVisitorInstance {
-		builder.v.namedTypeVisitor = &NamedTypeVisitorFuncs{
-			Enter: func(node ast.NamedType, info *Info) Result {
-				return visitor.EnterType(node, info)
-			},
-			Leave: func(node ast.NamedType, info *Info) Result {
-				return visitor.LeaveType(node, info)
-			},
-		}
-	}
-	if builder.v.listTypeVisitor == defaultVisitorInstance {
-		builder.v.listTypeVisitor = &ListTypeVisitorFuncs{
-			Enter: func(node ast.ListType, info *Info) Result {
-				return visitor.EnterType(node, info)
-			},
-			Leave: func(node ast.ListType, info *Info) Result {
-				return visitor.LeaveType(node, info)
-			},
-		}
-	}
-	return builder
-}
-
-// VisitValueWith set a visitor for Value. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitValueWith(visitor ValueVisitor) Builder {
-	if builder.v.variableVisitor == defaultVisitorInstance {
-		builder.v.variableVisitor = &VariableVisitorFuncs{
-			Enter: func(node ast.Variable, info *Info) Result {
-				return visitor.EnterValue(node, info)
-			},
-			Leave: func(node ast.Variable, info *Info) Result {
-				return visitor.LeaveValue(node, info)
-			},
-		}
-	}
-	if builder.v.stringValueVisitor == defaultVisitorInstance {
-		builder.v.stringValueVisitor = &StringValueVisitorFuncs{
-			Enter: func(node ast.StringValue, info *Info) Result {
-				return visitor.EnterValue(node, info)
-			},
-			Leave: func(node ast.StringValue, info *Info) Result {
-				return visitor.LeaveValue(node, info)
-			},
-		}
-	}
-	if builder.v.objectValueVisitor == defaultVisitorInstance {
-		builder.v.objectValueVisitor = &ObjectValueVisitorFuncs{
-			Enter: func(node ast.ObjectValue, info *Info) Result {
-				return visitor.EnterValue(node, info)
-			},
-			Leave: func(node ast.ObjectValue, info *Info) Result {
-				return visitor.LeaveValue(node, info)
-			},
-		}
-	}
-	if builder.v.nullValueVisitor == defaultVisitorInstance {
-		builder.v.nullValueVisitor = &NullValueVisitorFuncs{
-			Enter: func(node ast.NullValue, info *Info) Result {
-				return visitor.EnterValue(node, info)
-			},
-			Leave: func(node ast.NullValue, info *Info) Result {
-				return visitor.LeaveValue(node, info)
-			},
-		}
-	}
-	if builder.v.listValueVisitor == defaultVisitorInstance {
-		builder.v.listValueVisitor = &ListValueVisitorFuncs{
-			Enter: func(node ast.ListValue, info *Info) Result {
-				return visitor.EnterValue(node, info)
-			},
-			Leave: func(node ast.ListValue, info *Info) Result {
-				return visitor.LeaveValue(node, info)
-			},
-		}
-	}
-	if builder.v.intValueVisitor == defaultVisitorInstance {
-		builder.v.intValueVisitor = &IntValueVisitorFuncs{
-			Enter: func(node ast.IntValue, info *Info) Result {
-				return visitor.EnterValue(node, info)
-			},
-			Leave: func(node ast.IntValue, info *Info) Result {
-				return visitor.LeaveValue(node, info)
-			},
-		}
-	}
-	if builder.v.floatValueVisitor == defaultVisitorInstance {
-		builder.v.floatValueVisitor = &FloatValueVisitorFuncs{
-			Enter: func(node ast.FloatValue, info *Info) Result {
-				return visitor.EnterValue(node, info)
-			},
-			Leave: func(node ast.FloatValue, info *Info) Result {
-				return visitor.LeaveValue(node, info)
-			},
-		}
-	}
-	if builder.v.enumValueVisitor == defaultVisitorInstance {
-		builder.v.enumValueVisitor = &EnumValueVisitorFuncs{
-			Enter: func(node ast.EnumValue, info *Info) Result {
-				return visitor.EnterValue(node, info)
-			},
-			Leave: func(node ast.EnumValue, info *Info) Result {
-				return visitor.LeaveValue(node, info)
-			},
-		}
-	}
-	if builder.v.booleanValueVisitor == defaultVisitorInstance {
-		builder.v.booleanValueVisitor = &BooleanValueVisitorFuncs{
-			Enter: func(node ast.BooleanValue, info *Info) Result {
-				return visitor.EnterValue(node, info)
-			},
-			Leave: func(node ast.BooleanValue, info *Info) Result {
-				return visitor.LeaveValue(node, info)
-			},
-		}
-	}
-	return builder
-}
-
-// VisitDefinitionWith set a visitor for Definition. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitDefinitionWith(visitor DefinitionVisitor) Builder {
-	if builder.v.inlineFragmentVisitor == defaultVisitorInstance {
-		builder.v.inlineFragmentVisitor = &InlineFragmentVisitorFuncs{
-			Enter: func(node *ast.InlineFragment, info *Info) Result {
-				return visitor.EnterDefinition(node, info)
-			},
-			Leave: func(node *ast.InlineFragment, info *Info) Result {
-				return visitor.LeaveDefinition(node, info)
-			},
-		}
-	}
-	if builder.v.fragmentSpreadVisitor == defaultVisitorInstance {
-		builder.v.fragmentSpreadVisitor = &FragmentSpreadVisitorFuncs{
-			Enter: func(node *ast.FragmentSpread, info *Info) Result {
-				return visitor.EnterDefinition(node, info)
-			},
-			Leave: func(node *ast.FragmentSpread, info *Info) Result {
-				return visitor.LeaveDefinition(node, info)
-			},
-		}
-	}
-	if builder.v.fieldVisitor == defaultVisitorInstance {
-		builder.v.fieldVisitor = &FieldVisitorFuncs{
-			Enter: func(node *ast.Field, info *Info) Result {
-				return visitor.EnterDefinition(node, info)
-			},
-			Leave: func(node *ast.Field, info *Info) Result {
-				return visitor.LeaveDefinition(node, info)
-			},
-		}
-	}
-	if builder.v.operationDefinitionVisitor == defaultVisitorInstance {
-		builder.v.operationDefinitionVisitor = &OperationDefinitionVisitorFuncs{
-			Enter: func(node *ast.OperationDefinition, info *Info) Result {
-				return visitor.EnterDefinition(node, info)
-			},
-			Leave: func(node *ast.OperationDefinition, info *Info) Result {
-				return visitor.LeaveDefinition(node, info)
-			},
-		}
-	}
-	if builder.v.fragmentDefinitionVisitor == defaultVisitorInstance {
-		builder.v.fragmentDefinitionVisitor = &FragmentDefinitionVisitorFuncs{
-			Enter: func(node *ast.FragmentDefinition, info *Info) Result {
-				return visitor.EnterDefinition(node, info)
-			},
-			Leave: func(node *ast.FragmentDefinition, info *Info) Result {
-				return visitor.LeaveDefinition(node, info)
-			},
-		}
-	}
-	return builder
-}
-
-// VisitSelectionWith set a visitor for Selection. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitSelectionWith(visitor SelectionVisitor) Builder {
-	if builder.v.inlineFragmentVisitor == defaultVisitorInstance {
-		builder.v.inlineFragmentVisitor = &InlineFragmentVisitorFuncs{
-			Enter: func(node *ast.InlineFragment, info *Info) Result {
-				return visitor.EnterSelection(node, info)
-			},
-			Leave: func(node *ast.InlineFragment, info *Info) Result {
-				return visitor.LeaveSelection(node, info)
-			},
-		}
-	}
-	if builder.v.fragmentSpreadVisitor == defaultVisitorInstance {
-		builder.v.fragmentSpreadVisitor = &FragmentSpreadVisitorFuncs{
-			Enter: func(node *ast.FragmentSpread, info *Info) Result {
-				return visitor.EnterSelection(node, info)
-			},
-			Leave: func(node *ast.FragmentSpread, info *Info) Result {
-				return visitor.LeaveSelection(node, info)
-			},
-		}
-	}
-	if builder.v.fieldVisitor == defaultVisitorInstance {
-		builder.v.fieldVisitor = &FieldVisitorFuncs{
-			Enter: func(node *ast.Field, info *Info) Result {
-				return visitor.EnterSelection(node, info)
-			},
-			Leave: func(node *ast.Field, info *Info) Result {
-				return visitor.LeaveSelection(node, info)
-			},
-		}
-	}
-	return builder
-}
-
-// VisitArgumentWith set a visitor for Argument. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitArgumentWith(visitor ArgumentVisitor) Builder {
-	builder.v.argumentVisitor = visitor
-	return builder
-}
-
-// VisitArgumentsWith set a visitor for Arguments. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitArgumentsWith(visitor ArgumentsVisitor) Builder {
-	builder.v.argumentsVisitor = visitor
-	return builder
-}
-
-// VisitBooleanValueWith set a visitor for BooleanValue. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitBooleanValueWith(visitor BooleanValueVisitor) Builder {
-	builder.v.booleanValueVisitor = visitor
-	return builder
-}
-
-// VisitDefinitionsWith set a visitor for Definitions. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitDefinitionsWith(visitor DefinitionsVisitor) Builder {
-	builder.v.definitionsVisitor = visitor
-	return builder
-}
-
-// VisitDirectiveWith set a visitor for Directive. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitDirectiveWith(visitor DirectiveVisitor) Builder {
-	builder.v.directiveVisitor = visitor
-	return builder
-}
-
-// VisitDirectivesWith set a visitor for Directives. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitDirectivesWith(visitor DirectivesVisitor) Builder {
-	builder.v.directivesVisitor = visitor
-	return builder
-}
-
-// VisitDocumentWith set a visitor for Document. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitDocumentWith(visitor DocumentVisitor) Builder {
-	builder.v.documentVisitor = visitor
-	return builder
-}
-
-// VisitEnumValueWith set a visitor for EnumValue. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitEnumValueWith(visitor EnumValueVisitor) Builder {
-	builder.v.enumValueVisitor = visitor
-	return builder
-}
-
-// VisitFieldWith set a visitor for Field. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitFieldWith(visitor FieldVisitor) Builder {
-	builder.v.fieldVisitor = visitor
-	return builder
-}
-
-// VisitFloatValueWith set a visitor for FloatValue. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitFloatValueWith(visitor FloatValueVisitor) Builder {
-	builder.v.floatValueVisitor = visitor
-	return builder
-}
-
-// VisitFragmentDefinitionWith set a visitor for FragmentDefinition. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitFragmentDefinitionWith(visitor FragmentDefinitionVisitor) Builder {
-	builder.v.fragmentDefinitionVisitor = visitor
-	return builder
-}
-
-// VisitFragmentSpreadWith set a visitor for FragmentSpread. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitFragmentSpreadWith(visitor FragmentSpreadVisitor) Builder {
-	builder.v.fragmentSpreadVisitor = visitor
-	return builder
-}
-
-// VisitInlineFragmentWith set a visitor for InlineFragment. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitInlineFragmentWith(visitor InlineFragmentVisitor) Builder {
-	builder.v.inlineFragmentVisitor = visitor
-	return builder
-}
-
-// VisitIntValueWith set a visitor for IntValue. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitIntValueWith(visitor IntValueVisitor) Builder {
-	builder.v.intValueVisitor = visitor
-	return builder
-}
-
-// VisitListTypeWith set a visitor for ListType. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitListTypeWith(visitor ListTypeVisitor) Builder {
-	builder.v.listTypeVisitor = visitor
-	return builder
-}
-
-// VisitListValueWith set a visitor for ListValue. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitListValueWith(visitor ListValueVisitor) Builder {
-	builder.v.listValueVisitor = visitor
-	return builder
-}
-
-// VisitNameWith set a visitor for Name. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitNameWith(visitor NameVisitor) Builder {
-	builder.v.nameVisitor = visitor
-	return builder
-}
-
-// VisitNamedTypeWith set a visitor for NamedType. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitNamedTypeWith(visitor NamedTypeVisitor) Builder {
-	builder.v.namedTypeVisitor = visitor
-	return builder
-}
-
-// VisitNonNullTypeWith set a visitor for NonNullType. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitNonNullTypeWith(visitor NonNullTypeVisitor) Builder {
-	builder.v.nonNullTypeVisitor = visitor
-	return builder
-}
-
-// VisitNullValueWith set a visitor for NullValue. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitNullValueWith(visitor NullValueVisitor) Builder {
-	builder.v.nullValueVisitor = visitor
-	return builder
-}
-
-// VisitObjectFieldWith set a visitor for ObjectField. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitObjectFieldWith(visitor ObjectFieldVisitor) Builder {
-	builder.v.objectFieldVisitor = visitor
-	return builder
-}
-
-// VisitObjectValueWith set a visitor for ObjectValue. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitObjectValueWith(visitor ObjectValueVisitor) Builder {
-	builder.v.objectValueVisitor = visitor
-	return builder
-}
-
-// VisitOperationDefinitionWith set a visitor for OperationDefinition. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitOperationDefinitionWith(visitor OperationDefinitionVisitor) Builder {
-	builder.v.operationDefinitionVisitor = visitor
-	return builder
-}
-
-// VisitSelectionSetWith set a visitor for SelectionSet. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitSelectionSetWith(visitor SelectionSetVisitor) Builder {
-	builder.v.selectionSetVisitor = visitor
-	return builder
-}
-
-// VisitStringValueWith set a visitor for StringValue. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitStringValueWith(visitor StringValueVisitor) Builder {
-	builder.v.stringValueVisitor = visitor
-	return builder
-}
-
-// VisitVariableWith set a visitor for Variable. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitVariableWith(visitor VariableVisitor) Builder {
-	builder.v.variableVisitor = visitor
-	return builder
-}
-
-// VisitVariableDefinitionWith set a visitor for VariableDefinition. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitVariableDefinitionWith(visitor VariableDefinitionVisitor) Builder {
-	builder.v.variableDefinitionVisitor = visitor
-	return builder
-}
-
-// VisitVariableDefinitionsWith set a visitor for VariableDefinitions. Note that this will override the one that is set previously
-// silently.
-func (builder Builder) VisitVariableDefinitionsWith(visitor VariableDefinitionsVisitor) Builder {
-	builder.v.variableDefinitionsVisitor = visitor
-	return builder
+	return Continue
 }
