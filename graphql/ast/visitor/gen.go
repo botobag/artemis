@@ -470,12 +470,12 @@ func New%sVisitor(action %sVisitAction) *Visitor {
 func genWalk(w io.Writer, preorder bool) {
 	for _, node := range astNodes {
 		fmt.Fprintf(w, `
-func walk%s(node %s, ctx interface{}, v *Visitor) Result {`, node.Name, node.TypeExpr())
+func walk%s(node %s, ctx interface{}, v *Visitor) bool {`, node.Name, node.TypeExpr())
 		// Enter a node.
 		if !node.IsAbstract() && preorder {
 			fmt.Fprintf(w, `
 	if result := v.Visit%s(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 `, node.Name)
 		}
@@ -484,8 +484,8 @@ func walk%s(node %s, ctx interface{}, v *Visitor) Result {`, node.Name, node.Typ
 		if node.Name == "ListValue" {
 			fmt.Fprintf(w, `
 	for _, value := range node.Values() {
-		if result := walkValue(value, ctx, v); result == Break {
-			return result
+		if cont := walkValue(value, ctx, v); !cont {
+			return false
 		}
 	}
 `)
@@ -495,8 +495,8 @@ func walk%s(node %s, ctx interface{}, v *Visitor) Result {`, node.Name, node.Typ
 		if node.Name == "ObjectValue" {
 			fmt.Fprintf(w, `
 	for _, field := range node.Fields() {
-		if result := walkObjectField(field, ctx, v); result == Break {
-			return result
+		if cont := walkObjectField(field, ctx, v); !cont {
+			return false
 		}
 	}
 `)
@@ -505,17 +505,17 @@ func walk%s(node %s, ctx interface{}, v *Visitor) Result {`, node.Name, node.Typ
 		// Special case: NonNullType
 		if node.Name == "NonNullType" {
 			fmt.Fprintf(w, `
-	var result Result
+	var cont bool
 	switch t := node.Type.(type) {
 	case ast.NamedType:
-		result = walkNamedType(t, ctx, v)
+		cont = walkNamedType(t, ctx, v)
 	case ast.ListType:
-		result = walkListType(t, ctx, v)
+		cont = walkListType(t, ctx, v)
 	default:
 		panic(fmt.Sprintf("unhandled nullable type \"%%T\"", node.Type))
 	}
-	if result == Break {
-		return result
+	if !cont {
+		return false
 	}
 `)
 		}
@@ -524,28 +524,28 @@ func walk%s(node %s, ctx interface{}, v *Visitor) Result {`, node.Name, node.Typ
 		if len(node.Children) > 0 {
 			if node.IsAbstract() {
 				fmt.Fprintf(w, `
-	var result Result
+	var cont bool
 	switch node := node.(type) {`)
 				for _, possibleType := range node.Children {
 					fmt.Fprintf(w, `
 	case %s:
-		result = walk%s(node, ctx, v)`, possibleType.TypeExpr(), possibleType.Name)
+		cont = walk%s(node, ctx, v)`, possibleType.TypeExpr(), possibleType.Name)
 				}
 
 				fmt.Fprintf(w, `
 	default:
 		panic(fmt.Sprintf("unexpected node type %%T when visiting %s", node))
 	}
-	if result == Break {
-		return result
+	if !cont {
+		return false
 	}`, node.Name)
 
 			} else if node.IsArray() {
 				elementTypeInfo := node.Children[0]
 				fmt.Fprintf(w, `
 	for _, childNode := range node {
-		if result := walk%s(childNode, ctx, v); result == Break {
-			return result
+		if cont := walk%s(childNode, ctx, v); !cont {
+			return false
 		}
 	}`, elementTypeInfo.Name)
 
@@ -576,14 +576,14 @@ func walk%s(node %s, ctx interface{}, v *Visitor) Result {`, node.Name, node.Typ
 					if isOptional {
 						fmt.Fprintf(w, `
 	if %s {
-		if result := walk%s(node.%s, ctx, v); result == Break {
-			return result
+		if cont := walk%s(node.%s, ctx, v); !cont {
+			return false
 		}
 	}`, fieldTypeInfo.NilCheck("node."+field.Name()), fieldTypeInfo.Name, field.Name())
 					} else {
 						fmt.Fprintf(w, `
-	if result := walk%s(node.%s, ctx, v); result == Break {
-		return result
+	if cont := walk%s(node.%s, ctx, v); !cont {
+		return false
 	}`, fieldTypeInfo.Name, field.Name())
 					}
 
@@ -597,11 +597,11 @@ func walk%s(node %s, ctx interface{}, v *Visitor) Result {`, node.Name, node.Typ
 		// Leave node.
 		if !node.IsAbstract() && !preorder {
 			fmt.Fprintf(w, `
-	return v.Visit%s(node, ctx)
+	return v.Visit%s(node, ctx) != Break
 `, node.Name)
 		} else {
 			fmt.Fprintf(w, `
-	return Continue
+	return true
 `)
 		}
 

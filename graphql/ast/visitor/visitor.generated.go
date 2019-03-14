@@ -1179,587 +1179,587 @@ func NewVariableDefinitionsVisitor(action VariableDefinitionsVisitAction) *Visit
 	}
 }
 
-func walkNode(node ast.Node, ctx interface{}, v *Visitor) Result {
-	var result Result
+func walkNode(node ast.Node, ctx interface{}, v *Visitor) bool {
+	var cont bool
 	switch node := node.(type) {
 	case *ast.Argument:
-		result = walkArgument(node, ctx, v)
+		cont = walkArgument(node, ctx, v)
 	case ast.Arguments:
-		result = walkArguments(node, ctx, v)
+		cont = walkArguments(node, ctx, v)
 	case ast.Definitions:
-		result = walkDefinitions(node, ctx, v)
+		cont = walkDefinitions(node, ctx, v)
 	case *ast.Directive:
-		result = walkDirective(node, ctx, v)
+		cont = walkDirective(node, ctx, v)
 	case ast.Directives:
-		result = walkDirectives(node, ctx, v)
+		cont = walkDirectives(node, ctx, v)
 	case ast.Document:
-		result = walkDocument(node, ctx, v)
+		cont = walkDocument(node, ctx, v)
 	case ast.Name:
-		result = walkName(node, ctx, v)
+		cont = walkName(node, ctx, v)
 	case *ast.ObjectField:
-		result = walkObjectField(node, ctx, v)
+		cont = walkObjectField(node, ctx, v)
 	case ast.SelectionSet:
-		result = walkSelectionSet(node, ctx, v)
+		cont = walkSelectionSet(node, ctx, v)
 	case *ast.VariableDefinition:
-		result = walkVariableDefinition(node, ctx, v)
+		cont = walkVariableDefinition(node, ctx, v)
 	case ast.VariableDefinitions:
-		result = walkVariableDefinitions(node, ctx, v)
+		cont = walkVariableDefinitions(node, ctx, v)
 	case ast.Type:
-		result = walkType(node, ctx, v)
+		cont = walkType(node, ctx, v)
 	case ast.Value:
-		result = walkValue(node, ctx, v)
+		cont = walkValue(node, ctx, v)
 	case ast.Definition:
-		result = walkDefinition(node, ctx, v)
+		cont = walkDefinition(node, ctx, v)
 	case ast.Selection:
-		result = walkSelection(node, ctx, v)
+		cont = walkSelection(node, ctx, v)
 	default:
 		panic(fmt.Sprintf("unexpected node type %T when visiting Node", node))
 	}
-	if result == Break {
-		return result
+	if !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkType(node ast.Type, ctx interface{}, v *Visitor) Result {
-	var result Result
+func walkType(node ast.Type, ctx interface{}, v *Visitor) bool {
+	var cont bool
 	switch node := node.(type) {
 	case ast.ListType:
-		result = walkListType(node, ctx, v)
+		cont = walkListType(node, ctx, v)
 	case ast.NamedType:
-		result = walkNamedType(node, ctx, v)
+		cont = walkNamedType(node, ctx, v)
 	case ast.NonNullType:
-		result = walkNonNullType(node, ctx, v)
+		cont = walkNonNullType(node, ctx, v)
 	default:
 		panic(fmt.Sprintf("unexpected node type %T when visiting Type", node))
 	}
-	if result == Break {
-		return result
+	if !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkValue(node ast.Value, ctx interface{}, v *Visitor) Result {
-	var result Result
+func walkValue(node ast.Value, ctx interface{}, v *Visitor) bool {
+	var cont bool
 	switch node := node.(type) {
 	case ast.BooleanValue:
-		result = walkBooleanValue(node, ctx, v)
+		cont = walkBooleanValue(node, ctx, v)
 	case ast.EnumValue:
-		result = walkEnumValue(node, ctx, v)
+		cont = walkEnumValue(node, ctx, v)
 	case ast.FloatValue:
-		result = walkFloatValue(node, ctx, v)
+		cont = walkFloatValue(node, ctx, v)
 	case ast.IntValue:
-		result = walkIntValue(node, ctx, v)
+		cont = walkIntValue(node, ctx, v)
 	case ast.ListValue:
-		result = walkListValue(node, ctx, v)
+		cont = walkListValue(node, ctx, v)
 	case ast.NullValue:
-		result = walkNullValue(node, ctx, v)
+		cont = walkNullValue(node, ctx, v)
 	case ast.ObjectValue:
-		result = walkObjectValue(node, ctx, v)
+		cont = walkObjectValue(node, ctx, v)
 	case ast.StringValue:
-		result = walkStringValue(node, ctx, v)
+		cont = walkStringValue(node, ctx, v)
 	case ast.Variable:
-		result = walkVariable(node, ctx, v)
+		cont = walkVariable(node, ctx, v)
 	default:
 		panic(fmt.Sprintf("unexpected node type %T when visiting Value", node))
 	}
-	if result == Break {
-		return result
+	if !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkDefinition(node ast.Definition, ctx interface{}, v *Visitor) Result {
-	var result Result
+func walkDefinition(node ast.Definition, ctx interface{}, v *Visitor) bool {
+	var cont bool
 	switch node := node.(type) {
 	case *ast.FragmentDefinition:
-		result = walkFragmentDefinition(node, ctx, v)
+		cont = walkFragmentDefinition(node, ctx, v)
 	case *ast.OperationDefinition:
-		result = walkOperationDefinition(node, ctx, v)
+		cont = walkOperationDefinition(node, ctx, v)
 	case ast.Selection:
-		result = walkSelection(node, ctx, v)
+		cont = walkSelection(node, ctx, v)
 	default:
 		panic(fmt.Sprintf("unexpected node type %T when visiting Definition", node))
 	}
-	if result == Break {
-		return result
+	if !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkSelection(node ast.Selection, ctx interface{}, v *Visitor) Result {
-	var result Result
+func walkSelection(node ast.Selection, ctx interface{}, v *Visitor) bool {
+	var cont bool
 	switch node := node.(type) {
 	case *ast.Field:
-		result = walkField(node, ctx, v)
+		cont = walkField(node, ctx, v)
 	case *ast.FragmentSpread:
-		result = walkFragmentSpread(node, ctx, v)
+		cont = walkFragmentSpread(node, ctx, v)
 	case *ast.InlineFragment:
-		result = walkInlineFragment(node, ctx, v)
+		cont = walkInlineFragment(node, ctx, v)
 	default:
 		panic(fmt.Sprintf("unexpected node type %T when visiting Selection", node))
 	}
-	if result == Break {
-		return result
+	if !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkArgument(node *ast.Argument, ctx interface{}, v *Visitor) Result {
+func walkArgument(node *ast.Argument, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitArgument(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit Name.
-	if result := walkName(node.Name, ctx, v); result == Break {
-		return result
+	if cont := walkName(node.Name, ctx, v); !cont {
+		return false
 	}
 	// Visit Value.
-	if result := walkValue(node.Value, ctx, v); result == Break {
-		return result
+	if cont := walkValue(node.Value, ctx, v); !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkArguments(node ast.Arguments, ctx interface{}, v *Visitor) Result {
+func walkArguments(node ast.Arguments, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitArguments(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	for _, childNode := range node {
-		if result := walkArgument(childNode, ctx, v); result == Break {
-			return result
+		if cont := walkArgument(childNode, ctx, v); !cont {
+			return false
 		}
 	}
 
-	return Continue
+	return true
 }
 
-func walkBooleanValue(node ast.BooleanValue, ctx interface{}, v *Visitor) Result {
+func walkBooleanValue(node ast.BooleanValue, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitBooleanValue(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
-	return Continue
+	return true
 }
 
-func walkDefinitions(node ast.Definitions, ctx interface{}, v *Visitor) Result {
+func walkDefinitions(node ast.Definitions, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitDefinitions(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	for _, childNode := range node {
-		if result := walkDefinition(childNode, ctx, v); result == Break {
-			return result
+		if cont := walkDefinition(childNode, ctx, v); !cont {
+			return false
 		}
 	}
 
-	return Continue
+	return true
 }
 
-func walkDirective(node *ast.Directive, ctx interface{}, v *Visitor) Result {
+func walkDirective(node *ast.Directive, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitDirective(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit Name.
-	if result := walkName(node.Name, ctx, v); result == Break {
-		return result
+	if cont := walkName(node.Name, ctx, v); !cont {
+		return false
 	}
 	// Visit Arguments.
 	if len(node.Arguments) != 0 {
-		if result := walkArguments(node.Arguments, ctx, v); result == Break {
-			return result
+		if cont := walkArguments(node.Arguments, ctx, v); !cont {
+			return false
 		}
 	}
 
-	return Continue
+	return true
 }
 
-func walkDirectives(node ast.Directives, ctx interface{}, v *Visitor) Result {
+func walkDirectives(node ast.Directives, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitDirectives(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	for _, childNode := range node {
-		if result := walkDirective(childNode, ctx, v); result == Break {
-			return result
+		if cont := walkDirective(childNode, ctx, v); !cont {
+			return false
 		}
 	}
 
-	return Continue
+	return true
 }
 
-func walkDocument(node ast.Document, ctx interface{}, v *Visitor) Result {
+func walkDocument(node ast.Document, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitDocument(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit Definitions.
-	if result := walkDefinitions(node.Definitions, ctx, v); result == Break {
-		return result
+	if cont := walkDefinitions(node.Definitions, ctx, v); !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkEnumValue(node ast.EnumValue, ctx interface{}, v *Visitor) Result {
+func walkEnumValue(node ast.EnumValue, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitEnumValue(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
-	return Continue
+	return true
 }
 
-func walkField(node *ast.Field, ctx interface{}, v *Visitor) Result {
+func walkField(node *ast.Field, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitField(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit Alias.
 	if !node.Alias.IsNil() {
-		if result := walkName(node.Alias, ctx, v); result == Break {
-			return result
+		if cont := walkName(node.Alias, ctx, v); !cont {
+			return false
 		}
 	}
 	// Visit Name.
-	if result := walkName(node.Name, ctx, v); result == Break {
-		return result
+	if cont := walkName(node.Name, ctx, v); !cont {
+		return false
 	}
 	// Visit Arguments.
 	if len(node.Arguments) != 0 {
-		if result := walkArguments(node.Arguments, ctx, v); result == Break {
-			return result
+		if cont := walkArguments(node.Arguments, ctx, v); !cont {
+			return false
 		}
 	}
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := walkDirectives(node.Directives, ctx, v); result == Break {
-			return result
+		if cont := walkDirectives(node.Directives, ctx, v); !cont {
+			return false
 		}
 	}
 	// Visit SelectionSet.
 	if len(node.SelectionSet) != 0 {
-		if result := walkSelectionSet(node.SelectionSet, ctx, v); result == Break {
-			return result
+		if cont := walkSelectionSet(node.SelectionSet, ctx, v); !cont {
+			return false
 		}
 	}
 
-	return Continue
+	return true
 }
 
-func walkFloatValue(node ast.FloatValue, ctx interface{}, v *Visitor) Result {
+func walkFloatValue(node ast.FloatValue, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitFloatValue(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
-	return Continue
+	return true
 }
 
-func walkFragmentDefinition(node *ast.FragmentDefinition, ctx interface{}, v *Visitor) Result {
+func walkFragmentDefinition(node *ast.FragmentDefinition, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitFragmentDefinition(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit Name.
-	if result := walkName(node.Name, ctx, v); result == Break {
-		return result
+	if cont := walkName(node.Name, ctx, v); !cont {
+		return false
 	}
 	// Visit VariableDefinitions.
 	if len(node.VariableDefinitions) != 0 {
-		if result := walkVariableDefinitions(node.VariableDefinitions, ctx, v); result == Break {
-			return result
+		if cont := walkVariableDefinitions(node.VariableDefinitions, ctx, v); !cont {
+			return false
 		}
 	}
 	// Visit TypeCondition.
-	if result := walkNamedType(node.TypeCondition, ctx, v); result == Break {
-		return result
+	if cont := walkNamedType(node.TypeCondition, ctx, v); !cont {
+		return false
 	}
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := walkDirectives(node.Directives, ctx, v); result == Break {
-			return result
+		if cont := walkDirectives(node.Directives, ctx, v); !cont {
+			return false
 		}
 	}
 	// Visit SelectionSet.
-	if result := walkSelectionSet(node.SelectionSet, ctx, v); result == Break {
-		return result
+	if cont := walkSelectionSet(node.SelectionSet, ctx, v); !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkFragmentSpread(node *ast.FragmentSpread, ctx interface{}, v *Visitor) Result {
+func walkFragmentSpread(node *ast.FragmentSpread, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitFragmentSpread(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit Name.
-	if result := walkName(node.Name, ctx, v); result == Break {
-		return result
+	if cont := walkName(node.Name, ctx, v); !cont {
+		return false
 	}
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := walkDirectives(node.Directives, ctx, v); result == Break {
-			return result
+		if cont := walkDirectives(node.Directives, ctx, v); !cont {
+			return false
 		}
 	}
 
-	return Continue
+	return true
 }
 
-func walkInlineFragment(node *ast.InlineFragment, ctx interface{}, v *Visitor) Result {
+func walkInlineFragment(node *ast.InlineFragment, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitInlineFragment(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit TypeCondition.
 	if !node.TypeCondition.Name.IsNil() {
-		if result := walkNamedType(node.TypeCondition, ctx, v); result == Break {
-			return result
+		if cont := walkNamedType(node.TypeCondition, ctx, v); !cont {
+			return false
 		}
 	}
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := walkDirectives(node.Directives, ctx, v); result == Break {
-			return result
+		if cont := walkDirectives(node.Directives, ctx, v); !cont {
+			return false
 		}
 	}
 	// Visit SelectionSet.
-	if result := walkSelectionSet(node.SelectionSet, ctx, v); result == Break {
-		return result
+	if cont := walkSelectionSet(node.SelectionSet, ctx, v); !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkIntValue(node ast.IntValue, ctx interface{}, v *Visitor) Result {
+func walkIntValue(node ast.IntValue, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitIntValue(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
-	return Continue
+	return true
 }
 
-func walkListType(node ast.ListType, ctx interface{}, v *Visitor) Result {
+func walkListType(node ast.ListType, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitListType(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit ItemType.
-	if result := walkType(node.ItemType, ctx, v); result == Break {
-		return result
+	if cont := walkType(node.ItemType, ctx, v); !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkListValue(node ast.ListValue, ctx interface{}, v *Visitor) Result {
+func walkListValue(node ast.ListValue, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitListValue(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	for _, value := range node.Values() {
-		if result := walkValue(value, ctx, v); result == Break {
-			return result
+		if cont := walkValue(value, ctx, v); !cont {
+			return false
 		}
 	}
 
-	return Continue
+	return true
 }
 
-func walkName(node ast.Name, ctx interface{}, v *Visitor) Result {
+func walkName(node ast.Name, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitName(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
-	return Continue
+	return true
 }
 
-func walkNamedType(node ast.NamedType, ctx interface{}, v *Visitor) Result {
+func walkNamedType(node ast.NamedType, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitNamedType(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit Name.
-	if result := walkName(node.Name, ctx, v); result == Break {
-		return result
+	if cont := walkName(node.Name, ctx, v); !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkNonNullType(node ast.NonNullType, ctx interface{}, v *Visitor) Result {
+func walkNonNullType(node ast.NonNullType, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitNonNullType(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
-	var result Result
+	var cont bool
 	switch t := node.Type.(type) {
 	case ast.NamedType:
-		result = walkNamedType(t, ctx, v)
+		cont = walkNamedType(t, ctx, v)
 	case ast.ListType:
-		result = walkListType(t, ctx, v)
+		cont = walkListType(t, ctx, v)
 	default:
 		panic(fmt.Sprintf("unhandled nullable type \"%T\"", node.Type))
 	}
-	if result == Break {
-		return result
+	if !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkNullValue(node ast.NullValue, ctx interface{}, v *Visitor) Result {
+func walkNullValue(node ast.NullValue, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitNullValue(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
-	return Continue
+	return true
 }
 
-func walkObjectField(node *ast.ObjectField, ctx interface{}, v *Visitor) Result {
+func walkObjectField(node *ast.ObjectField, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitObjectField(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit Name.
-	if result := walkName(node.Name, ctx, v); result == Break {
-		return result
+	if cont := walkName(node.Name, ctx, v); !cont {
+		return false
 	}
 	// Visit Value.
-	if result := walkValue(node.Value, ctx, v); result == Break {
-		return result
+	if cont := walkValue(node.Value, ctx, v); !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkObjectValue(node ast.ObjectValue, ctx interface{}, v *Visitor) Result {
+func walkObjectValue(node ast.ObjectValue, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitObjectValue(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	for _, field := range node.Fields() {
-		if result := walkObjectField(field, ctx, v); result == Break {
-			return result
+		if cont := walkObjectField(field, ctx, v); !cont {
+			return false
 		}
 	}
 
-	return Continue
+	return true
 }
 
-func walkOperationDefinition(node *ast.OperationDefinition, ctx interface{}, v *Visitor) Result {
+func walkOperationDefinition(node *ast.OperationDefinition, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitOperationDefinition(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit Name.
 	if !node.Name.IsNil() {
-		if result := walkName(node.Name, ctx, v); result == Break {
-			return result
+		if cont := walkName(node.Name, ctx, v); !cont {
+			return false
 		}
 	}
 	// Visit VariableDefinitions.
 	if len(node.VariableDefinitions) != 0 {
-		if result := walkVariableDefinitions(node.VariableDefinitions, ctx, v); result == Break {
-			return result
+		if cont := walkVariableDefinitions(node.VariableDefinitions, ctx, v); !cont {
+			return false
 		}
 	}
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := walkDirectives(node.Directives, ctx, v); result == Break {
-			return result
+		if cont := walkDirectives(node.Directives, ctx, v); !cont {
+			return false
 		}
 	}
 	// Visit SelectionSet.
-	if result := walkSelectionSet(node.SelectionSet, ctx, v); result == Break {
-		return result
+	if cont := walkSelectionSet(node.SelectionSet, ctx, v); !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkSelectionSet(node ast.SelectionSet, ctx interface{}, v *Visitor) Result {
+func walkSelectionSet(node ast.SelectionSet, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitSelectionSet(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	for _, childNode := range node {
-		if result := walkSelection(childNode, ctx, v); result == Break {
-			return result
+		if cont := walkSelection(childNode, ctx, v); !cont {
+			return false
 		}
 	}
 
-	return Continue
+	return true
 }
 
-func walkStringValue(node ast.StringValue, ctx interface{}, v *Visitor) Result {
+func walkStringValue(node ast.StringValue, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitStringValue(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
-	return Continue
+	return true
 }
 
-func walkVariable(node ast.Variable, ctx interface{}, v *Visitor) Result {
+func walkVariable(node ast.Variable, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitVariable(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit Name.
-	if result := walkName(node.Name, ctx, v); result == Break {
-		return result
+	if cont := walkName(node.Name, ctx, v); !cont {
+		return false
 	}
 
-	return Continue
+	return true
 }
 
-func walkVariableDefinition(node *ast.VariableDefinition, ctx interface{}, v *Visitor) Result {
+func walkVariableDefinition(node *ast.VariableDefinition, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitVariableDefinition(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	// Visit Variable.
-	if result := walkVariable(node.Variable, ctx, v); result == Break {
-		return result
+	if cont := walkVariable(node.Variable, ctx, v); !cont {
+		return false
 	}
 	// Visit Type.
-	if result := walkType(node.Type, ctx, v); result == Break {
-		return result
+	if cont := walkType(node.Type, ctx, v); !cont {
+		return false
 	}
 	// Visit DefaultValue.
 	if node.DefaultValue != nil {
-		if result := walkValue(node.DefaultValue, ctx, v); result == Break {
-			return result
+		if cont := walkValue(node.DefaultValue, ctx, v); !cont {
+			return false
 		}
 	}
 	// Visit Directives.
 	if len(node.Directives) != 0 {
-		if result := walkDirectives(node.Directives, ctx, v); result == Break {
-			return result
+		if cont := walkDirectives(node.Directives, ctx, v); !cont {
+			return false
 		}
 	}
 
-	return Continue
+	return true
 }
 
-func walkVariableDefinitions(node ast.VariableDefinitions, ctx interface{}, v *Visitor) Result {
+func walkVariableDefinitions(node ast.VariableDefinitions, ctx interface{}, v *Visitor) bool {
 	if result := v.VisitVariableDefinitions(node, ctx); result != Continue {
-		return result
+		return result != Break
 	}
 
 	for _, childNode := range node {
-		if result := walkVariableDefinition(childNode, ctx, v); result == Break {
-			return result
+		if cont := walkVariableDefinition(childNode, ctx, v); !cont {
+			return false
 		}
 	}
 
-	return Continue
+	return true
 }
