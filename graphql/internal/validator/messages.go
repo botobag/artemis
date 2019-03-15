@@ -20,8 +20,14 @@ import (
 	"fmt"
 )
 
-// DuplicateOperationNameMessage returns message describing error occurred in checking "Operation
-// Name Uniqueness" (rules.UniqueOperationNames).
+// DuplicateOperationNameMessage returns message describing error occurred in rule "Operation Name
+// Uniqueness" (rules.UniqueOperationNames).
 func DuplicateOperationNameMessage(operationName string) string {
 	return fmt.Sprintf(`There can be only one operation named "%s".`, operationName)
+}
+
+// AnonOperationNotAloneMessage returns message describing error occurred in rule "Lone Anonymous
+// Operation" (rules.LoneAnonymousOperation).
+func AnonOperationNotAloneMessage() string {
+	return "This anonymous operation must be the only defined operation."
 }

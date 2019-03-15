@@ -27,5 +27,6 @@ func init() {
 	// encountering multiple validation errors.
 	validator.InitStandardRules(
 		UniqueOperationNames{},
+		LoneAnonymousOperation{},
 	)
 }
