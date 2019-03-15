@@ -740,6 +740,11 @@ func (value StringValue) TokenRange() token.Range {
 	}
 }
 
+// IsBlockString returns true if the value is provided in a block string (""").
+func (value StringValue) IsBlockString() bool {
+	return value.Token.Kind == token.KindBlockString
+}
+
 // Interface implements Value.
 func (value StringValue) Interface() interface{} {
 	return value.Value()
