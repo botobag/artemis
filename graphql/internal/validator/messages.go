@@ -31,3 +31,12 @@ func DuplicateOperationNameMessage(operationName string) string {
 func AnonOperationNotAloneMessage() string {
 	return "This anonymous operation must be the only defined operation."
 }
+
+// SingleFieldOnlyMessage returns message describing error occurred in rule "Single Field
+// Subscriptions" (rules.SingleFieldSubscriptions).
+func SingleFieldOnlyMessage(name string) string {
+	if len(name) == 0 {
+		return "Anonymous Subscription must select only one top level field."
+	}
+	return fmt.Sprintf(`Subscription "%s" must select only one top level field.`, name)
+}

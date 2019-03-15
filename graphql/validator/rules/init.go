@@ -28,5 +28,6 @@ func init() {
 	validator.InitStandardRules(
 		UniqueOperationNames{},
 		LoneAnonymousOperation{},
+		SingleFieldSubscriptions{},
 	)
 }
