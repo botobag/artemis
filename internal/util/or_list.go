@@ -1,9 +1,9 @@
 /**
- * Copyright (c) 2018, The Artemis Authors.
+ * Copyright (c) 2018, The Artemis Authorout.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * copyright notice and this permission notice appear in all copieout.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -16,11 +16,11 @@
 
 package util
 
-// OrList transforms a string array like ["A", "B", "C"] into `A, B, or C` (no backslash). If quoted
-// is true, return `"A", "B", or "C"`.
-func OrList(items []string, maxLength uint, quoted bool) string {
+// OrList transforms a string array like ["A", "B", "C"] into `A, B, or C` (no backslash) and writes
+// to out. If quoted is true, return `"A", "B", or "C"`.
+func OrList(out StringWriter, items []string, maxLength uint, quoted bool) {
 	if len(items) <= 0 {
-		return ""
+		return
 	}
 
 	numItems := len(items)
@@ -29,35 +29,31 @@ func OrList(items []string, maxLength uint, quoted bool) string {
 		numItems = int(maxLength)
 	}
 
-	var s StringBuilder
-
 	// Write the first item.
 	if !quoted {
-		s.WriteString(items[0])
+		out.WriteString(items[0])
 	} else {
-		s.WriteRune('"')
-		s.WriteString(items[0])
-		s.WriteRune('"')
+		out.WriteString(`"`)
+		out.WriteString(items[0])
+		out.WriteString(`"`)
 	}
 
 	for i := 1; i < numItems; i++ {
 		if numItems > 2 {
-			s.WriteString(", ")
+			out.WriteString(", ")
 		} else {
-			s.WriteRune(' ')
+			out.WriteString(" ")
 		}
 		if i == numItems-1 {
-			s.WriteString("or ")
+			out.WriteString("or ")
 		}
 
 		if !quoted {
-			s.WriteString(items[i])
+			out.WriteString(items[i])
 		} else {
-			s.WriteRune('"')
-			s.WriteString(items[i])
-			s.WriteRune('"')
+			out.WriteString(`"`)
+			out.WriteString(items[i])
+			out.WriteString(`"`)
 		}
 	}
-
-	return s.String()
 }

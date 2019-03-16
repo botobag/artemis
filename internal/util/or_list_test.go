@@ -23,29 +23,35 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func orListString(items []string, maxLength uint, quoted bool) string {
+	var s util.StringBuilder
+	util.OrList(&s, items, maxLength, quoted)
+	return s.String()
+}
+
 var _ = Describe("OrList", func() {
 	It("accepts an empty list", func() {
-		Expect(util.OrList(nil, 5, false)).Should(BeEmpty())
-		Expect(util.OrList([]string{}, 5, false)).Should(BeEmpty())
+		Expect(orListString(nil, 5, false)).Should(BeEmpty())
+		Expect(orListString([]string{}, 5, false)).Should(BeEmpty())
 	})
 
 	It("returns single item", func() {
-		Expect(util.OrList([]string{"A"}, 5, false)).Should(Equal("A"))
-		Expect(util.OrList([]string{"A"}, 5, true)).Should(Equal(`"A"`))
+		Expect(orListString([]string{"A"}, 5, false)).Should(Equal("A"))
+		Expect(orListString([]string{"A"}, 5, true)).Should(Equal(`"A"`))
 	})
 
 	It("returns two item list", func() {
-		Expect(util.OrList([]string{"A", "B"}, 5, false)).Should(Equal("A or B"))
-		Expect(util.OrList([]string{"A", "B"}, 5, true)).Should(Equal(`"A" or "B"`))
+		Expect(orListString([]string{"A", "B"}, 5, false)).Should(Equal("A or B"))
+		Expect(orListString([]string{"A", "B"}, 5, true)).Should(Equal(`"A" or "B"`))
 	})
 
 	It("returns comma separated many item list", func() {
-		Expect(util.OrList([]string{"A", "B", "C"}, 5, false)).Should(Equal("A, B, or C"))
-		Expect(util.OrList([]string{"A", "B", "C"}, 5, true)).Should(Equal(`"A", "B", or "C"`))
+		Expect(orListString([]string{"A", "B", "C"}, 5, false)).Should(Equal("A, B, or C"))
+		Expect(orListString([]string{"A", "B", "C"}, 5, true)).Should(Equal(`"A", "B", or "C"`))
 	})
 
 	It("limits to five items", func() {
-		Expect(util.OrList([]string{"A", "B", "C", "D", "E", "F"}, 5, false)).Should(Equal("A, B, C, D, or E"))
-		Expect(util.OrList([]string{"A", "B", "C", "D", "E", "F"}, 5, true)).Should(Equal(`"A", "B", "C", "D", or "E"`))
+		Expect(orListString([]string{"A", "B", "C", "D", "E", "F"}, 5, false)).Should(Equal("A, B, C, D, or E"))
+		Expect(orListString([]string{"A", "B", "C", "D", "E", "F"}, 5, true)).Should(Equal(`"A", "B", "C", "D", or "E"`))
 	})
 })

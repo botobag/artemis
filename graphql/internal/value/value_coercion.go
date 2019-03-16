@@ -127,8 +127,11 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 
 			var didYouMean string
 			if len(suggestions) > 0 {
-				didYouMean = fmt.Sprintf("did you mean %s?",
-					util.OrList(suggestions, 5 /* maxLength */, false /* quoted */))
+				var didYouMeanBuilder util.StringBuilder
+				didYouMeanBuilder.WriteString("did you mean ")
+				util.OrList(&didYouMeanBuilder, suggestions, 5 /* maxLength */, false /* quoted */)
+				didYouMeanBuilder.WriteString("?")
+				didYouMean = didYouMeanBuilder.String()
 			}
 			return nil, graphql.ErrorsOf(
 				newCoercionError(
@@ -246,7 +249,11 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 				suggestions := util.SuggestionList(name, fieldNames)
 				var didYouMean string
 				if len(suggestions) > 0 {
-					didYouMean = fmt.Sprintf("did you mean %s?", util.OrList(suggestions, 5 /* maxLength*/, false /*quoted*/))
+					var didYouMeanBuilder util.StringBuilder
+					didYouMeanBuilder.WriteString("did you mean ")
+					util.OrList(&didYouMeanBuilder, suggestions, 5 /* maxLength */, false /* quoted */)
+					didYouMeanBuilder.WriteString("?")
+					didYouMean = didYouMeanBuilder.String()
 				}
 
 				errs.Append(
