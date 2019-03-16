@@ -17,16 +17,17 @@
 package util
 
 // OrList transforms a string array like ["A", "B", "C"] into `A, B, or C` (no backslash) and writes
-// to out. If quoted is true, return `"A", "B", or "C"`.
-func OrList(out StringWriter, items []string, maxLength uint, quoted bool) {
+// to out. If quoted is true, return `"A", "B", or "C"`. If a positive integer is provided in limit,
+// only transforms up to number of n items.
+func OrList(out StringWriter, items []string, limit int, quoted bool) {
 	if len(items) <= 0 {
 		return
 	}
 
 	numItems := len(items)
-	if numItems > int(maxLength) {
-		items = items[:maxLength]
-		numItems = int(maxLength)
+	if limit > 0 && numItems > limit {
+		items = items[:limit]
+		numItems = limit
 	}
 
 	// Write the first item.

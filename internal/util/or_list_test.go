@@ -23,9 +23,9 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func orListString(items []string, maxLength uint, quoted bool) string {
+func orListString(items []string, limit int, quoted bool) string {
 	var s util.StringBuilder
-	util.OrList(&s, items, maxLength, quoted)
+	util.OrList(&s, items, limit, quoted)
 	return s.String()
 }
 
