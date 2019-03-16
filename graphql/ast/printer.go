@@ -24,12 +24,6 @@ import (
 	"github.com/botobag/artemis/jsonwriter"
 )
 
-// StringWriter is the interface that wraps the WriteString method. Latest Go has io.StringWriter
-// but it is only available in Go 1.12 and later.
-type StringWriter interface {
-	WriteString(s string) (n int, err error)
-}
-
 // Print uses a set of formatting rules (compatible with graphql-js) to convert an AST into a
 // string.
 func Print(node Node) string {
@@ -39,14 +33,14 @@ func Print(node Node) string {
 }
 
 // FPrint "pretty-prints" an AST node to out.
-func FPrint(out StringWriter, node Node) {
+func FPrint(out util.StringWriter, node Node) {
 	(&printer{
 		StringWriter: out,
 	}).printNode(node)
 }
 
 type printer struct {
-	StringWriter
+	util.StringWriter
 	indentLevel int
 }
 
