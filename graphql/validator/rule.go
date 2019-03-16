@@ -47,6 +47,14 @@ type OperationRule interface {
 	CheckOperation(ctx *ValidationContext, operation *ast.OperationDefinition) NextCheckAction
 }
 
+// SelectionSetRule validates a SelectionSet.
+type SelectionSetRule interface {
+	CheckSelectionSet(
+		ctx *ValidationContext,
+		ttype graphql.Type,
+		selectionSet ast.SelectionSet) NextCheckAction
+}
+
 // FieldRule validates a Field.
 type FieldRule interface {
 	CheckField(

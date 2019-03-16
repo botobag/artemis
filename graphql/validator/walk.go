@@ -25,9 +25,10 @@ import (
 
 // rules contains a collection of actions to be performed on nodes for validation.
 type rules struct {
-	numRules       int
-	operationRules operationRules
-	fieldRules     fieldRules
+	numRules          int
+	operationRules    operationRules
+	selectionSetRules selectionSetRules
+	fieldRules        fieldRules
 }
 
 func buildRules(rs ...interface{}) *rules {
@@ -40,6 +41,13 @@ func buildRules(rs ...interface{}) *rules {
 			operationRules := &rules.operationRules
 			operationRules.indices = append(operationRules.indices, i)
 			operationRules.rules = append(operationRules.rules, r)
+			isRule = true
+		}
+
+		if r, ok := rule.(SelectionSetRule); ok {
+			selectionSetRules := &rules.selectionSetRules
+			selectionSetRules.indices = append(selectionSetRules.indices, i)
+			selectionSetRules.rules = append(selectionSetRules.rules, r)
 			isRule = true
 		}
 
@@ -87,6 +95,23 @@ func (r *operationRules) Run(ctx *ValidationContext, operation *ast.OperationDef
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
 			setSkipping(ctx, index, operation, rule.CheckOperation(ctx, operation))
+		}
+	}
+}
+
+type selectionSetRules struct {
+	indices []int
+	rules   []SelectionSetRule
+}
+
+func (r *selectionSetRules) Run(ctx *ValidationContext, ttype graphql.Type, selectionSet ast.SelectionSet) {
+	indices := r.indices
+	for i, rule := range r.rules {
+		index := indices[i]
+		// See whether we can run the rule.
+		if !shouldSkipRule(ctx, index) {
+			// Run the rule and set skipping state.
+			setSkipping(ctx, index, selectionSet, rule.CheckSelectionSet(ctx, ttype, selectionSet))
 		}
 	}
 }
@@ -164,6 +189,10 @@ func walkFragmentDefinition(ctx *ValidationContext, fragment *ast.FragmentDefini
 
 func walkSelectionSet(ctx *ValidationContext, ttype graphql.Type, selectionSet ast.SelectionSet) {
 	ttype = graphql.NamedTypeOf(ttype)
+
+	// Run selection set rules.
+	ctx.rules.selectionSetRules.Run(ctx, ttype, selectionSet)
+
 	for _, selection := range selectionSet {
 		walkSelection(ctx, ttype, selection)
 	}

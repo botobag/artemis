@@ -30,5 +30,6 @@ func init() {
 		LoneAnonymousOperation{},
 		SingleFieldSubscriptions{},
 		FieldsOnCorrectType{},
+		OverlappingFieldsCanBeMerged{},
 	)
 }

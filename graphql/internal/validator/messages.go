@@ -70,3 +70,46 @@ func UndefinedFieldMessage(
 
 	return message.String()
 }
+
+// FieldConflictReason contains diagnostic message telling why two fields are conflict.
+type FieldConflictReason struct {
+	ResponseKey string
+
+	// Reason could only be:
+	//
+	//  - A string, or
+	//  - A nested list of conflicts (i.e., []*FieldConflictReason).
+	MessageOrSubFieldReasons interface{}
+}
+
+// FieldsConflictMessage returns message describing error occurred in rule "Field Selection Merging"
+// (rules.OverlappingFieldsCanBeMerged)
+func FieldsConflictMessage(reason *FieldConflictReason) string {
+	var message util.StringBuilder
+
+	message.WriteString(`Fields "`)
+	message.WriteString(reason.ResponseKey)
+	message.WriteString(`" conflict because `)
+	subReasonMessage(&message, reason.MessageOrSubFieldReasons)
+	message.WriteString(`. Use different aliases on the fields to fetch both if this was intentional.`)
+
+	return message.String()
+}
+
+func subReasonMessage(builder *util.StringBuilder, subReasons interface{}) {
+	switch reason := subReasons.(type) {
+	case string:
+		builder.WriteString(reason)
+
+	case []*FieldConflictReason:
+		for i, r := range reason {
+			if i != 0 {
+				builder.WriteString(" and ")
+			}
+			builder.WriteString(`subfields "`)
+			builder.WriteString(r.ResponseKey)
+			builder.WriteString(`" conflict because `)
+			subReasonMessage(builder, r.MessageOrSubFieldReasons)
+		}
+	}
+}

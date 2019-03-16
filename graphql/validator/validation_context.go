@@ -19,6 +19,7 @@ package validator
 import (
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
+	internal "github.com/botobag/artemis/graphql/internal/validator"
 	astutil "github.com/botobag/artemis/graphql/util/ast"
 )
 
@@ -27,6 +28,9 @@ type ValidationContext struct {
 	schema   graphql.Schema
 	document ast.Document
 	rules    *rules
+
+	// Mapping FragmentDefinition's from their names; This is lazily computed on first query.
+	fragments map[string]*ast.FragmentDefinition
 
 	// Error list
 	errs graphql.Errors
@@ -55,6 +59,18 @@ type ValidationContext struct {
 
 	// UniqueOperationNames
 	KnownOperationNames map[string]ast.Name
+
+	// OverlappingFieldsCanBeMerged
+
+	// A memoization for when two fragments are compared "between" each other for conflicts. Two
+	// fragments may be compared many times, so memoizing this can dramatically improve the
+	// performance of this validator.
+	FragmentPairSet internal.ConflictFragmentPairSet
+
+	// A cache for the "field map" and list of fragment names found in any given selection set.
+	// Selection sets may be asked for this information multiple times, so this improves the
+	// performance of this validator.
+	FieldsAndFragmentNamesCache internal.FieldsAndFragmentNamesCache
 }
 
 // newValidationContext initializes a validation context for validating given document.
@@ -67,6 +83,9 @@ func newValidationContext(schema graphql.Schema, document ast.Document, rules *r
 		skippingRules: make([]interface{}, rules.numRules),
 
 		KnownOperationNames: map[string]ast.Name{},
+
+		FragmentPairSet:             internal.NewConflictFragmentPairSet(),
+		FieldsAndFragmentNamesCache: internal.NewFieldsAndFragmentNamesCache(),
 	}
 }
 
@@ -85,6 +104,22 @@ func (ctx *ValidationContext) TypeResolver() astutil.TypeResolver {
 	return astutil.TypeResolver{
 		Schema: ctx.schema,
 	}
+}
+
+// Fragment looks up the FragmentDefinition with given name in current document.
+func (ctx *ValidationContext) Fragment(name string) *ast.FragmentDefinition {
+	fragmentMap := ctx.fragments
+	if fragmentMap == nil {
+		// Build map.
+		fragmentMap = map[string]*ast.FragmentDefinition{}
+
+		for _, definition := range ctx.document.Definitions {
+			if definition, ok := definition.(*ast.FragmentDefinition); ok {
+				fragmentMap[definition.Name.Value()] = definition
+			}
+		}
+	}
+	return fragmentMap[name]
 }
 
 // CurrentOperation returns the operation in the document being validated.
