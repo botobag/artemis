@@ -18,6 +18,8 @@ package validator
 
 import (
 	"fmt"
+
+	"github.com/botobag/artemis/internal/util"
 )
 
 // DuplicateOperationNameMessage returns message describing error occurred in rule "Operation Name
@@ -39,4 +41,32 @@ func SingleFieldOnlyMessage(name string) string {
 		return "Anonymous Subscription must select only one top level field."
 	}
 	return fmt.Sprintf(`Subscription "%s" must select only one top level field.`, name)
+}
+
+// UndefinedFieldMessage returns message describing error occurred in rule "Field Selections on
+// Objects, Interfaces, and Unions Types" (rules.FieldsOnCorrectType).
+func UndefinedFieldMessage(
+	fieldName string,
+	parentTypeName string,
+	suggestedTypeNames []string,
+	suggestedFieldNames []string) string {
+
+	var message util.StringBuilder
+	message.WriteString(`Cannot query field "`)
+	message.WriteString(fieldName)
+	message.WriteString(`" on type "`)
+	message.WriteString(parentTypeName)
+	message.WriteString(`".`)
+
+	if len(suggestedTypeNames) > 0 {
+		message.WriteString(` Did you mean to use an inline fragment on `)
+		util.OrList(&message, suggestedTypeNames, 5, true /*quoted*/)
+		message.WriteString(`?`)
+	} else if len(suggestedFieldNames) > 0 {
+		message.WriteString(` Did you mean `)
+		util.OrList(&message, suggestedFieldNames, 5, true /*quoted*/)
+		message.WriteString(`?`)
+	}
+
+	return message.String()
 }

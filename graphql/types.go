@@ -319,6 +319,11 @@ func NewPossibleTypeSet() PossibleTypeSet {
 	}
 }
 
+// Empty returns true if there's no any possible types in the set.
+func (set PossibleTypeSet) Empty() bool {
+	return len(set.types) == 0
+}
+
 // Add adds a type to the set.
 func (set PossibleTypeSet) Add(o Object) {
 	set.types[o] = true

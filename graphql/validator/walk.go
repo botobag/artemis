@@ -19,6 +19,7 @@ package validator
 import (
 	"fmt"
 
+	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 )
 
@@ -26,6 +27,7 @@ import (
 type rules struct {
 	numRules       int
 	operationRules operationRules
+	fieldRules     fieldRules
 }
 
 func buildRules(rs ...interface{}) *rules {
@@ -41,16 +43,18 @@ func buildRules(rs ...interface{}) *rules {
 			isRule = true
 		}
 
+		if r, ok := rule.(FieldRule); ok {
+			fieldRules := &rules.fieldRules
+			fieldRules.indices = append(fieldRules.indices, i)
+			fieldRules.rules = append(fieldRules.rules, r)
+			isRule = true
+		}
+
 		if !isRule {
 			panic(fmt.Sprintf(`"%T" is not a validation rule`, rule))
 		}
 	}
 	return rules
-}
-
-type operationRules struct {
-	indices []int
-	rules   []OperationRule
 }
 
 func shouldSkipRule(ctx *ValidationContext, ruleIndex int) bool {
@@ -70,6 +74,11 @@ func setSkipping(ctx *ValidationContext, ruleIndex int, node ast.Node, nextCheck
 	}
 }
 
+type operationRules struct {
+	indices []int
+	rules   []OperationRule
+}
+
 func (r *operationRules) Run(ctx *ValidationContext, operation *ast.OperationDefinition) {
 	indices := r.indices
 	for i, rule := range r.rules {
@@ -78,6 +87,23 @@ func (r *operationRules) Run(ctx *ValidationContext, operation *ast.OperationDef
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
 			setSkipping(ctx, index, operation, rule.CheckOperation(ctx, operation))
+		}
+	}
+}
+
+type fieldRules struct {
+	indices []int
+	rules   []FieldRule
+}
+
+func (r *fieldRules) Run(ctx *ValidationContext, parentType graphql.Type, fieldDef graphql.Field, field *ast.Field) {
+	indices := r.indices
+	for i, rule := range r.rules {
+		index := indices[i]
+		// See whether we can run the rule.
+		if !shouldSkipRule(ctx, index) {
+			// Run the rule and set skipping state.
+			setSkipping(ctx, index, field, rule.CheckField(ctx, parentType, fieldDef, field))
 		}
 	}
 }
@@ -110,6 +136,20 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 	// Run operation rules.
 	ctx.rules.operationRules.Run(ctx, operation)
 
+	// Determine the Object type of the operation.
+	var object graphql.Object
+	switch operation.OperationType() {
+	case ast.OperationTypeQuery:
+		object = ctx.Schema().Query()
+	case ast.OperationTypeMutation:
+		object = ctx.Schema().Mutation()
+	case ast.OperationTypeSubscription:
+		object = ctx.Schema().Subscription()
+	}
+
+	// Walk selection set.
+	walkSelectionSet(ctx, object, operation.SelectionSet)
+
 	// Call leave before return.
 	leaveNode(ctx, operation)
 
@@ -117,5 +157,51 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 }
 
 func walkFragmentDefinition(ctx *ValidationContext, fragment *ast.FragmentDefinition) {
-	// TODO
+	typeCondition := ctx.TypeResolver().ResolveType(fragment.TypeCondition)
+
+	walkSelectionSet(ctx, typeCondition, fragment.SelectionSet)
+}
+
+func walkSelectionSet(ctx *ValidationContext, ttype graphql.Type, selectionSet ast.SelectionSet) {
+	ttype = graphql.NamedTypeOf(ttype)
+	for _, selection := range selectionSet {
+		walkSelection(ctx, ttype, selection)
+	}
+}
+
+func walkSelection(ctx *ValidationContext, parentType graphql.Type, selection ast.Selection) {
+	switch selection := selection.(type) {
+	case *ast.Field:
+		walkField(ctx, parentType, selection)
+
+	case *ast.InlineFragment:
+		walkInlineFragment(ctx, parentType, selection)
+
+	case *ast.FragmentSpread:
+		// TODO
+	}
+}
+
+func walkField(ctx *ValidationContext, parentType graphql.Type, field *ast.Field) {
+	// Resolve field type.
+	fieldDef := ctx.TypeResolver().ResolveField(parentType, field)
+
+	// Run field rules.
+	ctx.rules.fieldRules.Run(ctx, parentType, fieldDef, field)
+
+	// Visit selection set of field.
+	var fieldType graphql.Type
+	if fieldDef != nil {
+		fieldType = fieldDef.Type()
+	}
+	walkSelectionSet(ctx, fieldType, field.SelectionSet)
+}
+
+func walkInlineFragment(ctx *ValidationContext, parentType graphql.Type, fragment *ast.InlineFragment) {
+	if fragment.HasTypeCondition() {
+		parentType = ctx.TypeResolver().ResolveType(fragment.TypeCondition)
+	}
+
+	// Visit selection set.
+	walkSelectionSet(ctx, parentType, fragment.SelectionSet)
 }

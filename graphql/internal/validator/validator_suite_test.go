@@ -14,21 +14,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package rules
+package validator_test
 
 import (
-	"github.com/botobag/artemis/graphql/validator"
+	"testing"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-func init() {
-	// Initialize the set of standard rules in validator package.
-	//
-	// The order of the rules in this list has been adjusted to lead to the most clear output when
-	// encountering multiple validation errors.
-	validator.InitStandardRules(
-		UniqueOperationNames{},
-		LoneAnonymousOperation{},
-		SingleFieldSubscriptions{},
-		FieldsOnCorrectType{},
-	)
+func TestGraphQLValidatorInternal(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "GraphQL Validator Internal Suite")
 }

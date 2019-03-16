@@ -19,6 +19,7 @@ package validator
 import (
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
+	astutil "github.com/botobag/artemis/graphql/util/ast"
 )
 
 // A ValidationContext stores various states for running walk function and validation rules.
@@ -77,6 +78,13 @@ func (ctx *ValidationContext) Schema() graphql.Schema {
 // Document returns the document being validated.
 func (ctx *ValidationContext) Document() ast.Document {
 	return ctx.document
+}
+
+// TypeResolver creates ast.TypeResolver to resolve type for AST nodes during validation.
+func (ctx *ValidationContext) TypeResolver() astutil.TypeResolver {
+	return astutil.TypeResolver{
+		Schema: ctx.schema,
+	}
 }
 
 // CurrentOperation returns the operation in the document being validated.

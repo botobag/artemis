@@ -17,6 +17,7 @@
 package validator
 
 import (
+	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 )
 
@@ -44,4 +45,13 @@ const (
 // OperationRule validates an OperationDefinition.
 type OperationRule interface {
 	CheckOperation(ctx *ValidationContext, operation *ast.OperationDefinition) NextCheckAction
+}
+
+// FieldRule validates a Field.
+type FieldRule interface {
+	CheckField(
+		ctx *ValidationContext,
+		parentType graphql.Type,
+		fieldDef graphql.Field,
+		field *ast.Field) NextCheckAction
 }
