@@ -14,12 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package executor
+package graphql
 
 import (
 	"context"
-
-	"github.com/botobag/artemis/graphql"
 )
 
 // This files contains definitions of meta-fields for accessing introspection system as per [0] and
@@ -29,18 +27,38 @@ import (
 // [0]: https://facebook.github.io/graphql/June2018/#sec-Type-Name-Introspection
 // [1]: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
 
-var (
-	schemaMetaFieldName = "__schema"
-	schemaMetaFieldType = graphql.MustNewNonNullOfType(graphql.IntrospectionTypes.Schema())
-	typeMetaFieldName   = "__type"
-	typeMetaFieldArgs   = []graphql.Argument{
-		// FIXME: Should not use graphql.MockArgument.
-		graphql.MockArgument("name", "", graphql.MustNewNonNullOfType(graphql.String()), nil),
-	}
-	typeMetaFieldType     = graphql.IntrospectionTypes.Type()
-	typenameMetaFieldName = "__typename"
-	typenameMetaFieldType = graphql.MustNewNonNullOfType(graphql.String())
+// List of meta-field names
+const (
+	SchemaMetaFieldName   = "__schema"
+	TypeMetaFieldName     = "__type"
+	TypenameMetaFieldName = "__typename"
 )
+
+var (
+	// Type of __schema meta-field
+	schemaMetaFieldType Type
+
+	// Type of __type meta-field
+	typeMetaFieldType Type
+	// Arguments taken by __type
+	typeMetaFieldArgs []Argument
+
+	// Type of __typename meta-field
+	typenameMetaFieldType Type
+)
+
+func init() {
+	schemaMetaFieldType = MustNewNonNullOfType(IntrospectionTypes.Schema())
+	typeMetaFieldArgs = []Argument{
+		// FIXME: Access private data structure.
+		{
+			name:  "name",
+			ttype: MustNewNonNullOfType(String()),
+		},
+	}
+	typeMetaFieldType = IntrospectionTypes.Type()
+	typenameMetaFieldType = MustNewNonNullOfType(String())
+}
 
 //===----------------------------------------------------------------------------------------====//
 // __schema
@@ -54,39 +72,39 @@ var (
 // [0]: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
 type schemaMetaField struct{}
 
-// Name implements graphql.Field.
+// Name implements Field.
 func (schemaMetaField) Name() string {
-	return schemaMetaFieldName
+	return SchemaMetaFieldName
 }
 
-// Description implements graphql.Field.
+// Description implements Field.
 func (schemaMetaField) Description() string {
 	return "Access the current type schema of this server."
 }
 
-// Type implements graphql.Field.
-func (schemaMetaField) Type() graphql.Type {
+// Type implements Field.
+func (schemaMetaField) Type() Type {
 	return schemaMetaFieldType
 }
 
-// Args implements graphql.Field.
-func (schemaMetaField) Args() []graphql.Argument {
+// Args implements Field.
+func (schemaMetaField) Args() []Argument {
 	return nil
 }
 
 type schemaMetaFieldResolver struct{}
 
-func (schemaMetaFieldResolver) Resolve(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+func (schemaMetaFieldResolver) Resolve(ctx context.Context, source interface{}, info ResolveInfo) (interface{}, error) {
 	return info.Schema(), nil
 }
 
-// Resolver implements graphql.Field.
-func (schemaMetaField) Resolver() graphql.FieldResolver {
+// Resolver implements Field.
+func (schemaMetaField) Resolver() FieldResolver {
 	return schemaMetaFieldResolver{}
 }
 
 // Deprecation is non-nil when the field is tagged as deprecated.
-func (schemaMetaField) Deprecation() *graphql.Deprecation {
+func (schemaMetaField) Deprecation() *Deprecation {
 	return nil
 }
 
@@ -102,39 +120,39 @@ func (schemaMetaField) Deprecation() *graphql.Deprecation {
 // [0]: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
 type typeMetaField struct{}
 
-// Name implements graphql.Field.
+// Name implements Field.
 func (typeMetaField) Name() string {
-	return typeMetaFieldName
+	return TypeMetaFieldName
 }
 
-// Description implements graphql.Field.
+// Description implements Field.
 func (typeMetaField) Description() string {
 	return "Request the type information of a single type."
 }
 
-// Type implements graphql.Field.
-func (typeMetaField) Type() graphql.Type {
+// Type implements Field.
+func (typeMetaField) Type() Type {
 	return typeMetaFieldType
 }
 
-// Args implements graphql.Field.
-func (typeMetaField) Args() []graphql.Argument {
+// Args implements Field.
+func (typeMetaField) Args() []Argument {
 	return typeMetaFieldArgs
 }
 
 type typeMetaFieldResolver struct{}
 
-func (typeMetaFieldResolver) Resolve(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+func (typeMetaFieldResolver) Resolve(ctx context.Context, source interface{}, info ResolveInfo) (interface{}, error) {
 	return info.Schema().TypeMap().Lookup(info.Args().Get("name").(string)), nil
 }
 
-// Resolver implements graphql.Field.
-func (typeMetaField) Resolver() graphql.FieldResolver {
+// Resolver implements Field.
+func (typeMetaField) Resolver() FieldResolver {
 	return typeMetaFieldResolver{}
 }
 
 // Deprecation is non-nil when the field is tagged as deprecated.
-func (typeMetaField) Deprecation() *graphql.Deprecation {
+func (typeMetaField) Deprecation() *Deprecation {
 	return nil
 }
 
@@ -148,38 +166,53 @@ func (typeMetaField) Deprecation() *graphql.Deprecation {
 // [0]: https://facebook.github.io/graphql/June2018/#sec-Type-Name-Introspection
 type typenameMetaField struct{}
 
-// Name implements graphql.Field.
+// Name implements Field.
 func (typenameMetaField) Name() string {
-	return typenameMetaFieldName
+	return TypenameMetaFieldName
 }
 
-// Description implements graphql.Field.
+// Description implements Field.
 func (typenameMetaField) Description() string {
 	return "The name of the current Object type at runtime."
 }
 
-// Type implements graphql.Field.
-func (typenameMetaField) Type() graphql.Type {
+// Type implements Field.
+func (typenameMetaField) Type() Type {
 	return typenameMetaFieldType
 }
 
-// Args implements graphql.Field.
-func (typenameMetaField) Args() []graphql.Argument {
+// Args implements Field.
+func (typenameMetaField) Args() []Argument {
 	return nil
 }
 
 type typenameMetaFieldResolver struct{}
 
-func (typenameMetaFieldResolver) Resolve(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+func (typenameMetaFieldResolver) Resolve(ctx context.Context, source interface{}, info ResolveInfo) (interface{}, error) {
 	return info.Object().Name(), nil
 }
 
-// Resolver implements graphql.Field.
-func (typenameMetaField) Resolver() graphql.FieldResolver {
+// Resolver implements Field.
+func (typenameMetaField) Resolver() FieldResolver {
 	return typenameMetaFieldResolver{}
 }
 
 // Deprecation is non-nil when the field is tagged as deprecated.
-func (typenameMetaField) Deprecation() *graphql.Deprecation {
+func (typenameMetaField) Deprecation() *Deprecation {
 	return nil
+}
+
+// SchemaMetaFieldDef returns the field that is used to introspect schema.
+func SchemaMetaFieldDef() Field {
+	return schemaMetaField{}
+}
+
+// TypeMetaFieldDef returns the field that is used to introspect type definition.
+func TypeMetaFieldDef() Field {
+	return typeMetaField{}
+}
+
+// TypenameMetaFieldDef returns the field that is used to introspect type name.
+func TypenameMetaFieldDef() Field {
+	return typenameMetaField{}
 }

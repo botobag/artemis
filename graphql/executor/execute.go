@@ -289,14 +289,14 @@ func findFieldDef(
 	fieldName string) graphql.Field {
 	if schema.Query() == parentType {
 		// Deal with special introspection fields.
-		if fieldName == schemaMetaFieldName {
-			return schemaMetaField{}
-		} else if fieldName == typeMetaFieldName {
-			return typeMetaField{}
+		if fieldName == graphql.SchemaMetaFieldName {
+			return graphql.SchemaMetaFieldDef()
+		} else if fieldName == graphql.TypeMetaFieldName {
+			return graphql.TypeMetaFieldDef()
 		}
 	}
-	if fieldName == typenameMetaFieldName {
-		return typenameMetaField{}
+	if fieldName == graphql.TypenameMetaFieldName {
+		return graphql.TypenameMetaFieldDef()
 	}
 	return parentType.Fields()[fieldName]
 }
