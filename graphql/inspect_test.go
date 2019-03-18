@@ -126,6 +126,21 @@ var _ = Describe("Inspect", func() {
 			A: true,
 			B: nil,
 		})).Should(Equal(`{ A: true, B: null }`))
+
+		// Unexported field won't be shown (and cannot be shown).
+		Expect(graphql.Inspect(struct {
+			A bool
+			b interface{}
+			C string
+		}{
+			A: true,
+			C: "c",
+		})).Should(Equal(`{ A: true, C: "c" }`))
+
+		Expect(graphql.Inspect(struct {
+			a bool
+			b interface{}
+		}{})).Should(Equal(`{}`))
 	})
 
 	It("map", func() {

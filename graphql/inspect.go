@@ -105,25 +105,40 @@ func InspectTo(out io.Writer, v interface{}) error {
 		if numFields == 0 {
 			out.Write([]byte{'{', '}'})
 		} else {
-			out.Write([]byte{'{', ' '})
+			out.Write([]byte{'{'})
 
+			// Set to true if any field was printed.
+			printed := false
 			for i := 0; i < numFields; i++ {
+				fieldValue := value.Field(i)
+				if !fieldValue.CanInterface() {
+					// Skip unexported fields.
+					continue
+				}
+
+				if printed {
+					out.Write([]byte{',', ' '})
+				} else {
+					// Add a space after "{".
+					out.Write([]byte{' '})
+					printed = true
+				}
+
 				field := typ.Field(i)
 				// Write field name.
 				out.Write([]byte(field.Name))
 				out.Write([]byte{':', ' '})
 
 				// Write value.
-				if err := InspectTo(out, value.Field(i).Interface()); err != nil {
+				if err := InspectTo(out, fieldValue.Interface()); err != nil {
 					return err
-				}
-
-				if i != numFields-1 {
-					out.Write([]byte{',', ' '})
 				}
 			}
 
-			out.Write([]byte{' ', '}'})
+			if printed {
+				out.Write([]byte{' '})
+			}
+			out.Write([]byte{'}'})
 		}
 
 	case reflect.Ptr:
