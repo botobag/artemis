@@ -31,10 +31,12 @@ type ValueWithCustomInspect interface {
 	Inspect(out io.Writer) error
 }
 
-// InspectToBuf prints Go values v to the given buf in the same format as graphql-js's inspect
-// function.  The implementation matches
+// InspectTo prints Go values v to the given buf in the same format as graphql-js's inspect
+// function. The implementation matches
 // https://github.com/graphql/graphql-js/blob/4cdc8e2/src/jsutils/inspect.js.
-func InspectToBuf(v interface{}, out io.Writer) error {
+//
+// Note that errors returned from out.Write are ignored.
+func InspectTo(out io.Writer, v interface{}) error {
 	if v, ok := v.(ValueWithCustomInspect); ok {
 		return v.Inspect(out)
 	}
@@ -51,126 +53,89 @@ func InspectToBuf(v interface{}, out io.Writer) error {
 
 	case reflect.Func:
 		f := runtime.FuncForPC(value.Pointer())
-		if _, err := out.Write([]byte{'[', 'f', 'u', 'n', 'c', 't', 'i', 'o', 'n', ' '}); err != nil {
-			return err
-		}
-		if _, err := out.Write([]byte(f.Name())); err != nil {
-			return err
-		}
-		if _, err := out.Write([]byte{']'}); err != nil {
-			return err
-		}
+		out.Write([]byte{'[', 'f', 'u', 'n', 'c', 't', 'i', 'o', 'n', ' '})
+		out.Write([]byte(f.Name()))
+		out.Write([]byte{']'})
 
 	case reflect.Array, reflect.Slice:
-		if _, err := out.Write([]byte{'['}); err != nil {
-			return err
-		}
+		out.Write([]byte{'['})
 		size := value.Len()
 		if size > 0 {
-			if err := InspectToBuf(value.Index(0).Interface(), out); err != nil {
+			if err := InspectTo(out, value.Index(0).Interface()); err != nil {
 				return err
 			}
 			for i := 1; i < size; i++ {
-				if _, err := out.Write([]byte{',', ' '}); err != nil {
-					return err
-				}
-				if err := InspectToBuf(value.Index(i).Interface(), out); err != nil {
+				out.Write([]byte{',', ' '})
+				if err := InspectTo(out, value.Index(i).Interface()); err != nil {
 					return err
 				}
 			}
 		}
-		if _, err := out.Write([]byte{']'}); err != nil {
-			return err
-		}
+		out.Write([]byte{']'})
 
 	case reflect.Map:
 		size := value.Len()
 		if size == 0 {
-			if _, err := out.Write([]byte{'{', '}'}); err != nil {
-				return err
-			}
+			out.Write([]byte{'{', '}'})
 		} else {
-			if _, err := out.Write([]byte{'{', ' '}); err != nil {
-				return err
-			}
+			out.Write([]byte{'{', ' '})
 
 			keys := value.MapKeys()
 			for i, key := range keys {
 				// Write key.
-				if err := InspectToBuf(key.Interface(), out); err != nil {
+				if err := InspectTo(out, key.Interface()); err != nil {
 					return err
 				}
-				if _, err := out.Write([]byte{':', ' '}); err != nil {
-					return err
-				}
+				out.Write([]byte{':', ' '})
 				// Write value.
-				if err := InspectToBuf(value.MapIndex(key).Interface(), out); err != nil {
+				if err := InspectTo(out, value.MapIndex(key).Interface()); err != nil {
 					return err
 				}
 				if i != len(keys)-1 {
-					if _, err := out.Write([]byte{',', ' '}); err != nil {
-						return err
-					}
+					out.Write([]byte{',', ' '})
 				}
 			}
 
-			if _, err := out.Write([]byte{' ', '}'}); err != nil {
-				return err
-			}
+			out.Write([]byte{' ', '}'})
 		}
 
 	case reflect.Struct:
 		typ := value.Type()
 		numFields := typ.NumField()
 		if numFields == 0 {
-			if _, err := out.Write([]byte{'{', '}'}); err != nil {
-				return err
-			}
+			out.Write([]byte{'{', '}'})
 		} else {
-			if _, err := out.Write([]byte{'{', ' '}); err != nil {
-				return err
-			}
+			out.Write([]byte{'{', ' '})
 
 			for i := 0; i < numFields; i++ {
 				field := typ.Field(i)
 				// Write field name.
-				if _, err := out.Write([]byte(field.Name)); err != nil {
-					return err
-				}
-
-				if _, err := out.Write([]byte{':', ' '}); err != nil {
-					return err
-				}
+				out.Write([]byte(field.Name))
+				out.Write([]byte{':', ' '})
 
 				// Write value.
-				if err := InspectToBuf(value.Field(i).Interface(), out); err != nil {
+				if err := InspectTo(out, value.Field(i).Interface()); err != nil {
 					return err
 				}
 
 				if i != numFields-1 {
-					if _, err := out.Write([]byte{',', ' '}); err != nil {
-						return err
-					}
+					out.Write([]byte{',', ' '})
 				}
 			}
 
-			if _, err := out.Write([]byte{' ', '}'}); err != nil {
-				return err
-			}
+			out.Write([]byte{' ', '}'})
 		}
 
 	case reflect.Ptr:
 		elem := value.Elem()
 		if !elem.IsValid() {
-			_, err := out.Write([]byte{'n', 'u', 'l', 'l'})
-			return err
+			out.Write([]byte{'n', 'u', 'l', 'l'})
+			return nil
 		}
-		return InspectToBuf(elem.Interface(), out)
+		return InspectTo(out, elem.Interface())
 
 	case reflect.Invalid:
-		if _, err := out.Write([]byte{'n', 'u', 'l', 'l'}); err != nil {
-			return err
-		}
+		out.Write([]byte{'n', 'u', 'l', 'l'})
 
 	default:
 		if _, err := fmt.Fprint(out, v); err != nil {
@@ -184,7 +149,7 @@ func InspectToBuf(v interface{}, out io.Writer) error {
 // Inspect calls InspectOrErr but panics on error.
 func Inspect(v interface{}) string {
 	var buf util.StringBuilder
-	if err := InspectToBuf(v, &buf); err != nil {
+	if err := InspectTo(&buf, v); err != nil {
 		panic(fmt.Sprintf("inspect %+v with error: %s", v, err))
 	}
 	return buf.String()
