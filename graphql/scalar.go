@@ -172,11 +172,6 @@ func MustNewScalar(typeDef ScalarTypeDefinition) Scalar {
 	return s
 }
 
-// String implements fmt.Stringer.
-func (s *scalar) String() string {
-	return s.Name()
-}
-
 // Name implements TypeWithName.
 func (s *scalar) Name() string {
 	return s.data.Name

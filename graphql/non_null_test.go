@@ -33,12 +33,6 @@ var _ = Describe("NonNull", func() {
 		Expect(err).Should(MatchError("Expected a nullable type for NonNull but got an Int!."))
 	})
 
-	It("stringifies to GraphQL notation", func() {
-		nonNullType, err := graphql.NewNonNullOfType(graphql.Int())
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(graphql.Inspect(nonNullType)).Should(Equal("Int!"))
-	})
-
 	It("rejects creating type without specifying element type", func() {
 		_, err := graphql.NewNonNullOfType(nil)
 		Expect(err).Should(MatchError("Must provide an non-nil element type for NonNull."))

@@ -93,12 +93,4 @@ var _ = Describe("Directive", func() {
 			graphql.MustNewDirective(&graphql.DirectiveConfig{})
 		}).Should(Panic())
 	})
-
-	It("stringifies to GraphQL notation", func() {
-		directiveType, err := graphql.NewDirective(&graphql.DirectiveConfig{
-			Name: "directive",
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(graphql.Inspect(directiveType)).Should(Equal("@directive"))
-	})
 })

@@ -17,8 +17,6 @@
 package graphql_test
 
 import (
-	"fmt"
-
 	"github.com/botobag/artemis/graphql"
 
 	. "github.com/onsi/ginkgo"
@@ -26,21 +24,6 @@ import (
 )
 
 var _ = Describe("Interface", func() {
-	var InterfaceType graphql.Interface
-
-	BeforeEach(func() {
-		var err error
-		InterfaceType, err = graphql.NewInterface(&graphql.InterfaceConfig{
-			Name: "Interface",
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-	})
-
-	It("stringifies to type name", func() {
-		Expect(fmt.Sprintf("%s", InterfaceType)).Should(Equal("Interface"))
-		Expect(fmt.Sprintf("%v", InterfaceType)).Should(Equal("Interface"))
-	})
-
 	It("rejects creating type without name", func() {
 		_, err := graphql.NewInterface(&graphql.InterfaceConfig{
 			Name: "",

@@ -139,11 +139,6 @@ func MustNewObject(typeDef ObjectTypeDefinition) Object {
 	return o
 }
 
-// String implements fmt.Stringer.
-func (o *object) String() string {
-	return o.Name()
-}
-
 // Name implements TypeWithName.
 func (o *object) Name() string {
 	return o.data.Name

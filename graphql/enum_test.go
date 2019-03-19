@@ -18,7 +18,6 @@ package graphql_test
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/internal/testutil"
@@ -720,15 +719,6 @@ var _ = Describe("Enum", func() {
 				}))
 			})
 		})
-	})
-
-	It("stringifies to type name", func() {
-		enumType, err := graphql.NewEnum(&graphql.EnumConfig{
-			Name: "Enum",
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(fmt.Sprintf("%s", enumType)).Should(Equal("Enum"))
-		Expect(fmt.Sprintf("%v", enumType)).Should(Equal("Enum"))
 	})
 
 	It("rejects creating type without name", func() {

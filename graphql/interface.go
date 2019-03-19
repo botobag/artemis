@@ -137,11 +137,6 @@ func MustNewInterface(typeDef InterfaceTypeDefinition) Interface {
 	return iface
 }
 
-// String implements fmt.Stringer.
-func (iface *iface) String() string {
-	return iface.Name()
-}
-
 // TypeResolver implements AbstractType.
 func (iface *iface) TypeResolver() TypeResolver {
 	return iface.typeResolver

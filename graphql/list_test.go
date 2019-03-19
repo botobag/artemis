@@ -24,29 +24,6 @@ import (
 )
 
 var _ = Describe("List", func() {
-
-	It("stringifies to GraphQL notation", func() {
-		listType, err := graphql.NewListOfType(graphql.Int())
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(graphql.Inspect(listType)).Should(Equal("[Int]"))
-
-		nonNullListType, err := graphql.NewNonNullOfType(listType)
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(graphql.Inspect(nonNullListType)).Should(Equal("[Int]!"))
-
-		nonNullType, err := graphql.NewNonNullOfType(graphql.Int())
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(graphql.Inspect(nonNullType)).Should(Equal("Int!"))
-
-		listNonNullType, err := graphql.NewListOfType(nonNullType)
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(graphql.Inspect(listNonNullType)).Should(Equal("[Int!]"))
-
-		listListType, err := graphql.NewListOfType(listType)
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(graphql.Inspect(listListType)).Should(Equal("[[Int]]"))
-	})
-
 	It("defines list with TypeDefinition", func() {
 		// Create [Int].
 		listType, err := graphql.NewListOf(graphql.T(graphql.Int()))

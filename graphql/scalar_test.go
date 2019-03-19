@@ -17,8 +17,6 @@
 package graphql_test
 
 import (
-	"fmt"
-
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 
@@ -89,18 +87,6 @@ var _ = Describe("Scalar", func() {
 			_, err = schemaWithFieldType(scalar)
 			Expect(err).ShouldNot(HaveOccurred())
 		})
-	})
-
-	It("stringifies to type name", func() {
-		scalarType, err := graphql.NewScalar(&graphql.ScalarConfig{
-			Name: "Scalar",
-			ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
-				return nil, nil
-			}),
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(fmt.Sprintf("%s", scalarType)).Should(Equal("Scalar"))
-		Expect(fmt.Sprintf("%v", scalarType)).Should(Equal("Scalar"))
 	})
 
 	It("rejects creating type without name", func() {

@@ -293,4 +293,68 @@ var _ = Describe("Inspect", func() {
 		}
 		Expect(graphql.Inspect([][]*Foo{{&Foo{}}})).Should(Equal("[[[Foo]]]"))
 	})
+
+	It("stringifies Type object", func() {
+		// Scalar
+		scalarType := graphql.MustNewScalar(&graphql.ScalarConfig{
+			Name: "Scalar",
+			ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
+				return nil, nil
+			}),
+		})
+		Expect(graphql.Inspect(scalarType)).Should(Equal("Scalar"))
+
+		// Object
+		objectType := graphql.MustNewObject(&graphql.ObjectConfig{
+			Name: "Object",
+		})
+		Expect(graphql.Inspect(objectType)).Should(Equal("Object"))
+
+		// Interface
+		interfaceType := graphql.MustNewInterface(&graphql.InterfaceConfig{
+			Name: "Interface",
+		})
+		Expect(graphql.Inspect(interfaceType)).Should(Equal("Interface"))
+
+		// Union
+		unionType := graphql.MustNewUnion(&graphql.UnionConfig{
+			Name: "Union",
+		})
+		Expect(graphql.Inspect(unionType)).Should(Equal("Union"))
+
+		// Enum
+		enumType := graphql.MustNewEnum(&graphql.EnumConfig{
+			Name: "Enum",
+		})
+		Expect(graphql.Inspect(enumType)).Should(Equal("Enum"))
+
+		// InputObject
+		inputObjectType := graphql.MustNewInputObject(&graphql.InputObjectConfig{
+			Name: "InputObject",
+		})
+		Expect(graphql.Inspect(inputObjectType)).Should(Equal("InputObject"))
+
+		// List & NonNull
+		listType := graphql.MustNewListOfType(graphql.Int())
+		Expect(graphql.Inspect(listType)).Should(Equal("[Int]"))
+
+		nonNullListType := graphql.MustNewNonNullOfType(listType)
+		Expect(graphql.Inspect(nonNullListType)).Should(Equal("[Int]!"))
+
+		nonNullType := graphql.MustNewNonNullOfType(graphql.Int())
+		Expect(graphql.Inspect(nonNullType)).Should(Equal("Int!"))
+
+		listNonNullType := graphql.MustNewListOfType(nonNullType)
+		Expect(graphql.Inspect(listNonNullType)).Should(Equal("[Int!]"))
+
+		listListType := graphql.MustNewListOfType(listType)
+		Expect(graphql.Inspect(listListType)).Should(Equal("[[Int]]"))
+	})
+
+	It("stringifies Directive", func() {
+		directiveType := graphql.MustNewDirective(&graphql.DirectiveConfig{
+			Name: "directive",
+		})
+		Expect(graphql.Inspect(directiveType)).Should(Equal("@directive"))
+	})
 })

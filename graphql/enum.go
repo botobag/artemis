@@ -359,11 +359,6 @@ func MustNewEnum(typeDef EnumTypeDefinition) Enum {
 	return e
 }
 
-// String implemennts fmt.Stringer.
-func (e *enum) String() string {
-	return e.Name()
-}
-
 // Name implemennts TypeWithName.
 func (e *enum) Name() string {
 	return e.data.Name

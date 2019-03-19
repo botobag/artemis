@@ -212,11 +212,6 @@ func MustNewInputObject(typeDef InputObjectTypeDefinition) InputObject {
 	return o
 }
 
-// String implemennts fmt.Stringer.
-func (o *inputObject) String() string {
-	return o.Name()
-}
-
 // Name implemennts TypeWithName.
 func (o *inputObject) Name() string {
 	return o.data.Name

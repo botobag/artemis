@@ -880,7 +880,7 @@ func (task *ExecuteNodeTask) completeAbstractValue(
 			graphql.NewError(
 				fmt.Sprintf("Abstract type %s must provide resolver to resolve to an Object type at "+
 					"runtime for field %s.%s with value %s",
-					returnType, parentFieldType(ctx, node).Name(), node.Field.Name(),
+					returnType.Name(), parentFieldType(ctx, node).Name(), node.Field.Name(),
 					graphql.Inspect(value))), result)
 		return false
 	}
@@ -896,7 +896,7 @@ func (task *ExecuteNodeTask) completeAbstractValue(
 			graphql.NewError(
 				fmt.Sprintf("Abstract type %s must resolve to an Object type at runtime for field %s.%s "+
 					"with value %s, received nil.",
-					returnType, parentFieldType(ctx, node).Name(), node.Field.Name(),
+					returnType.Name(), parentFieldType(ctx, node).Name(), node.Field.Name(),
 					graphql.Inspect(value))), result)
 		return false
 	}
@@ -906,7 +906,7 @@ func (task *ExecuteNodeTask) completeAbstractValue(
 		task.handleNodeError(
 			graphql.NewError(
 				fmt.Sprintf(`Runtime Object type "%s" is not a possible type for "%s".`,
-					runtimeType, returnType)), result)
+					runtimeType.Name(), returnType.Name())), result)
 		return false
 	}
 

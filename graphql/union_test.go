@@ -17,8 +17,6 @@
 package graphql_test
 
 import (
-	"fmt"
-
 	"github.com/botobag/artemis/graphql"
 
 	. "github.com/onsi/ginkgo"
@@ -26,15 +24,6 @@ import (
 )
 
 var _ = Describe("Union", func() {
-	It("stringifies to type name", func() {
-		unionType, err := graphql.NewUnion(&graphql.UnionConfig{
-			Name: "Union",
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(fmt.Sprintf("%s", unionType)).Should(Equal("Union"))
-		Expect(fmt.Sprintf("%v", unionType)).Should(Equal("Union"))
-	})
-
 	It("accepts empty set of possible types", func() {
 		emptyPossibleSet := graphql.NewPossibleTypeSet()
 

@@ -139,11 +139,6 @@ func MustNewUnion(typeDef UnionTypeDefinition) Union {
 	return u
 }
 
-// String implements fmt.Stringer.
-func (u *union) String() string {
-	return u.Name()
-}
-
 // TypeResolver implements AbstractType.
 func (u *union) TypeResolver() TypeResolver {
 	return u.typeResolver

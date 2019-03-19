@@ -17,8 +17,6 @@
 package graphql_test
 
 import (
-	"fmt"
-
 	"github.com/botobag/artemis/graphql"
 
 	. "github.com/onsi/ginkgo"
@@ -136,15 +134,6 @@ var _ = Describe("Object", func() {
 				},
 			},
 		}))
-	})
-
-	It("stringifies to type name", func() {
-		objectType, err := graphql.NewObject(&graphql.ObjectConfig{
-			Name: "Object",
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(fmt.Sprintf("%s", objectType)).Should(Equal("Object"))
-		Expect(fmt.Sprintf("%v", objectType)).Should(Equal("Object"))
 	})
 
 	It("rejects creating type without name", func() {
