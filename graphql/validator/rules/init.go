@@ -29,6 +29,7 @@ func init() {
 		UniqueOperationNames{},
 		LoneAnonymousOperation{},
 		SingleFieldSubscriptions{},
+		ScalarLeafs{},
 		FieldsOnCorrectType{},
 		OverlappingFieldsCanBeMerged{},
 	)

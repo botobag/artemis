@@ -113,3 +113,17 @@ func subReasonMessage(builder *util.StringBuilder, subReasons interface{}) {
 		}
 	}
 }
+
+// NoSubselectionAllowedMessage returns message describing error occurred in rule "Leaf Field
+// Selections" (rules.ScalarLeafs)
+func NoSubselectionAllowedMessage(fieldName string, typeName string) string {
+	return fmt.Sprintf(`Field "%s" must not have a selection since type "%s" has no subfields.`,
+		fieldName, typeName)
+}
+
+// RequiredSubselectionMessage returns message describing error occurred in rule "Leaf Field
+// Selections" (rules.ScalarLeafs)
+func RequiredSubselectionMessage(fieldName string, typeName string) string {
+	return fmt.Sprintf(`Field "%s" of type "%s" must have a selection of subfields. Did you mean "%s { ... }"?`,
+		fieldName, typeName, fieldName)
+}
