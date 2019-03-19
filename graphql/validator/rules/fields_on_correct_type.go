@@ -74,7 +74,7 @@ func (rule FieldsOnCorrectType) CheckField(
 	ctx.ReportError(
 		messages.UndefinedFieldMessage(
 			fieldName,
-			parentType.String(),
+			graphql.Inspect(parentType),
 			suggestedTypeNames,
 			suggestedFieldNames,
 		),

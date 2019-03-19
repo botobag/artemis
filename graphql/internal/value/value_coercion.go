@@ -79,7 +79,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 		if value == nil {
 			return nil, graphql.ErrorsOf(
 				newCoercionError(
-					fmt.Sprintf(`Expected non-nullable type %v not to be null`, t),
+					fmt.Sprintf(`Expected non-nullable type %s not to be null`, graphql.Inspect(t)),
 					blameNode,
 					path,
 					"",  /* subMessage */
@@ -107,7 +107,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 			}
 			return nil, graphql.ErrorsOf(
 				newCoercionError(
-					fmt.Sprintf(`Expected type %s`, t.String()),
+					fmt.Sprintf(`Expected type %s`, graphql.Inspect(t)),
 					blameNode,
 					path,
 					subMessage,
@@ -135,7 +135,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 			}
 			return nil, graphql.ErrorsOf(
 				newCoercionError(
-					fmt.Sprintf(`Expected type %s`, t.String()),
+					fmt.Sprintf(`Expected type %s`, graphql.Inspect(t)),
 					blameNode,
 					path,
 					didYouMean,
@@ -190,7 +190,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 		if !isObjectValue {
 			return nil, graphql.ErrorsOf(
 				newCoercionError(
-					fmt.Sprintf(`Expected type %s to be an object`, t.String()),
+					fmt.Sprintf(`Expected type %s to be an object`, graphql.Inspect(t)),
 					blameNode,
 					path,
 					"", /* subMessage */
@@ -214,7 +214,8 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 				} else if graphql.IsNonNullType(field.Type()) {
 					errs.Append(
 						newCoercionError(
-							fmt.Sprintf(`Field %s of required type %v was not provided`, path.String(), field.Type()),
+							fmt.Sprintf(`Field %s of required type %s was not provided`,
+								path.String(), graphql.Inspect(field.Type())),
 							blameNode,
 							nil, /* path */
 							"",  /* subMessage */
@@ -258,7 +259,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 
 				errs.Append(
 					newCoercionError(
-						fmt.Sprintf(`Field "%s" is not defined by type %s`, name, t.String()),
+						fmt.Sprintf(`Field "%s" is not defined by type %s`, name, graphql.Inspect(t)),
 						blameNode,
 						path,
 						didYouMean,
@@ -275,7 +276,7 @@ func coerceValueImpl(value interface{}, t graphql.Type, blameNode ast.Node, path
 
 	return nil, graphql.ErrorsOf(
 		newCoercionError(
-			fmt.Sprintf("%v is not a valid input type", t),
+			fmt.Sprintf("%s is not a valid input type", graphql.Inspect(t)),
 			blameNode,
 			path,
 			"",  /* subMessage */

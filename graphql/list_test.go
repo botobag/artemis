@@ -17,8 +17,6 @@
 package graphql_test
 
 import (
-	"fmt"
-
 	"github.com/botobag/artemis/graphql"
 
 	. "github.com/onsi/ginkgo"
@@ -30,28 +28,23 @@ var _ = Describe("List", func() {
 	It("stringifies to GraphQL notation", func() {
 		listType, err := graphql.NewListOfType(graphql.Int())
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(fmt.Sprintf("%s", listType)).Should(Equal("[Int]"))
-		Expect(fmt.Sprintf("%v", listType)).Should(Equal("[Int]"))
+		Expect(graphql.Inspect(listType)).Should(Equal("[Int]"))
 
 		nonNullListType, err := graphql.NewNonNullOfType(listType)
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(fmt.Sprintf("%s", nonNullListType)).Should(Equal("[Int]!"))
-		Expect(fmt.Sprintf("%v", nonNullListType)).Should(Equal("[Int]!"))
+		Expect(graphql.Inspect(nonNullListType)).Should(Equal("[Int]!"))
 
 		nonNullType, err := graphql.NewNonNullOfType(graphql.Int())
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(fmt.Sprintf("%s", nonNullType)).Should(Equal("Int!"))
-		Expect(fmt.Sprintf("%v", nonNullType)).Should(Equal("Int!"))
+		Expect(graphql.Inspect(nonNullType)).Should(Equal("Int!"))
 
 		listNonNullType, err := graphql.NewListOfType(nonNullType)
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(fmt.Sprintf("%s", listNonNullType)).Should(Equal("[Int!]"))
-		Expect(fmt.Sprintf("%v", listNonNullType)).Should(Equal("[Int!]"))
+		Expect(graphql.Inspect(listNonNullType)).Should(Equal("[Int!]"))
 
 		listListType, err := graphql.NewListOfType(listType)
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(fmt.Sprintf("%s", listListType)).Should(Equal("[[Int]]"))
-		Expect(fmt.Sprintf("%v", listListType)).Should(Equal("[[Int]]"))
+		Expect(graphql.Inspect(listListType)).Should(Equal("[[Int]]"))
 	})
 
 	It("defines list with TypeDefinition", func() {

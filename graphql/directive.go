@@ -16,10 +16,6 @@
 
 package graphql
 
-import (
-	"fmt"
-)
-
 // DirectiveLocation specifies a valid location for a directive to be used.
 type DirectiveLocation string
 
@@ -86,8 +82,6 @@ func (config *DirectiveConfig) DeepCopy() *DirectiveConfig {
 //
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.Directives
 type Directive interface {
-	fmt.Stringer
-
 	// Name of the directive
 	Name() string
 
@@ -126,9 +120,8 @@ func NewDirective(config *DirectiveConfig) (Directive, error) {
 	}
 
 	return &directive{
-		config:   *config.DeepCopy(),
-		args:     args,
-		notation: fmt.Sprintf("@%s", config.Name),
+		config: *config.DeepCopy(),
+		args:   args,
 	}, nil
 }
 
@@ -160,9 +153,4 @@ func (d *directive) Locations() []DirectiveLocation {
 // Args implements Directive.
 func (d *directive) Args() []Argument {
 	return d.args
-}
-
-// String implemennts fmt.Stringer.
-func (d *directive) String() string {
-	return d.notation
 }

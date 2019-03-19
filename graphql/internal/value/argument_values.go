@@ -93,16 +93,18 @@ func ArgumentValues(
 			// produce a field error.
 			if isNil {
 				return graphql.NoArgumentValues(), graphql.NewError(
-					fmt.Sprintf(`Argument "%s" of non-null type "%v" must not be null.`, argName, argType),
+					fmt.Sprintf(`Argument "%s" of non-null type "%s" must not be null.`,
+						argName, graphql.Inspect(argType)),
 					graphql.ErrorLocationOfASTNode(argNode))
 			} else if argVariable.Name.Token != nil {
 				return graphql.NoArgumentValues(), graphql.NewError(
-					fmt.Sprintf(`Argument "%s" of required type "%v" was provided the variable "$%s" which was `+
-						`not provided a runtime value.`, argName, argType, argVariable.Name.Value()),
+					fmt.Sprintf(`Argument "%s" of required type "%s" was provided the variable "$%s" which was `+
+						`not provided a runtime value.`, argName, graphql.Inspect(argType), argVariable.Name.Value()),
 					graphql.ErrorLocationOfASTNode(argNode))
 			} else {
 				return graphql.NoArgumentValues(), graphql.NewError(
-					fmt.Sprintf(`Argument "%s" of required type "%v" was provided.`, argName, argType),
+					fmt.Sprintf(`Argument "%s" of required type "%s" was provided.`,
+						argName, graphql.Inspect(argType)),
 					graphql.ErrorLocationOfASTNode(node))
 			}
 		} else if hasValue {

@@ -222,11 +222,6 @@ func (i *intType) Description() string {
 		"values. Int can represent values between -(2^31) and 2^31 - 1."
 }
 
-// String implements fmt.Stringer.
-func (i *intType) String() string {
-	return i.Name()
-}
-
 // CoerceResultValue implmenets LeafType.
 func (i *intType) CoerceResultValue(value interface{}) (interface{}, error) {
 	return i.coercer.CoerceResultValue(value)
@@ -419,11 +414,6 @@ func (f *floatType) Description() string {
 		"values as specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). "
 }
 
-// String implements fmt.Stringer.
-func (f *floatType) String() string {
-	return f.Name()
-}
-
 // CoerceResultValue implmenets LeafType.
 func (f *floatType) CoerceResultValue(value interface{}) (interface{}, error) {
 	return f.coercer.CoerceResultValue(value)
@@ -563,11 +553,6 @@ func (s *stringType) Description() string {
 		"readable text."
 }
 
-// String implements fmt.Stringer.
-func (s *stringType) String() string {
-	return s.Name()
-}
-
 // CoerceResultValue implmenets LeafType.
 func (s *stringType) CoerceResultValue(value interface{}) (interface{}, error) {
 	return s.coercer.CoerceResultValue(value)
@@ -691,11 +676,6 @@ func (b *booleanType) Description() string {
 	return "The `Boolean` scalar type represents `true` or `false`."
 }
 
-// String implements fmt.Stringer.
-func (b *booleanType) String() string {
-	return b.Name()
-}
-
 // CoerceResultValue implmenets LeafType.
 func (b *booleanType) CoerceResultValue(value interface{}) (interface{}, error) {
 	return b.coercer.CoerceResultValue(value)
@@ -802,11 +782,6 @@ func (id *idType) Description() string {
 		"response as a String; however, it is not intended to be human-readable. " +
 		"When expected as an input type, any string (such as `\"4\"`) or integer " +
 		"(such as `4`) input value will be accepted as an ID."
-}
-
-// String implements fmt.Stringer.
-func (id *idType) String() string {
-	return id.Name()
 }
 
 // CoerceResultValue implmenets LeafType.

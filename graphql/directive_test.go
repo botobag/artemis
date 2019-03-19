@@ -17,8 +17,6 @@
 package graphql_test
 
 import (
-	"fmt"
-
 	"github.com/botobag/artemis/graphql"
 
 	. "github.com/onsi/ginkgo"
@@ -101,7 +99,6 @@ var _ = Describe("Directive", func() {
 			Name: "directive",
 		})
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(fmt.Sprintf("%s", directiveType)).Should(Equal("@directive"))
-		Expect(fmt.Sprintf("%v", directiveType)).Should(Equal("@directive"))
+		Expect(graphql.Inspect(directiveType)).Should(Equal("@directive"))
 	})
 })

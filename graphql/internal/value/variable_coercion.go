@@ -40,8 +40,9 @@ func CoerceVariableValues(
 		if !graphql.IsInputType(varType) {
 			// Must use input types for variables. This should be caught during validation, however is
 			// checked again here for safety.
-			errs.Emplace(fmt.Sprintf(`Variable "$%s" expected value of type "%v" which cannot be used `+
-				`as an input type.`, varName, varType), graphql.ErrorLocationOfASTNode(varDefNode))
+			errs.Emplace(fmt.Sprintf(`Variable "$%s" expected value of type "%s" which cannot be used `+
+				`as an input type.`, varName, graphql.Inspect(varType)),
+				graphql.ErrorLocationOfASTNode(varDefNode))
 		} else {
 			value, hasValue := inputValues[varName]
 			if !hasValue && varDefNode.DefaultValue != nil {
@@ -57,9 +58,11 @@ func CoerceVariableValues(
 			} else if (!hasValue || value == nil) && graphql.IsNonNullType(varType) {
 				var message string
 				if hasValue {
-					message = fmt.Sprintf(`Variable "$%s" of non-null type "%v" must not be null.`, varName, varType)
+					message = fmt.Sprintf(`Variable "$%s" of non-null type "%s" must not be null.`,
+						varName, graphql.Inspect(varType))
 				} else {
-					message = fmt.Sprintf(`Variable "$%s" of required type "%v" was not provided.`, varName, varType)
+					message = fmt.Sprintf(`Variable "$%s" of required type "%s" was not provided.`,
+						varName, graphql.Inspect(varType))
 				}
 				errs.Emplace(message, graphql.ErrorLocationOfASTNode(varDefNode))
 			} else { // hasValue && varType is nullable

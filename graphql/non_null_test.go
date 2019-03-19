@@ -17,8 +17,6 @@
 package graphql_test
 
 import (
-	"fmt"
-
 	"github.com/botobag/artemis/graphql"
 
 	. "github.com/onsi/ginkgo"
@@ -38,8 +36,7 @@ var _ = Describe("NonNull", func() {
 	It("stringifies to GraphQL notation", func() {
 		nonNullType, err := graphql.NewNonNullOfType(graphql.Int())
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(fmt.Sprintf("%s", nonNullType)).Should(Equal("Int!"))
-		Expect(fmt.Sprintf("%v", nonNullType)).Should(Equal("Int!"))
+		Expect(graphql.Inspect(nonNullType)).Should(Equal("Int!"))
 	})
 
 	It("rejects creating type without specifying element type", func() {

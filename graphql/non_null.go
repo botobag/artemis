@@ -47,12 +47,11 @@ func (creator *nonNullTypeCreator) Finalize(t Type, typeDefResolver typeDefiniti
 	} else if elementType == nil {
 		return NewError("Must provide an non-nil element type for NonNull.")
 	} else if !IsNullableType(elementType) {
-		return NewError(fmt.Sprintf("Expected a nullable type for NonNull but got an %s.", elementType.String()))
+		return NewError(fmt.Sprintf("Expected a nullable type for NonNull but got an %s.", Inspect(elementType)))
 	}
 
 	nonNull := t.(*nonNull)
 	nonNull.elementType = elementType
-	nonNull.notation = fmt.Sprintf("%s!", elementType.String())
 	return nil
 }
 
@@ -103,8 +102,6 @@ func NonNullOfType(elementType Type) NonNullTypeDefinition {
 type nonNull struct {
 	ThisIsNonNullType
 	elementType Type
-	// notation is cached value for returning from String() and is initialized in constructor.
-	notation string
 }
 
 var _ NonNull = (*nonNull)(nil)
@@ -148,11 +145,6 @@ func MustNewNonNull(typeDef NonNullTypeDefinition) NonNull {
 		panic(err)
 	}
 	return n
-}
-
-// String implemennts fmt.Stringer.
-func (n *nonNull) String() string {
-	return n.notation
 }
 
 // UnwrappedType implements WrappingType.

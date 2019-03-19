@@ -50,6 +50,20 @@ func inspectTo(out io.Writer, v interface{}, seenValues []interface{}) error {
 	if v, ok := v.(ValueWithCustomInspect); ok {
 		return v.Inspect(out)
 	}
+	// Special types that have custom inspection
+	switch v := v.(type) {
+	case Type:
+		inspectTypeTo(out, v)
+		return nil
+
+	case Directive:
+		out.Write([]byte{'@'})
+		out.Write([]byte(v.Name()))
+		return nil
+
+	case ValueWithCustomInspect:
+		return v.Inspect(out)
+	}
 
 	value := reflect.ValueOf(v)
 	switch value.Kind() {
@@ -217,6 +231,36 @@ func inspectTo(out io.Writer, v interface{}, seenValues []interface{}) error {
 	}
 
 	return nil
+}
+
+func inspectTypeTo(out io.Writer, t Type) {
+	var wrapTypes []byte
+
+	for {
+		switch ttype := t.(type) {
+		case TypeWithName:
+			out.Write([]byte(ttype.Name()))
+			// Reverse wrapTypes.
+			n := len(wrapTypes)
+			for i := 0; i < n/2; i++ {
+				wrapTypes[i], wrapTypes[n-i-1] = wrapTypes[n-i-1], wrapTypes[i]
+			}
+			out.Write(wrapTypes)
+			return
+
+		case List:
+			out.Write([]byte{'['})
+			wrapTypes = append(wrapTypes, ']')
+			t = ttype.ElementType()
+
+		case NonNull:
+			wrapTypes = append(wrapTypes, '!')
+			t = ttype.InnerType()
+
+		default:
+			panic(fmt.Sprintf("unknown Type object: %T", t))
+		}
+	}
 }
 
 func inspectToWithCircularCheck(out io.Writer, v interface{}, previouslySeenValues []interface{}) error {

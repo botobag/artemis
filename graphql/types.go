@@ -17,8 +17,6 @@
 package graphql
 
 import (
-	"fmt"
-
 	"github.com/botobag/artemis/graphql/ast"
 )
 
@@ -26,9 +24,6 @@ import (
 //
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Types
 type Type interface {
-	// String representation when printing the type
-	fmt.Stringer
-
 	// graphqlType is a special mark to indicate a Type. It makes sure that only
 	// a set of object can be assigned to Type.
 	graphqlType()

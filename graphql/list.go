@@ -16,10 +16,6 @@
 
 package graphql
 
-import (
-	"fmt"
-)
-
 // listTypeCreator is given to newTypeImpl for creating a List.
 type listTypeCreator struct {
 	typeDef ListTypeDefinition
@@ -50,7 +46,6 @@ func (creator *listTypeCreator) Finalize(t Type, typeDefResolver typeDefinitionR
 
 	list := t.(*list)
 	list.elementType = elementType
-	list.notation = fmt.Sprintf("[%s]", elementType.String())
 	return nil
 }
 
@@ -101,8 +96,6 @@ func ListOfType(elementType Type) ListTypeDefinition {
 type list struct {
 	ThisIsListType
 	elementType Type
-	// notation is cached value for returning from String() and is initialized in constructor.
-	notation string
 }
 
 var _ List = (*list)(nil)
@@ -141,24 +134,19 @@ func NewList(typeDef ListTypeDefinition) (List, error) {
 // MustNewList is a convenience function equivalent to NewList but panics on failure instead of
 // returning an error.
 func MustNewList(typeDef ListTypeDefinition) List {
-	n, err := NewList(typeDef)
+	l, err := NewList(typeDef)
 	if err != nil {
 		panic(err)
 	}
-	return n
-}
-
-// String implements fmt.Stringer.
-func (n *list) String() string {
-	return n.notation
+	return l
 }
 
 // UnwrappedType implements WrappingType.
-func (n *list) UnwrappedType() Type {
-	return n.ElementType()
+func (l *list) UnwrappedType() Type {
+	return l.ElementType()
 }
 
 // ElementType implements List.
-func (n *list) ElementType() Type {
-	return n.elementType
+func (l *list) ElementType() Type {
+	return l.elementType
 }

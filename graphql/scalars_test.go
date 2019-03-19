@@ -17,7 +17,6 @@
 package graphql_test
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/botobag/artemis/graphql"
@@ -209,8 +208,7 @@ var _ = Describe("Scalars", func() {
 		}
 
 		for _, test := range tests {
-			Expect(fmt.Sprintf("%s", test.t)).Should(Equal(test.expected))
-			Expect(fmt.Sprintf("%v", test.t)).Should(Equal(test.expected))
+			Expect(graphql.Inspect(test.t)).Should(Equal(test.expected))
 		}
 	})
 })
