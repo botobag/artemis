@@ -127,3 +127,43 @@ func RequiredSubselectionMessage(fieldName string, typeName string) string {
 	return fmt.Sprintf(`Field "%s" of type "%s" must have a selection of subfields. Did you mean "%s { ... }"?`,
 		fieldName, typeName, fieldName)
 }
+
+// UnknownArgMessage returns message describing error occurred in rule "Argument Names"
+// (rules.KnownArgumentNames)
+func UnknownArgMessage(argName string, fieldName string, typeName string, suggestedArgs []string) string {
+	var message util.StringBuilder
+	message.WriteString(`Unknown argument "`)
+	message.WriteString(argName)
+	message.WriteString(`" on field "`)
+	message.WriteString(fieldName)
+	message.WriteString(`" of type "`)
+	message.WriteString(typeName)
+	message.WriteString(`".`)
+
+	if len(suggestedArgs) > 0 {
+		message.WriteString(` Did you mean `)
+		util.OrList(&message, suggestedArgs, 5, true /*quoted*/)
+		message.WriteString(`?`)
+	}
+
+	return message.String()
+}
+
+// UnknownDirectiveArgMessage returns message describing error occurred in rule "Argument Names"
+// (rules.KnownArgumentNamesOnDirectives)
+func UnknownDirectiveArgMessage(argName string, directiveName string, suggestedArgs []string) string {
+	var message util.StringBuilder
+	message.WriteString(`Unknown argument "`)
+	message.WriteString(argName)
+	message.WriteString(`" on directive @"`)
+	message.WriteString(directiveName)
+	message.WriteString(`".`)
+
+	if len(suggestedArgs) > 0 {
+		message.WriteString(` Did you mean `)
+		util.OrList(&message, suggestedArgs, 5, true /*quoted*/)
+		message.WriteString(`?`)
+	}
+
+	return message.String()
+}

@@ -29,6 +29,7 @@ type rules struct {
 	operationRules    operationRules
 	selectionSetRules selectionSetRules
 	fieldRules        fieldRules
+	directiveRules    directiveRules
 }
 
 func buildRules(rs ...interface{}) *rules {
@@ -55,6 +56,13 @@ func buildRules(rs ...interface{}) *rules {
 			fieldRules := &rules.fieldRules
 			fieldRules.indices = append(fieldRules.indices, i)
 			fieldRules.rules = append(fieldRules.rules, r)
+			isRule = true
+		}
+
+		if r, ok := rule.(DirectiveRule); ok {
+			directiveRules := &rules.directiveRules
+			directiveRules.indices = append(directiveRules.indices, i)
+			directiveRules.rules = append(directiveRules.rules, r)
 			isRule = true
 		}
 
@@ -133,6 +141,28 @@ func (r *fieldRules) Run(ctx *ValidationContext, parentType graphql.Type, fieldD
 	}
 }
 
+type directiveRules struct {
+	indices []int
+	rules   []DirectiveRule
+}
+
+func (r *directiveRules) Run(
+	ctx *ValidationContext,
+	directiveDef graphql.Directive,
+	directive *ast.Directive,
+	location graphql.DirectiveLocation) {
+
+	indices := r.indices
+	for i, rule := range r.rules {
+		index := indices[i]
+		// See whether we can run the rule.
+		if !shouldSkipRule(ctx, index) {
+			// Run the rule and set skipping state.
+			setSkipping(ctx, index, directive, rule.CheckDirective(ctx, directiveDef, directive, location))
+		}
+	}
+}
+
 func walk(ctx *ValidationContext) {
 	for _, definitions := range ctx.Document().Definitions {
 		switch def := definitions.(type) {
@@ -161,16 +191,27 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 	// Run operation rules.
 	ctx.rules.operationRules.Run(ctx, operation)
 
-	// Determine the Object type of the operation.
-	var object graphql.Object
+	// Determine the Object type of the operation and directive location.
+	var (
+		object   graphql.Object
+		location graphql.DirectiveLocation
+	)
 	switch operation.OperationType() {
 	case ast.OperationTypeQuery:
 		object = ctx.Schema().Query()
+		location = graphql.DirectiveLocationQuery
+
 	case ast.OperationTypeMutation:
 		object = ctx.Schema().Mutation()
+		location = graphql.DirectiveLocationMutation
+
 	case ast.OperationTypeSubscription:
 		object = ctx.Schema().Subscription()
+		location = graphql.DirectiveLocationSubscription
 	}
+
+	// Walk directives.
+	walkDirectives(ctx, operation.Directives, location)
 
 	// Walk selection set.
 	walkSelectionSet(ctx, object, operation.SelectionSet)
@@ -183,6 +224,8 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 
 func walkFragmentDefinition(ctx *ValidationContext, fragment *ast.FragmentDefinition) {
 	typeCondition := ctx.TypeResolver().ResolveType(fragment.TypeCondition)
+
+	walkDirectives(ctx, fragment.Directives, graphql.DirectiveLocationFragmentDefinition)
 
 	walkSelectionSet(ctx, typeCondition, fragment.SelectionSet)
 }
@@ -218,6 +261,9 @@ func walkField(ctx *ValidationContext, parentType graphql.Type, field *ast.Field
 	// Run field rules.
 	ctx.rules.fieldRules.Run(ctx, parentType, fieldDef, field)
 
+	// Visit directives.
+	walkDirectives(ctx, field.Directives, graphql.DirectiveLocationField)
+
 	// Visit selection set of field.
 	var fieldType graphql.Type
 	if fieldDef != nil {
@@ -231,6 +277,25 @@ func walkInlineFragment(ctx *ValidationContext, parentType graphql.Type, fragmen
 		parentType = ctx.TypeResolver().ResolveType(fragment.TypeCondition)
 	}
 
+	// Visit directives.
+	walkDirectives(ctx, fragment.Directives, graphql.DirectiveLocationInlineFragment)
+
 	// Visit selection set.
 	walkSelectionSet(ctx, parentType, fragment.SelectionSet)
+}
+
+func walkDirectives(ctx *ValidationContext, directives ast.Directives, location graphql.DirectiveLocation) {
+	if len(directives) == 0 {
+		return
+	}
+
+	directiveDefs := ctx.schema.Directives()
+	for _, directive := range directives {
+		// Run directive rules.
+		ctx.rules.directiveRules.Run(
+			ctx,
+			directiveDefs.Lookup(directive.Name.Value()),
+			directive,
+			location)
+	}
 }

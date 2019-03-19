@@ -63,3 +63,12 @@ type FieldRule interface {
 		fieldDef graphql.Field,
 		field *ast.Field) NextCheckAction
 }
+
+// DirectiveRule validates a Directive.
+type DirectiveRule interface {
+	CheckDirective(
+		ctx *ValidationContext,
+		directiveDef graphql.Directive,
+		directive *ast.Directive,
+		location graphql.DirectiveLocation) NextCheckAction
+}

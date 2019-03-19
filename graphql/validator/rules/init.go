@@ -31,6 +31,7 @@ func init() {
 		SingleFieldSubscriptions{},
 		ScalarLeafs{},
 		FieldsOnCorrectType{},
+		KnownArgumentNames{},
 		OverlappingFieldsCanBeMerged{},
 	)
 }
