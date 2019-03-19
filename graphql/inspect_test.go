@@ -52,7 +52,7 @@ func (o objectWithErrCustomInspect) Inspect(out io.Writer) error {
 	return o.err
 }
 
-// graphql-js/src/jsutils/__tests__/inspect-test.js
+// graphql-js/src/jsutils/__tests__/inspect-test.js@ffccf3f
 var _ = Describe("Inspect", func() {
 	It("null", func() {
 		Expect(graphql.Inspect(nil)).Should(Equal("null"))
@@ -93,6 +93,20 @@ var _ = Describe("Inspect", func() {
 			[]string{"a", "b"},
 			"c",
 		})).Should(Equal(`[["a", "b"], "c"]`))
+
+		Expect(graphql.Inspect([][][]interface{}{{{}}})).Should(Equal(`[[[]]]`))
+		Expect(graphql.Inspect([][][]interface{}{{{"a"}}})).Should(Equal(`[[[Array]]]`))
+		Expect(graphql.Inspect([][][]interface{}{{{"a"}, {"b"}}})).Should(Equal(`[[[Array], [Array]]]`))
+
+		Expect(graphql.Inspect([]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9})).Should(Equal(
+			`[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]`,
+		))
+		Expect(graphql.Inspect([]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10})).Should(Equal(
+			`[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ... 1 more item]`,
+		))
+		Expect(graphql.Inspect([]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11})).Should(Equal(
+			`[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ... 2 more items]`,
+		))
 	})
 
 	It("object", func() {
@@ -118,6 +132,51 @@ var _ = Describe("Inspect", func() {
 		}{
 			Array: []interface{}{nil, 0},
 		})).Should(Equal(`{ Array: [null, 0] }`))
+
+		Expect(graphql.Inspect(struct {
+			A struct {
+				B struct{}
+			}
+		}{})).Should(Equal(`{ A: { B: {} } }`))
+
+		Expect(graphql.Inspect(struct {
+			A struct {
+				B struct {
+					C int
+				}
+			}
+		}{
+			A: struct {
+				B struct {
+					C int
+				}
+			}{
+				B: struct {
+					C int
+				}{
+					C: 1,
+				},
+			},
+		})).Should(Equal(`{ A: { B: [Object] } }`))
+
+		// Named struct
+		type Depth3 struct {
+			D4 int
+		}
+		type Depth2 struct {
+			D3 *Depth3
+		}
+		type Depth1 struct {
+			D2 *Depth2
+		}
+
+		Expect(graphql.Inspect(&Depth1{
+			D2: &Depth2{
+				D3: &Depth3{
+					D4: 1,
+				},
+			},
+		})).Should(Equal(`{ D2: { D3: [Depth3] } }`))
 
 		Expect(graphql.Inspect(struct {
 			A bool
@@ -169,6 +228,18 @@ var _ = Describe("Inspect", func() {
 			Equal(`{ "a": true, "b": null }`),
 			Equal(`{ "b": null, "a": true }`),
 		))
+
+		Expect(graphql.Inspect(map[string]map[string]map[string]int{
+			"a": {
+				"b": {
+					"c": 1,
+				},
+			},
+		})).Should(Equal(`{ "a": { "b": [Map] } }`))
+
+		circularMap := map[string]interface{}{}
+		circularMap["a"] = circularMap
+		Expect(graphql.Inspect(circularMap)).Should(Equal(`{ "a": [Circular] }`))
 	})
 
 	It("pointer", func() {
@@ -188,5 +259,38 @@ var _ = Describe("Inspect", func() {
 		Expect(func() {
 			graphql.Inspect(objectWithErrCustomInspect{errors.New("error")})
 		}).Should(Panic())
+	})
+
+	It("detect circular objects", func() {
+		obj := &struct {
+			Self     interface{}
+			DeepSelf interface{}
+		}{}
+		obj.Self = obj
+		obj.DeepSelf = &struct {
+			Self interface{}
+		}{
+			Self: obj,
+		}
+
+		Expect(graphql.Inspect(obj)).Should(Equal(`{ Self: [Circular], DeepSelf: { Self: [Circular] } }`))
+
+		array := make([]interface{}, 2)
+		array[0] = array
+		array[1] = []interface{}{array}
+		Expect(graphql.Inspect(array)).Should(Equal(`[[Circular], [[Circular]]]`))
+
+		mixed := &struct {
+			Array []interface{}
+		}{}
+		mixed.Array = []interface{}{mixed}
+		Expect(graphql.Inspect(mixed)).Should(Equal("{ Array: [[Circular]] }"))
+	})
+
+	It("Use class names for the shortform of an object", func() {
+		type Foo struct {
+			Foo string
+		}
+		Expect(graphql.Inspect([][]*Foo{{&Foo{}}})).Should(Equal("[[[Foo]]]"))
 	})
 })

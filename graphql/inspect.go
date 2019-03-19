@@ -21,9 +21,15 @@ import (
 	"io"
 	"reflect"
 	"runtime"
+	"strconv"
 
 	"github.com/botobag/artemis/internal/util"
 	"github.com/botobag/artemis/jsonwriter"
+)
+
+const (
+	maxArrayLength    = 10
+	maxRecursiveDepth = 2
 )
 
 // ValueWithCustomInspect provides custom inspect function to serialize value in Inspect.
@@ -33,10 +39,14 @@ type ValueWithCustomInspect interface {
 
 // InspectTo prints Go values v to the given buf in the same format as graphql-js's inspect
 // function. The implementation matches
-// https://github.com/graphql/graphql-js/blob/4cdc8e2/src/jsutils/inspect.js.
+// https://github.com/graphql/graphql-js/blob/1375776/src/jsutils/inspect.js.
 //
 // Note that errors returned from out.Write are ignored.
 func InspectTo(out io.Writer, v interface{}) error {
+	return inspectTo(out, v, nil)
+}
+
+func inspectTo(out io.Writer, v interface{}, seenValues []interface{}) error {
 	if v, ok := v.(ValueWithCustomInspect); ok {
 		return v.Inspect(out)
 	}
@@ -58,88 +68,136 @@ func InspectTo(out io.Writer, v interface{}) error {
 		out.Write([]byte{']'})
 
 	case reflect.Array, reflect.Slice:
-		out.Write([]byte{'['})
+		seenValues = append(seenValues, v)
+
 		size := value.Len()
-		if size > 0 {
-			if err := InspectTo(out, value.Index(0).Interface()); err != nil {
+		if size == 0 {
+			out.Write([]byte{'[', ']'})
+			break
+		}
+
+		if len(seenValues) > maxRecursiveDepth {
+			out.Write([]byte{'[', 'A', 'r', 'r', 'a', 'y', ']'})
+			break
+		}
+
+		out.Write([]byte{'['})
+
+		// Write the first item.
+		if err := inspectToWithCircularCheck(out, value.Index(0).Interface(), seenValues); err != nil {
+			return err
+		}
+
+		// Write the remaining items.
+		l := size
+		if l > maxArrayLength {
+			l = maxArrayLength
+		}
+		remaining := size - l
+		for i := 1; i < l; i++ {
+			out.Write([]byte{',', ' '})
+			if err := inspectToWithCircularCheck(out, value.Index(i).Interface(), seenValues); err != nil {
 				return err
 			}
-			for i := 1; i < size; i++ {
-				out.Write([]byte{',', ' '})
-				if err := InspectTo(out, value.Index(i).Interface()); err != nil {
-					return err
-				}
-			}
+		}
+		if remaining == 1 {
+			out.Write([]byte{',', ' ', '.', '.', '.', ' ', '1', ' ', 'm', 'o', 'r', 'e', ' ', 'i', 't', 'e', 'm'})
+		} else if remaining > 1 {
+			out.Write([]byte{',', ' ', '.', '.', '.', ' '})
+			out.Write(strconv.AppendInt(nil, int64(remaining), 10))
+			out.Write([]byte{' ', 'm', 'o', 'r', 'e', ' ', 'i', 't', 'e', 'm', 's'})
 		}
 		out.Write([]byte{']'})
 
 	case reflect.Map:
+		seenValues = append(seenValues, v)
+
 		size := value.Len()
 		if size == 0 {
 			out.Write([]byte{'{', '}'})
-		} else {
-			out.Write([]byte{'{', ' '})
-
-			keys := value.MapKeys()
-			for i, key := range keys {
-				// Write key.
-				if err := InspectTo(out, key.Interface()); err != nil {
-					return err
-				}
-				out.Write([]byte{':', ' '})
-				// Write value.
-				if err := InspectTo(out, value.MapIndex(key).Interface()); err != nil {
-					return err
-				}
-				if i != len(keys)-1 {
-					out.Write([]byte{',', ' '})
-				}
-			}
-
-			out.Write([]byte{' ', '}'})
+			break
 		}
 
+		if len(seenValues) > maxRecursiveDepth {
+			out.Write([]byte{'[', 'M', 'a', 'p', ']'})
+			break
+		}
+
+		out.Write([]byte{'{', ' '})
+
+		keys := value.MapKeys()
+		for i, key := range keys {
+			// Write key.
+			if err := inspectToWithCircularCheck(out, key.Interface(), seenValues); err != nil {
+				return err
+			}
+			out.Write([]byte{':', ' '})
+			// Write value.
+			if err := inspectToWithCircularCheck(out, value.MapIndex(key).Interface(), seenValues); err != nil {
+				return err
+			}
+			if i != len(keys)-1 {
+				out.Write([]byte{',', ' '})
+			}
+		}
+
+		out.Write([]byte{' ', '}'})
+
 	case reflect.Struct:
+		seenValues = append(seenValues, v)
+
 		typ := value.Type()
 		numFields := typ.NumField()
 		if numFields == 0 {
 			out.Write([]byte{'{', '}'})
-		} else {
-			out.Write([]byte{'{'})
+			break
+		}
 
-			// Set to true if any field was printed.
-			printed := false
-			for i := 0; i < numFields; i++ {
-				fieldValue := value.Field(i)
-				if !fieldValue.CanInterface() {
-					// Skip unexported fields.
-					continue
-				}
+		if len(seenValues) > maxRecursiveDepth {
+			out.Write([]byte{'['})
+			if len(typ.Name()) == 0 {
+				out.Write([]byte{'O', 'b', 'j', 'e', 'c', 't'})
+			} else {
+				out.Write([]byte(typ.Name()))
+			}
+			out.Write([]byte{']'})
+			break
+		}
 
-				if printed {
-					out.Write([]byte{',', ' '})
-				} else {
-					// Add a space after "{".
-					out.Write([]byte{' '})
-					printed = true
-				}
+		out.Write([]byte{'{'})
 
-				field := typ.Field(i)
-				// Write field name.
-				out.Write([]byte(field.Name))
-				out.Write([]byte{':', ' '})
-
-				// Write value.
-				if err := InspectTo(out, fieldValue.Interface()); err != nil {
-					return err
-				}
+		// Set to true if any field was printed.
+		printed := false
+		for i := 0; i < numFields; i++ {
+			fieldValue := value.Field(i)
+			if !fieldValue.CanInterface() {
+				// Skip unexported fields.
+				continue
 			}
 
 			if printed {
+				out.Write([]byte{',', ' '})
+			} else {
+				// Add a space after "{".
 				out.Write([]byte{' '})
+				printed = true
 			}
-			out.Write([]byte{'}'})
+
+			field := typ.Field(i)
+			// Write field name.
+			out.Write([]byte(field.Name))
+			out.Write([]byte{':', ' '})
+
+			// Write value.
+			if err := inspectToWithCircularCheck(out, fieldValue.Interface(), seenValues); err != nil {
+				return err
+			}
 		}
+
+		if printed {
+			out.Write([]byte{' '})
+		}
+		out.Write([]byte{'}'})
 
 	case reflect.Ptr:
 		elem := value.Elem()
@@ -147,7 +205,7 @@ func InspectTo(out io.Writer, v interface{}) error {
 			out.Write([]byte{'n', 'u', 'l', 'l'})
 			return nil
 		}
-		return InspectTo(out, elem.Interface())
+		return inspectToWithCircularCheck(out, elem.Interface(), seenValues)
 
 	case reflect.Invalid:
 		out.Write([]byte{'n', 'u', 'l', 'l'})
@@ -159,6 +217,17 @@ func InspectTo(out io.Writer, v interface{}) error {
 	}
 
 	return nil
+}
+
+func inspectToWithCircularCheck(out io.Writer, v interface{}, previouslySeenValues []interface{}) error {
+	for _, previouslySeenValue := range previouslySeenValues {
+		if reflect.DeepEqual(previouslySeenValue, v) {
+			out.Write([]byte{'[', 'C', 'i', 'r', 'c', 'u', 'l', 'a', 'r', ']'})
+			return nil
+		}
+	}
+
+	return inspectTo(out, v, previouslySeenValues)
 }
 
 // Inspect calls InspectOrErr but panics on error.
