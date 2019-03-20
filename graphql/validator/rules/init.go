@@ -33,6 +33,7 @@ func init() {
 		FieldsOnCorrectType{},
 		KnownArgumentNames{},
 		UniqueArgumentNames{},
+		ProvidedRequiredArguments{},
 		OverlappingFieldsCanBeMerged{},
 	)
 }

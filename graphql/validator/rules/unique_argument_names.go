@@ -34,6 +34,8 @@ func (rule UniqueArgumentNames) CheckField(
 	parentType graphql.Type,
 	fieldDef graphql.Field,
 	field *ast.Field) validator.NextCheckAction {
+
+	// A GraphQL field or directive is only valid if all supplied arguments are uniquely named.
 	rule.checkUniqueArgNames(ctx, field.Arguments)
 	return validator.ContinueCheck
 }

@@ -82,7 +82,7 @@ func MatchGraphQLError(matchers ...ErrorFieldsMatcher) types.GomegaMatcher {
 // ConsistOfGraphQLErrors is used to match a graphql.Errors like an array of graphql.Error's with
 // Gomega's ConsistOf.
 //
-//		Expect(errs).Should(MatchGraphQLErrors(
+//		Expect(errs).Should(ConsistOfGraphQLErrors(
 //			MatchGraphQLError(
 //				MessageContainSubstring("First error"),
 //				KindIs(graphql.ErrKindSyntax),

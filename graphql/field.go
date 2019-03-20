@@ -269,6 +269,11 @@ func (arg *Argument) DefaultValue() interface{} {
 	return arg.defaultValue
 }
 
+// IsRequiredArgument returns true if value must be provided to the argument for execution.
+func IsRequiredArgument(arg *Argument) bool {
+	return IsNonNullType(arg.Type()) && !arg.HasDefaultValue()
+}
+
 // MockArgument creates an Argument object. This is only used in the tests to create an Argument for
 // comparing with one in Type instances. We never use this to create an Argument.
 func MockArgument(name string, description string, t Type, defaultValue interface{}) Argument {

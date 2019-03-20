@@ -268,6 +268,169 @@ var HumanOrAlien = &graphql.UnionConfig{
 	},
 }
 
+var ComplexInput = &graphql.InputObjectConfig{
+	Name: "ComplexInput",
+	Fields: graphql.InputFields{
+		"requiredField": {
+			Type: graphql.NonNullOfType(graphql.Boolean()),
+		},
+		"nonNullField": {
+			Type:         graphql.NonNullOfType(graphql.Boolean()),
+			DefaultValue: false,
+		},
+		"intField": {
+			Type: graphql.T(graphql.Int()),
+		},
+		"stringField": {
+			Type: graphql.T(graphql.String()),
+		},
+		"booleanField": {
+			Type: graphql.T(graphql.Boolean()),
+		},
+		"stringListField": {
+			Type: graphql.ListOfType(graphql.String()),
+		},
+	},
+}
+
+var ComplicatedArgs = &graphql.ObjectConfig{
+	Name: "ComplicatedArgs",
+	Fields: graphql.Fields{
+		"intArgField": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"intArg": {
+					Type: graphql.T(graphql.Int()),
+				},
+			},
+		},
+		"nonNullIntArgField": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"nonNullIntArg": {
+					Type: graphql.NonNullOfType(graphql.Int()),
+				},
+			},
+		},
+		"stringArgField": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"stringArg": {
+					Type: graphql.T(graphql.String()),
+				},
+			},
+		},
+		"booleanArgField": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"booleanArg": {
+					Type: graphql.T(graphql.Boolean()),
+				},
+			},
+		},
+		"enumArgField": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"enumArg": {
+					Type: FurColor,
+				},
+			},
+		},
+		"floatArgField": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"floatArg": {
+					Type: graphql.T(graphql.Float()),
+				},
+			},
+		},
+		"idArgField": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"idArg": {
+					Type: graphql.T(graphql.ID()),
+				},
+			},
+		},
+		"stringListArgField": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"stringListArg": {
+					Type: graphql.ListOfType(graphql.String()),
+				},
+			},
+		},
+		"stringListNonNullArgField": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"stringListNonNullArg": {
+					Type: graphql.ListOf(graphql.NonNullOfType(graphql.String())),
+				},
+			},
+		},
+		"complexArgField": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"complexArg": {
+					Type: ComplexInput,
+				},
+			},
+		},
+		"multipleReqs": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"req1": {
+					Type: graphql.NonNullOfType(graphql.Int()),
+				},
+				"req2": {
+					Type: graphql.NonNullOfType(graphql.Int()),
+				},
+			},
+		},
+		"nonNullFieldWithDefault": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"arg": {
+					Type:         graphql.NonNullOfType(graphql.Int()),
+					DefaultValue: 0,
+				},
+			},
+		},
+		"multipleOpts": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"opt1": {
+					Type:         graphql.T(graphql.Int()),
+					DefaultValue: 0,
+				},
+				"opt2": {
+					Type:         graphql.T(graphql.Int()),
+					DefaultValue: 0,
+				},
+			},
+		},
+		"multipleOptAndReq": {
+			Type: graphql.T(graphql.String()),
+			Args: graphql.ArgumentConfigMap{
+				"req1": {
+					Type: graphql.NonNullOfType(graphql.Int()),
+				},
+				"req2": {
+					Type: graphql.NonNullOfType(graphql.Int()),
+				},
+				"opt1": {
+					Type:         graphql.T(graphql.Int()),
+					DefaultValue: 0,
+				},
+				"opt2": {
+					Type:         graphql.T(graphql.Int()),
+					DefaultValue: 0,
+				},
+			},
+		},
+	},
+}
+
 var InvalidScalar = &graphql.ScalarConfig{
 	Name: "Invalid",
 	ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
@@ -332,11 +495,9 @@ var QueryRoot = &graphql.ObjectConfig{
 		"humanOrAlien": {
 			Type: HumanOrAlien,
 		},
-		/*
-			"complicatedArgs": {
-				Type: ComplicatedArgs,
-			},
-		*/
+		"complicatedArgs": {
+			Type: ComplicatedArgs,
+		},
 		"invalidArg": {
 			Args: graphql.ArgumentConfigMap{
 				"arg": {

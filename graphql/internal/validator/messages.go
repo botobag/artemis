@@ -173,3 +173,17 @@ func UnknownDirectiveArgMessage(argName string, directiveName string, suggestedA
 func DuplicateArgMessage(argName string) string {
 	return fmt.Sprintf(`There can be only one argument named "%s".`, argName)
 }
+
+// MissingFieldArgMessage returns message describing error occurred in rule "Required Arguments"
+// (rules.ProvidedRequiredArguments)
+func MissingFieldArgMessage(argName string, fieldName string, typeName string) string {
+	return fmt.Sprintf(`Field "%s" argument "%s" of type "%s" is required, but it was not provided.`,
+		fieldName, argName, typeName)
+}
+
+// MissingDirectiveArgMessage returns message describing error occurred in rule "Required Arguments"
+// (rules.ProvidedRequiredArgumentsOnDirectives)
+func MissingDirectiveArgMessage(argName string, directiveName string, typeName string) string {
+	return fmt.Sprintf(`Directive "@%s" argument "%s" of type "%s" is required, but it was not provided.`,
+		directiveName, argName, typeName)
+}
