@@ -32,6 +32,7 @@ func init() {
 		ScalarLeafs{},
 		FieldsOnCorrectType{},
 		KnownArgumentNames{},
+		UniqueArgumentNames{},
 		OverlappingFieldsCanBeMerged{},
 	)
 }
