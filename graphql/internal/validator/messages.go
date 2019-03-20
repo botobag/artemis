@@ -167,3 +167,9 @@ func UnknownDirectiveArgMessage(argName string, directiveName string, suggestedA
 
 	return message.String()
 }
+
+// DuplicateArgMessage returns message describing error occurred in rule "Argument Uniqueness"
+// (rules.UniqueArgumentNames)
+func DuplicateArgMessage(argName string) string {
+	return fmt.Sprintf(`There can be only one argument named "%s".`, argName)
+}
