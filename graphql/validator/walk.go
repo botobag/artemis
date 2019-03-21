@@ -104,24 +104,13 @@ type operationRules struct {
 }
 
 func (r *operationRules) Run(ctx *ValidationContext, operation *ast.OperationDefinition) {
-	var (
-		indices       = r.indices
-		skippingRules = ctx.skippingRules
-	)
+	indices := r.indices
 	for i, rule := range r.rules {
 		index := indices[i]
 		// See whether we can run the rule.
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
-			nextAction := rule.CheckOperation(ctx, operation)
-
-			if nextAction == StopCheck {
-				skippingRules[index] = StopCheck
-			} else {
-				// Set skipping state to the operation node to stop running this rule on the child nodes.
-				// Operation is only valid to appear at the top-level, therefore it's safe to do so.
-				skippingRules[index] = operation
-			}
+			setSkipping(ctx, index, operation, rule.CheckOperation(ctx, operation))
 		}
 	}
 }
@@ -132,24 +121,13 @@ type fragmentRules struct {
 }
 
 func (r *fragmentRules) Run(ctx *ValidationContext, fragment *ast.FragmentDefinition) {
-	var (
-		indices       = r.indices
-		skippingRules = ctx.skippingRules
-	)
+	indices := r.indices
 	for i, rule := range r.rules {
 		index := indices[i]
 		// See whether we can run the rule.
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
-			nextAction := rule.CheckFragment(ctx, fragment)
-
-			if nextAction == StopCheck {
-				skippingRules[index] = StopCheck
-			} else {
-				// Set skipping state to the fragment node to stop running this rule on the child nodes.
-				// Fragment is only valid to appear at the top-level, therefore it's safe to do so.
-				skippingRules[index] = fragment
-			}
+			setSkipping(ctx, index, fragment, rule.CheckFragment(ctx, fragment))
 		}
 	}
 }

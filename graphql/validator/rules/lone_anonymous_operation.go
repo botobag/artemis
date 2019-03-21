@@ -43,5 +43,7 @@ func (rule LoneAnonymousOperation) CheckOperation(ctx *validator.ValidationConte
 		}
 	}
 
-	return validator.ContinueCheck
+	// It is safe to stop running this rule on the child nodes because operation nodes are only valid
+	// to appear at the top-level.
+	return validator.SkipCheckForChildNodes
 }

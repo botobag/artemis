@@ -56,5 +56,7 @@ func (rule SingleFieldSubscriptions) CheckOperation(ctx *validator.ValidationCon
 		}
 	}
 
-	return validator.ContinueCheck
+	// It is safe to stop running this rule on the child nodes because operation nodes are only valid
+	// to appear at the top-level.
+	return validator.SkipCheckForChildNodes
 }
