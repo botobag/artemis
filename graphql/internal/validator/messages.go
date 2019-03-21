@@ -187,3 +187,9 @@ func MissingDirectiveArgMessage(argName string, directiveName string, typeName s
 	return fmt.Sprintf(`Directive "@%s" argument "%s" of type "%s" is required, but it was not provided.`,
 		directiveName, argName, typeName)
 }
+
+// DuplicateFragmentNameMessage returns message describing error occurred in rule "Fragment Name
+// Uniqueness" (rules.UniqueFragmentNames).
+func DuplicateFragmentNameMessage(fragmentName string) string {
+	return fmt.Sprintf(`There can be only one fragment named "%s".`, fragmentName)
+}

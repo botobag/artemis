@@ -27,6 +27,7 @@ import (
 type rules struct {
 	numRules          int
 	operationRules    operationRules
+	fragmentRules     fragmentRules
 	selectionSetRules selectionSetRules
 	fieldRules        fieldRules
 	directiveRules    directiveRules
@@ -42,6 +43,13 @@ func buildRules(rs ...interface{}) *rules {
 			operationRules := &rules.operationRules
 			operationRules.indices = append(operationRules.indices, i)
 			operationRules.rules = append(operationRules.rules, r)
+			isRule = true
+		}
+
+		if r, ok := rule.(FragmentRule); ok {
+			fragmentRules := &rules.fragmentRules
+			fragmentRules.indices = append(fragmentRules.indices, i)
+			fragmentRules.rules = append(fragmentRules.rules, r)
 			isRule = true
 		}
 
@@ -113,6 +121,34 @@ func (r *operationRules) Run(ctx *ValidationContext, operation *ast.OperationDef
 				// Set skipping state to the operation node to stop running this rule on the child nodes.
 				// Operation is only valid to appear at the top-level, therefore it's safe to do so.
 				skippingRules[index] = operation
+			}
+		}
+	}
+}
+
+type fragmentRules struct {
+	indices []int
+	rules   []FragmentRule
+}
+
+func (r *fragmentRules) Run(ctx *ValidationContext, fragment *ast.FragmentDefinition) {
+	var (
+		indices       = r.indices
+		skippingRules = ctx.skippingRules
+	)
+	for i, rule := range r.rules {
+		index := indices[i]
+		// See whether we can run the rule.
+		if !shouldSkipRule(ctx, index) {
+			// Run the rule and set skipping state.
+			nextAction := rule.CheckFragment(ctx, fragment)
+
+			if nextAction == StopCheck {
+				skippingRules[index] = StopCheck
+			} else {
+				// Set skipping state to the fragment node to stop running this rule on the child nodes.
+				// Fragment is only valid to appear at the top-level, therefore it's safe to do so.
+				skippingRules[index] = fragment
 			}
 		}
 	}
@@ -234,6 +270,9 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 }
 
 func walkFragmentDefinition(ctx *ValidationContext, fragment *ast.FragmentDefinition) {
+	// Run fragment rules.
+	ctx.rules.fragmentRules.Run(ctx, fragment)
+
 	typeCondition := ctx.TypeResolver().ResolveType(fragment.TypeCondition)
 
 	walkDirectives(ctx, fragment.Directives, graphql.DirectiveLocationFragmentDefinition)

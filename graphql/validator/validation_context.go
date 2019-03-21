@@ -71,6 +71,9 @@ type ValidationContext struct {
 	// Selection sets may be asked for this information multiple times, so this improves the
 	// performance of this validator.
 	FieldsAndFragmentNamesCache internal.FieldsAndFragmentNamesCache
+
+	// UniqueFragmentNames
+	KnownFragmentNames map[string]ast.Name
 }
 
 // newValidationContext initializes a validation context for validating given document.
@@ -86,6 +89,8 @@ func newValidationContext(schema graphql.Schema, document ast.Document, rules *r
 
 		FragmentPairSet:             internal.NewConflictFragmentPairSet(),
 		FieldsAndFragmentNamesCache: internal.NewFieldsAndFragmentNamesCache(),
+
+		KnownFragmentNames: map[string]ast.Name{},
 	}
 }
 

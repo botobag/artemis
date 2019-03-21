@@ -47,6 +47,11 @@ type OperationRule interface {
 	CheckOperation(ctx *ValidationContext, operation *ast.OperationDefinition) NextCheckAction
 }
 
+// FragmentRule validates an FragmentDefinition.
+type FragmentRule interface {
+	CheckFragment(ctx *ValidationContext, fragment *ast.FragmentDefinition) NextCheckAction
+}
+
 // SelectionSetRule validates a SelectionSet.
 type SelectionSetRule interface {
 	CheckSelectionSet(

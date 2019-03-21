@@ -26,7 +26,8 @@ import (
 	"github.com/botobag/artemis/internal/util"
 )
 
-// FieldsOnCorrectType implements the "Lone Anonymous Operation" validation rule.
+// FieldsOnCorrectType implements the "Field Selections on Objects, Interfaces, and Unions Types"
+// validation rule.
 //
 // See https://facebook.github.io/graphql/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types.
 type FieldsOnCorrectType struct{}
