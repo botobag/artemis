@@ -42,9 +42,9 @@ func (rule UniqueOperationNames) CheckOperation(ctx *validator.ValidationContext
 					graphql.ErrorLocationOfASTNode(operationName),
 				},
 			)
-			return validator.SkipCheckForChildNodes
+		} else {
+			knownOperationNames[operationNameValue] = operationName
 		}
-		knownOperationNames[operationNameValue] = operationName
 	}
 
 	return validator.ContinueCheck

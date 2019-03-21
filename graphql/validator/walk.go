@@ -96,13 +96,24 @@ type operationRules struct {
 }
 
 func (r *operationRules) Run(ctx *ValidationContext, operation *ast.OperationDefinition) {
-	indices := r.indices
+	var (
+		indices       = r.indices
+		skippingRules = ctx.skippingRules
+	)
 	for i, rule := range r.rules {
 		index := indices[i]
 		// See whether we can run the rule.
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
-			setSkipping(ctx, index, operation, rule.CheckOperation(ctx, operation))
+			nextAction := rule.CheckOperation(ctx, operation)
+
+			if nextAction == StopCheck {
+				skippingRules[index] = StopCheck
+			} else {
+				// Set skipping state to the operation node to stop running this rule on the child nodes.
+				// Operation is only valid to appear at the top-level, therefore it's safe to do so.
+				skippingRules[index] = operation
+			}
 		}
 	}
 }

@@ -39,9 +39,9 @@ func (rule LoneAnonymousOperation) CheckOperation(ctx *validator.ValidationConte
 					messages.AnonOperationNotAloneMessage(),
 					graphql.ErrorLocationOfASTNode(operation),
 				)
-				return validator.SkipCheckForChildNodes
 			}
 		}
 	}
+
 	return validator.ContinueCheck
 }

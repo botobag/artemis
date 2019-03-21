@@ -53,9 +53,8 @@ func (rule SingleFieldSubscriptions) CheckOperation(ctx *validator.ValidationCon
 			}
 
 			ctx.ReportError(messages.SingleFieldOnlyMessage(name), locations)
-
-			return validator.SkipCheckForChildNodes
 		}
 	}
+
 	return validator.ContinueCheck
 }
