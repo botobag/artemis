@@ -29,6 +29,7 @@ func init() {
 		UniqueOperationNames{},
 		LoneAnonymousOperation{},
 		SingleFieldSubscriptions{},
+		KnownTypeNames{},
 		ScalarLeafs{},
 		FieldsOnCorrectType{},
 		UniqueFragmentNames{},

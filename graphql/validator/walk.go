@@ -25,12 +25,13 @@ import (
 
 // rules contains a collection of actions to be performed on nodes for validation.
 type rules struct {
-	numRules          int
-	operationRules    operationRules
-	fragmentRules     fragmentRules
-	selectionSetRules selectionSetRules
-	fieldRules        fieldRules
-	directiveRules    directiveRules
+	numRules            int
+	operationRules      operationRules
+	fragmentRules       fragmentRules
+	selectionSetRules   selectionSetRules
+	fieldRules          fieldRules
+	inlineFragmentRules inlineFragmentRules
+	directiveRules      directiveRules
 }
 
 func buildRules(rs ...interface{}) *rules {
@@ -64,6 +65,13 @@ func buildRules(rs ...interface{}) *rules {
 			fieldRules := &rules.fieldRules
 			fieldRules.indices = append(fieldRules.indices, i)
 			fieldRules.rules = append(fieldRules.rules, r)
+			isRule = true
+		}
+
+		if r, ok := rule.(InlineFragmentRule); ok {
+			inlineFragmentRules := &rules.inlineFragmentRules
+			inlineFragmentRules.indices = append(inlineFragmentRules.indices, i)
+			inlineFragmentRules.rules = append(inlineFragmentRules.rules, r)
 			isRule = true
 		}
 
@@ -162,6 +170,23 @@ func (r *fieldRules) Run(ctx *ValidationContext, parentType graphql.Type, fieldD
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
 			setSkipping(ctx, index, field, rule.CheckField(ctx, parentType, fieldDef, field))
+		}
+	}
+}
+
+type inlineFragmentRules struct {
+	indices []int
+	rules   []InlineFragmentRule
+}
+
+func (r *inlineFragmentRules) Run(ctx *ValidationContext, parentType graphql.Type, fragment *ast.InlineFragment) {
+	indices := r.indices
+	for i, rule := range r.rules {
+		index := indices[i]
+		// See whether we can run the rule.
+		if !shouldSkipRule(ctx, index) {
+			// Run the rule and set skipping state.
+			setSkipping(ctx, index, fragment, rule.CheckInlineFragment(ctx, parentType, fragment))
 		}
 	}
 }
@@ -313,6 +338,9 @@ func walkInlineFragment(ctx *ValidationContext, parentType graphql.Type, fragmen
 	if fragment.HasTypeCondition() {
 		parentType = ctx.TypeResolver().ResolveType(fragment.TypeCondition)
 	}
+
+	// Run inline fragment rules.
+	ctx.rules.inlineFragmentRules.Run(ctx, parentType, fragment)
 
 	// Visit directives.
 	walkDirectives(ctx, fragment.Directives, graphql.DirectiveLocationInlineFragment)

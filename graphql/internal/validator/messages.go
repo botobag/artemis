@@ -193,3 +193,20 @@ func MissingDirectiveArgMessage(argName string, directiveName string, typeName s
 func DuplicateFragmentNameMessage(fragmentName string) string {
 	return fmt.Sprintf(`There can be only one fragment named "%s".`, fragmentName)
 }
+
+// UnknownTypeMessage returns message describing error occurred in rule
+// "Fragment Spread Type Existence" (rules.KnownTypeNames)
+func UnknownTypeMessage(typeName string, suggestedTypes []string) string {
+	var message util.StringBuilder
+	message.WriteString(`Unknown type "`)
+	message.WriteString(typeName)
+	message.WriteString(`".`)
+
+	if len(suggestedTypes) > 0 {
+		message.WriteString(` Did you mean `)
+		util.OrList(&message, suggestedTypes, 5, true /*quoted*/)
+		message.WriteString(`?`)
+	}
+
+	return message.String()
+}

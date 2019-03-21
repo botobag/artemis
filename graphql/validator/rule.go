@@ -69,6 +69,14 @@ type FieldRule interface {
 		field *ast.Field) NextCheckAction
 }
 
+// InlineFragmentRule validates a InlineFragment.
+type InlineFragmentRule interface {
+	CheckInlineFragment(
+		ctx *ValidationContext,
+		parentType graphql.Type,
+		fragment *ast.InlineFragment) NextCheckAction
+}
+
 // DirectiveRule validates a Directive.
 type DirectiveRule interface {
 	CheckDirective(

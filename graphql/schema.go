@@ -131,6 +131,16 @@ func (typeMap TypeMap) Lookup(name string) Type {
 	return typeMap.types[name]
 }
 
+// Size returns number of types in the map.
+func (typeMap TypeMap) Size() int {
+	return len(typeMap.types)
+}
+
+// KeyIterator returns iterator to loop over all type names in type map.
+func (typeMap TypeMap) KeyIterator() Iterator {
+	return NewMapKeysIterator(typeMap.types)
+}
+
 // Iterator returns iterator to loop over all types in type map.
 func (typeMap TypeMap) Iterator() Iterator {
 	return NewMapValuesIterator(typeMap.types)

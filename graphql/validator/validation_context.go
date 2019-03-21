@@ -74,6 +74,13 @@ type ValidationContext struct {
 
 	// UniqueFragmentNames
 	KnownFragmentNames map[string]ast.Name
+
+	// KnownTypeNames
+
+	// existingTypeNames caches all type names occurred in the schema; This is lazily initialized at
+	// the first time ExistingTypeNames is called. It is used by KnownTypeNames rule to make a
+	// suggestion list.
+	existingTypeNames []string
 }
 
 // newValidationContext initializes a validation context for validating given document.
@@ -136,4 +143,27 @@ func (ctx *ValidationContext) CurrentOperation() *ast.OperationDefinition {
 // context for reporting.
 func (ctx *ValidationContext) ReportError(message string, args ...interface{}) {
 	ctx.errs.Emplace(message, args...)
+}
+
+// ExistingTypeNames returns list of types declared in the schema.
+func (ctx *ValidationContext) ExistingTypeNames() []string {
+	existingTypeNames := ctx.existingTypeNames
+	if existingTypeNames == nil {
+		var (
+			existingTypesMap        = ctx.Schema().TypeMap()
+			existingTypesMapKeyIter = existingTypesMap.KeyIterator()
+		)
+		existingTypeNames = make([]string, 0, existingTypesMap.Size())
+		for {
+			name, err := existingTypesMapKeyIter.Next()
+			if err != nil {
+				break
+			}
+			existingTypeNames = append(existingTypeNames, name.(string))
+		}
+
+		// Cache the result in ctx.
+		ctx.existingTypeNames = existingTypeNames
+	}
+	return existingTypeNames
 }
