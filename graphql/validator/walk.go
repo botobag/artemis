@@ -228,6 +228,9 @@ func walkFragmentDefinition(ctx *ValidationContext, fragment *ast.FragmentDefini
 	walkDirectives(ctx, fragment.Directives, graphql.DirectiveLocationFragmentDefinition)
 
 	walkSelectionSet(ctx, typeCondition, fragment.SelectionSet)
+
+	// Call leave before return.
+	leaveNode(ctx, fragment)
 }
 
 func walkSelectionSet(ctx *ValidationContext, ttype graphql.Type, selectionSet ast.SelectionSet) {
@@ -239,6 +242,9 @@ func walkSelectionSet(ctx *ValidationContext, ttype graphql.Type, selectionSet a
 	for _, selection := range selectionSet {
 		walkSelection(ctx, ttype, selection)
 	}
+
+	// Call leave before return.
+	leaveNode(ctx, selectionSet)
 }
 
 func walkSelection(ctx *ValidationContext, parentType graphql.Type, selection ast.Selection) {
@@ -270,6 +276,9 @@ func walkField(ctx *ValidationContext, parentType graphql.Type, field *ast.Field
 		fieldType = fieldDef.Type()
 	}
 	walkSelectionSet(ctx, fieldType, field.SelectionSet)
+
+	// Call leave before return.
+	leaveNode(ctx, field)
 }
 
 func walkInlineFragment(ctx *ValidationContext, parentType graphql.Type, fragment *ast.InlineFragment) {
@@ -282,6 +291,9 @@ func walkInlineFragment(ctx *ValidationContext, parentType graphql.Type, fragmen
 
 	// Visit selection set.
 	walkSelectionSet(ctx, parentType, fragment.SelectionSet)
+
+	// Call leave before return.
+	leaveNode(ctx, fragment)
 }
 
 func walkDirectives(ctx *ValidationContext, directives ast.Directives, location graphql.DirectiveLocation) {
@@ -297,5 +309,11 @@ func walkDirectives(ctx *ValidationContext, directives ast.Directives, location 
 			directiveDefs.Lookup(directive.Name.Value()),
 			directive,
 			location)
+
+		// Call leave.
+		leaveNode(ctx, directive)
 	}
+
+	// Call leave before return.
+	leaveNode(ctx, directives)
 }
