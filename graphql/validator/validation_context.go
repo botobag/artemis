@@ -23,14 +23,74 @@ import (
 	astutil "github.com/botobag/artemis/graphql/util/ast"
 )
 
+// FragmentInfo stores information about a fragment definition during validation. It is specifically
+// used as value type of the fragment map in ValidationContext and exposed to FragmentRule's and
+// FragmentSpreadRule's.
+type FragmentInfo struct {
+	def *ast.FragmentDefinition
+
+	typeCondition graphql.Type
+
+	// Set to true if fragments that have been referenced (used) in any operation definitions (used by
+	// NoUnusedFragments)
+	used bool
+}
+
+// Definition returns info.def.
+func (info *FragmentInfo) Definition() *ast.FragmentDefinition {
+	return info.def
+}
+
+// TypeCondition returns info.typeCondition.
+func (info *FragmentInfo) TypeCondition() graphql.Type {
+	return info.typeCondition
+}
+
+// RecursivelyMarkUsed marks the fragment to be used and works with ctx to also mark the fragments
+// that are directly and indirectly referenced by this fragment to be used.
+func (info *FragmentInfo) RecursivelyMarkUsed(ctx *ValidationContext) {
+	if info.used {
+		// Return quiclkly if it is already in use.
+		return
+	}
+
+	stack := []*FragmentInfo{info}
+	for len(stack) > 0 {
+		var fragment *FragmentInfo
+		fragment, stack = stack[len(stack)-1], stack[:len(stack)-1]
+
+		// Mark used bit.
+		fragment.used = true
+
+		// Scan selection set and check any fragment spreads.
+		for _, selection := range fragment.def.SelectionSet {
+			if fragmentSpread, ok := selection.(*ast.FragmentSpread); ok {
+				// Look up ctx to find fragment expanded by the fragment spread.
+				f := ctx.FragmentInfo(fragmentSpread.Name.Value())
+				if f != nil && !f.used {
+					// Put f to the stack.
+					stack = append(stack, f)
+				}
+			}
+		}
+	}
+}
+
+// Used returns true if this fragment has been marked as used (via RecursivelyMarkUsed) or is
+// depended by any other fragments that has been marked as used.
+func (info *FragmentInfo) Used() bool {
+	return info.used
+}
+
 // A ValidationContext stores various states for running walk function and validation rules.
 type ValidationContext struct {
 	schema   graphql.Schema
 	document ast.Document
 	rules    *rules
 
-	// Mapping FragmentDefinition's from their names; This is lazily computed on first query.
-	fragments map[string]*ast.FragmentDefinition
+	// Mapping FragmentInfo's from their names; This is lazily computed on the first call to
+	// FragmentInfo.
+	fragmentInfos map[string]*FragmentInfo
 
 	// Error list
 	errs graphql.Errors
@@ -118,20 +178,36 @@ func (ctx *ValidationContext) TypeResolver() astutil.TypeResolver {
 	}
 }
 
-// Fragment looks up the FragmentDefinition with given name in current document.
-func (ctx *ValidationContext) Fragment(name string) *ast.FragmentDefinition {
-	fragmentMap := ctx.fragments
-	if fragmentMap == nil {
+// FragmentInfo looks up the FragmentInfo for given fragment name in current document.
+func (ctx *ValidationContext) FragmentInfo(name string) *FragmentInfo {
+	fragmentInfoMap := ctx.fragmentInfos
+	if fragmentInfoMap == nil {
 		// Build map.
-		fragmentMap = map[string]*ast.FragmentDefinition{}
+		fragmentInfoMap = map[string]*FragmentInfo{}
+		resolver := ctx.TypeResolver()
 
 		for _, definition := range ctx.document.Definitions {
 			if definition, ok := definition.(*ast.FragmentDefinition); ok {
-				fragmentMap[definition.Name.Value()] = definition
+				fragmentInfoMap[definition.Name.Value()] = &FragmentInfo{
+					def:           definition,
+					typeCondition: resolver.ResolveType(definition.TypeCondition),
+				}
 			}
 		}
+
+		// Cache in ctx.
+		ctx.fragmentInfos = fragmentInfoMap
 	}
-	return fragmentMap[name]
+	return fragmentInfoMap[name]
+}
+
+// Fragment looks up fragment definition for given name in current document.
+func (ctx *ValidationContext) Fragment(name string) *ast.FragmentDefinition {
+	info := ctx.FragmentInfo(name)
+	if info != nil {
+		return info.Definition()
+	}
+	return nil
 }
 
 // CurrentOperation returns the operation in the document being validated.

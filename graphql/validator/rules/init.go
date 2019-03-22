@@ -34,6 +34,7 @@ func init() {
 		ScalarLeafs{},
 		FieldsOnCorrectType{},
 		UniqueFragmentNames{},
+		NoUnusedFragments{},
 		KnownArgumentNames{},
 		UniqueArgumentNames{},
 		ProvidedRequiredArguments{},

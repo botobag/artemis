@@ -23,37 +23,42 @@ import (
 	"github.com/botobag/artemis/graphql/validator"
 )
 
-// UniqueFragmentNames implements the "Unique Fragment Names" validation rule.
+// NoUnusedFragments implements the "Fragments must be used" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Fragment-Name-Uniqueness.
-type UniqueFragmentNames struct{}
+// See https://facebook.github.io/graphql/June2018/#sec-Fragments-Must-Be-Used.
+type NoUnusedFragments struct{}
+
+// A GraphQL document is only valid if all fragment definitions are spread within operations, or
+// spread within other fragments spread within operations.
+
+// CheckFragmentSpread implements validator.FragmentSpreadRule.
+func (rule NoUnusedFragments) CheckFragmentSpread(
+	ctx *validator.ValidationContext,
+	fragmentInfo *validator.FragmentInfo,
+	fragmentSpread *ast.FragmentSpread) validator.NextCheckAction {
+
+	if fragmentInfo != nil {
+		// Mark fragment to be used.
+		fragmentInfo.RecursivelyMarkUsed(ctx)
+	}
+	return validator.ContinueCheck
+}
 
 // CheckFragment implements validator.FragmentRule.
-func (rule UniqueFragmentNames) CheckFragment(
+func (rule NoUnusedFragments) CheckFragment(
 	ctx *validator.ValidationContext,
 	fragmentInfo *validator.FragmentInfo,
 	fragment *ast.FragmentDefinition) validator.NextCheckAction {
 
-	// A GraphQL document is only valid if all defined fragments have unique names.
-	var (
-		knownFragmentNames = ctx.KnownFragmentNames
-		fragmentName       = fragment.Name
-		fragmentNameValue  = fragmentName.Value()
-	)
-
-	if prevName, exists := knownFragmentNames[fragmentNameValue]; exists {
+	if !fragmentInfo.Used() {
 		ctx.ReportError(
-			messages.DuplicateFragmentNameMessage(fragmentNameValue),
-			[]graphql.ErrorLocation{
-				graphql.ErrorLocationOfASTNode(prevName),
-				graphql.ErrorLocationOfASTNode(fragmentName),
-			},
+			messages.UnusedFragMessage(fragment.Name.Value()),
+			graphql.ErrorLocationOfASTNode(fragment),
 		)
-	} else {
-		knownFragmentNames[fragmentNameValue] = fragmentName
 	}
 
-	// It is safe to stop running this rule on the child nodes because fragment nodes are only valid
-	// to appear at the top-level.
+	// Skip scanning fragment definition body. This is safe and required. FragmentDefinition should
+	// only appear as top-level definition of a GraphQL document. Skipping child nodes also prevents
+	// FragmentSpread's within the FragmentDefinition from being accounted to the uses of fragments.
 	return validator.SkipCheckForChildNodes
 }

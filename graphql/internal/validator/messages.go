@@ -223,3 +223,9 @@ func FragmentOnNonCompositeErrorMessage(fragmentName string, typeCondition strin
 func InlineFragmentOnNonCompositeErrorMessage(typeCondition string) string {
 	return fmt.Sprintf(`Fragment cannot condition on non composite type "%s".`, typeCondition)
 }
+
+// UnusedFragMessage returns message describing error occurred in rule "Fragments must be used"
+// (rules.NoUnusedFragments)
+func UnusedFragMessage(fragName string) string {
+	return fmt.Sprintf(`Fragment "%s" is never used.`, fragName)
+}

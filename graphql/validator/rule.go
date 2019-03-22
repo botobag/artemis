@@ -51,7 +51,7 @@ type OperationRule interface {
 type FragmentRule interface {
 	CheckFragment(
 		ctx *ValidationContext,
-		typeCondition graphql.Type,
+		fragmentInfo *FragmentInfo,
 		fragment *ast.FragmentDefinition) NextCheckAction
 }
 
@@ -78,6 +78,14 @@ type InlineFragmentRule interface {
 		ctx *ValidationContext,
 		parentType graphql.Type,
 		fragment *ast.InlineFragment) NextCheckAction
+}
+
+// FragmentSpreadRule validates a FragmentSpread.
+type FragmentSpreadRule interface {
+	CheckFragmentSpread(
+		ctx *ValidationContext,
+		fragmentInfo *FragmentInfo,
+		fragmentSpread *ast.FragmentSpread) NextCheckAction
 }
 
 // DirectiveRule validates a Directive.

@@ -35,9 +35,10 @@ type FragmentsOnCompositeTypes struct{}
 // CheckFragment implements validator.FragmentRule.
 func (rule FragmentsOnCompositeTypes) CheckFragment(
 	ctx *validator.ValidationContext,
-	typeCondition graphql.Type,
+	fragmentInfo *validator.FragmentInfo,
 	fragment *ast.FragmentDefinition) validator.NextCheckAction {
 
+	typeCondition := fragmentInfo.TypeCondition()
 	if typeCondition != nil && !graphql.IsCompositeType(typeCondition) {
 		ctx.ReportError(
 			messages.FragmentOnNonCompositeErrorMessage(
