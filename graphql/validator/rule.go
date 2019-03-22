@@ -49,7 +49,10 @@ type OperationRule interface {
 
 // FragmentRule validates an FragmentDefinition.
 type FragmentRule interface {
-	CheckFragment(ctx *ValidationContext, fragment *ast.FragmentDefinition) NextCheckAction
+	CheckFragment(
+		ctx *ValidationContext,
+		typeCondition graphql.Type,
+		fragment *ast.FragmentDefinition) NextCheckAction
 }
 
 // SelectionSetRule validates a SelectionSet.

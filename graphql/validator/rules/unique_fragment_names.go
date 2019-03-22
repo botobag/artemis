@@ -29,7 +29,11 @@ import (
 type UniqueFragmentNames struct{}
 
 // CheckFragment implements validator.FragmentRule.
-func (rule UniqueFragmentNames) CheckFragment(ctx *validator.ValidationContext, fragment *ast.FragmentDefinition) validator.NextCheckAction {
+func (rule UniqueFragmentNames) CheckFragment(
+	ctx *validator.ValidationContext,
+	typeCondition graphql.Type,
+	fragment *ast.FragmentDefinition) validator.NextCheckAction {
+
 	// A GraphQL document is only valid if all defined fragments have unique names.
 	var (
 		knownFragmentNames = ctx.KnownFragmentNames

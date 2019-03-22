@@ -128,14 +128,14 @@ type fragmentRules struct {
 	rules   []FragmentRule
 }
 
-func (r *fragmentRules) Run(ctx *ValidationContext, fragment *ast.FragmentDefinition) {
+func (r *fragmentRules) Run(ctx *ValidationContext, typeCondition graphql.Type, fragment *ast.FragmentDefinition) {
 	indices := r.indices
 	for i, rule := range r.rules {
 		index := indices[i]
 		// See whether we can run the rule.
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
-			setSkipping(ctx, index, fragment, rule.CheckFragment(ctx, fragment))
+			setSkipping(ctx, index, fragment, rule.CheckFragment(ctx, typeCondition, fragment))
 		}
 	}
 }
@@ -273,10 +273,10 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 }
 
 func walkFragmentDefinition(ctx *ValidationContext, fragment *ast.FragmentDefinition) {
-	// Run fragment rules.
-	ctx.rules.fragmentRules.Run(ctx, fragment)
-
 	typeCondition := ctx.TypeResolver().ResolveType(fragment.TypeCondition)
+
+	// Run fragment rules.
+	ctx.rules.fragmentRules.Run(ctx, typeCondition, fragment)
 
 	walkDirectives(ctx, fragment.Directives, graphql.DirectiveLocationFragmentDefinition)
 

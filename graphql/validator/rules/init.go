@@ -30,6 +30,7 @@ func init() {
 		LoneAnonymousOperation{},
 		SingleFieldSubscriptions{},
 		KnownTypeNames{},
+		FragmentsOnCompositeTypes{},
 		ScalarLeafs{},
 		FieldsOnCorrectType{},
 		UniqueFragmentNames{},

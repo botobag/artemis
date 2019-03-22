@@ -210,3 +210,16 @@ func UnknownTypeMessage(typeName string, suggestedTypes []string) string {
 
 	return message.String()
 }
+
+// FragmentOnNonCompositeErrorMessage returns message describing error occurred in rule "Fragments
+// on Composite Types" (rules.FragmentsOnCompositeTypes)
+func FragmentOnNonCompositeErrorMessage(fragmentName string, typeCondition string) string {
+	return fmt.Sprintf(`Fragment "%s" cannot condition on non composite type "%s".`,
+		fragmentName, typeCondition)
+}
+
+// InlineFragmentOnNonCompositeErrorMessage returns message describing error occurred in rule
+// "Fragments on Composite Types" (rules.FragmentsOnCompositeTypes)
+func InlineFragmentOnNonCompositeErrorMessage(typeCondition string) string {
+	return fmt.Sprintf(`Fragment cannot condition on non composite type "%s".`, typeCondition)
+}

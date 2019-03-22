@@ -41,7 +41,11 @@ func (rule KnownTypeNames) CheckOperation(ctx *validator.ValidationContext, oper
 }
 
 // CheckFragment implements validator.FragmentRule.
-func (rule KnownTypeNames) CheckFragment(ctx *validator.ValidationContext, fragment *ast.FragmentDefinition) validator.NextCheckAction {
+func (rule KnownTypeNames) CheckFragment(
+	ctx *validator.ValidationContext,
+	typeCondition graphql.Type,
+	fragment *ast.FragmentDefinition) validator.NextCheckAction {
+
 	rule.checkType(ctx, fragment.TypeCondition)
 	return validator.ContinueCheck
 }
