@@ -229,3 +229,9 @@ func InlineFragmentOnNonCompositeErrorMessage(typeCondition string) string {
 func UnusedFragMessage(fragName string) string {
 	return fmt.Sprintf(`Fragment "%s" is never used.`, fragName)
 }
+
+// UnknownFragmentMessage returns message describing error occurred in rule "Fragment spread target
+// defined" (rules.KnownFragmentNames)
+func UnknownFragmentMessage(fragName string) string {
+	return fmt.Sprintf(`Unknown fragment "%s".`, fragName)
+}
