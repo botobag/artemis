@@ -235,3 +235,25 @@ func UnusedFragMessage(fragName string) string {
 func UnknownFragmentMessage(fragName string) string {
 	return fmt.Sprintf(`Unknown fragment "%s".`, fragName)
 }
+
+// CycleErrorMessage returns message describing error occurred in rule "Fragments must not form
+// cycles" (rules.NoFragmentCycles)
+func CycleErrorMessage(fragName string, spreadNames []string) string {
+	var message util.StringBuilder
+
+	message.WriteString(`Cannot spread fragment "`)
+	message.WriteString(fragName)
+	message.WriteString(`" within itself`)
+
+	if len(spreadNames) > 0 {
+		message.WriteString(` via `)
+		message.WriteString(spreadNames[0])
+		for _, name := range spreadNames[1:] {
+			message.WriteString(", ")
+			message.WriteString(name)
+		}
+	}
+	message.WriteString(`.`)
+
+	return message.String()
+}

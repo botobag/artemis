@@ -34,6 +34,14 @@ type FragmentInfo struct {
 	// Set to true if fragments that have been referenced (used) in any operation definitions (used by
 	// NoUnusedFragments)
 	used bool
+
+	// Used by NoFragmentCycles to see if the fragment has been visited during cylce detection.
+	CycleChecked bool
+}
+
+// Name returns the fragment name indicated by the info.
+func (info *FragmentInfo) Name() string {
+	return info.def.Name.Value()
 }
 
 // Definition returns info.def.
