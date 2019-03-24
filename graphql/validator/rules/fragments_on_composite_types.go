@@ -56,11 +56,11 @@ func (rule FragmentsOnCompositeTypes) CheckFragment(
 func (rule FragmentsOnCompositeTypes) CheckInlineFragment(
 	ctx *validator.ValidationContext,
 	parentType graphql.Type,
+	typeCondition graphql.Type,
 	fragment *ast.InlineFragment) validator.NextCheckAction {
 
-	if fragment.HasTypeCondition() && parentType != nil {
-		// parentType must be resolved to the type condition in this case.
-		if !graphql.IsCompositeType(parentType) {
+	if typeCondition != nil {
+		if !graphql.IsCompositeType(typeCondition) {
 			ctx.ReportError(
 				messages.InlineFragmentOnNonCompositeErrorMessage(ast.Print(fragment.TypeCondition)),
 				graphql.ErrorLocationOfASTNode(fragment.TypeCondition),

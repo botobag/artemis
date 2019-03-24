@@ -77,6 +77,7 @@ type InlineFragmentRule interface {
 	CheckInlineFragment(
 		ctx *ValidationContext,
 		parentType graphql.Type,
+		typeCondition graphql.Type,
 		fragment *ast.InlineFragment) NextCheckAction
 }
 
@@ -84,6 +85,7 @@ type InlineFragmentRule interface {
 type FragmentSpreadRule interface {
 	CheckFragmentSpread(
 		ctx *ValidationContext,
+		parentType graphql.Type,
 		fragmentInfo *FragmentInfo,
 		fragmentSpread *ast.FragmentSpread) NextCheckAction
 }

@@ -187,14 +187,14 @@ type inlineFragmentRules struct {
 	rules   []InlineFragmentRule
 }
 
-func (r *inlineFragmentRules) Run(ctx *ValidationContext, parentType graphql.Type, fragment *ast.InlineFragment) {
+func (r *inlineFragmentRules) Run(ctx *ValidationContext, parentType graphql.Type, typeCondition graphql.Type, fragment *ast.InlineFragment) {
 	indices := r.indices
 	for i, rule := range r.rules {
 		index := indices[i]
 		// See whether we can run the rule.
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
-			setSkipping(ctx, index, fragment, rule.CheckInlineFragment(ctx, parentType, fragment))
+			setSkipping(ctx, index, fragment, rule.CheckInlineFragment(ctx, parentType, typeCondition, fragment))
 		}
 	}
 }
@@ -204,14 +204,14 @@ type fragmentSpreadRules struct {
 	rules   []FragmentSpreadRule
 }
 
-func (r *fragmentSpreadRules) Run(ctx *ValidationContext, fragmentInfo *FragmentInfo, fragmentSpread *ast.FragmentSpread) {
+func (r *fragmentSpreadRules) Run(ctx *ValidationContext, parentType graphql.Type, fragmentInfo *FragmentInfo, fragmentSpread *ast.FragmentSpread) {
 	indices := r.indices
 	for i, rule := range r.rules {
 		index := indices[i]
 		// See whether we can run the rule.
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
-			setSkipping(ctx, index, fragmentSpread, rule.CheckFragmentSpread(ctx, fragmentInfo, fragmentSpread))
+			setSkipping(ctx, index, fragmentSpread, rule.CheckFragmentSpread(ctx, parentType, fragmentInfo, fragmentSpread))
 		}
 	}
 }
@@ -334,7 +334,7 @@ func walkSelection(ctx *ValidationContext, parentType graphql.Type, selection as
 		walkInlineFragment(ctx, parentType, selection)
 
 	case *ast.FragmentSpread:
-		walkFragmentSpread(ctx, selection)
+		walkFragmentSpread(ctx, parentType, selection)
 	}
 }
 
@@ -360,28 +360,33 @@ func walkField(ctx *ValidationContext, parentType graphql.Type, field *ast.Field
 }
 
 func walkInlineFragment(ctx *ValidationContext, parentType graphql.Type, fragment *ast.InlineFragment) {
+	var (
+		typeCondition  graphql.Type
+		nextParentType = parentType
+	)
 	if fragment.HasTypeCondition() {
-		parentType = ctx.TypeResolver().ResolveType(fragment.TypeCondition)
+		typeCondition = ctx.TypeResolver().ResolveType(fragment.TypeCondition)
+		nextParentType = typeCondition
 	}
 
 	// Run inline fragment rules.
-	ctx.rules.inlineFragmentRules.Run(ctx, parentType, fragment)
+	ctx.rules.inlineFragmentRules.Run(ctx, parentType, typeCondition, fragment)
 
 	// Visit directives.
 	walkDirectives(ctx, fragment.Directives, graphql.DirectiveLocationInlineFragment)
 
 	// Visit selection set.
-	walkSelectionSet(ctx, parentType, fragment.SelectionSet)
+	walkSelectionSet(ctx, nextParentType, fragment.SelectionSet)
 
 	// Call leave before return.
 	leaveNode(ctx, fragment)
 }
 
-func walkFragmentSpread(ctx *ValidationContext, fragmentSpread *ast.FragmentSpread) {
+func walkFragmentSpread(ctx *ValidationContext, parentType graphql.Type, fragmentSpread *ast.FragmentSpread) {
 	fragmentInfo := ctx.FragmentInfo(fragmentSpread.Name.Value())
 
 	// Run fragment spread rules.
-	ctx.rules.fragmentSpreadRules.Run(ctx, fragmentInfo, fragmentSpread)
+	ctx.rules.fragmentSpreadRules.Run(ctx, parentType, fragmentInfo, fragmentSpread)
 
 	// Visit directives.
 	walkDirectives(ctx, fragmentSpread.Directives, graphql.DirectiveLocationFragmentSpread)

@@ -566,14 +566,15 @@ type InlineFragment struct {
 func (node *InlineFragment) TokenRange() token.Range {
 	var firstToken *token.Token
 	if node.HasTypeCondition() {
-		firstToken = node.TypeCondition.Name.Token
+		// ".Prev" to move to "on".
+		firstToken = node.TypeCondition.Name.Token.Prev
 	} else if len(node.Directives) > 0 {
 		firstToken = node.Directives.FirstToken()
 	} else {
 		firstToken = node.SelectionSet.FirstToken()
 	}
 	return token.Range{
-		First: firstToken,
+		First: firstToken.Prev, // "..." token
 		Last:  node.SelectionSet.LastToken(),
 	}
 }

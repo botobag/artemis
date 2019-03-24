@@ -51,8 +51,13 @@ func (rule KnownTypeNames) CheckFragment(
 }
 
 // CheckInlineFragment implements validator.InlineFragmentRule.
-func (rule KnownTypeNames) CheckInlineFragment(ctx *validator.ValidationContext, parentType graphql.Type, fragment *ast.InlineFragment) validator.NextCheckAction {
-	if fragment.HasTypeCondition() && parentType == nil {
+func (rule KnownTypeNames) CheckInlineFragment(
+	ctx *validator.ValidationContext,
+	parentType graphql.Type,
+	typeCondition graphql.Type,
+	fragment *ast.InlineFragment) validator.NextCheckAction {
+
+	if fragment.HasTypeCondition() {
 		rule.checkType(ctx, fragment.TypeCondition)
 	}
 	return validator.ContinueCheck

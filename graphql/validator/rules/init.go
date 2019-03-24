@@ -36,6 +36,8 @@ func init() {
 		UniqueFragmentNames{},
 		KnownFragmentNames{},
 		NoUnusedFragments{},
+		PossibleFragmentSpreads{},
+		NoFragmentCycles{},
 		KnownArgumentNames{},
 		UniqueArgumentNames{},
 		ProvidedRequiredArguments{},

@@ -83,7 +83,7 @@ type FieldConflictReason struct {
 }
 
 // FieldsConflictMessage returns message describing error occurred in rule "Field Selection Merging"
-// (rules.OverlappingFieldsCanBeMerged)
+// (rules.OverlappingFieldsCanBeMerged).
 func FieldsConflictMessage(reason *FieldConflictReason) string {
 	var message util.StringBuilder
 
@@ -195,7 +195,7 @@ func DuplicateFragmentNameMessage(fragmentName string) string {
 }
 
 // UnknownTypeMessage returns message describing error occurred in rule
-// "Fragment Spread Type Existence" (rules.KnownTypeNames)
+// "Fragment Spread Type Existence" (rules.KnownTypeNames).
 func UnknownTypeMessage(typeName string, suggestedTypes []string) string {
 	var message util.StringBuilder
 	message.WriteString(`Unknown type "`)
@@ -212,32 +212,32 @@ func UnknownTypeMessage(typeName string, suggestedTypes []string) string {
 }
 
 // FragmentOnNonCompositeErrorMessage returns message describing error occurred in rule "Fragments
-// on Composite Types" (rules.FragmentsOnCompositeTypes)
+// on Composite Types" (rules.FragmentsOnCompositeTypes).
 func FragmentOnNonCompositeErrorMessage(fragmentName string, typeCondition string) string {
 	return fmt.Sprintf(`Fragment "%s" cannot condition on non composite type "%s".`,
 		fragmentName, typeCondition)
 }
 
 // InlineFragmentOnNonCompositeErrorMessage returns message describing error occurred in rule
-// "Fragments on Composite Types" (rules.FragmentsOnCompositeTypes)
+// "Fragments on Composite Types" (rules.FragmentsOnCompositeTypes).
 func InlineFragmentOnNonCompositeErrorMessage(typeCondition string) string {
 	return fmt.Sprintf(`Fragment cannot condition on non composite type "%s".`, typeCondition)
 }
 
 // UnusedFragMessage returns message describing error occurred in rule "Fragments must be used"
-// (rules.NoUnusedFragments)
+// (rules.NoUnusedFragments).
 func UnusedFragMessage(fragName string) string {
 	return fmt.Sprintf(`Fragment "%s" is never used.`, fragName)
 }
 
 // UnknownFragmentMessage returns message describing error occurred in rule "Fragment spread target
-// defined" (rules.KnownFragmentNames)
+// defined" (rules.KnownFragmentNames).
 func UnknownFragmentMessage(fragName string) string {
 	return fmt.Sprintf(`Unknown fragment "%s".`, fragName)
 }
 
 // CycleErrorMessage returns message describing error occurred in rule "Fragments must not form
-// cycles" (rules.NoFragmentCycles)
+// cycles" (rules.NoFragmentCycles).
 func CycleErrorMessage(fragName string, spreadNames []string) string {
 	var message util.StringBuilder
 
@@ -256,4 +256,18 @@ func CycleErrorMessage(fragName string, spreadNames []string) string {
 	message.WriteString(`.`)
 
 	return message.String()
+}
+
+// TypeIncompatibleAnonSpreadMessage returns message describing error occurred in rule "Fragment
+// spread is possible" (rules.PossibleFragmentSpreads).
+func TypeIncompatibleAnonSpreadMessage(parentType string, fragType string) string {
+	return fmt.Sprintf(`Fragment cannot be spread here as objects of type "%s" can never be of type "%s"`,
+		parentType, fragType)
+}
+
+// TypeIncompatibleSpreadMessage returns message describing error occurred in rule "Fragment spread
+// is possible" (rules.PossibleFragmentSpreads).
+func TypeIncompatibleSpreadMessage(fragName string, parentType string, fragType string) string {
+	return fmt.Sprintf(`Fragment "%s" cannot be spread here as objects of type "%s" can never be of type "%s".`,
+		fragName, parentType, fragType)
 }

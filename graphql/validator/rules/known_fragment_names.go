@@ -31,6 +31,7 @@ type KnownFragmentNames struct{}
 // CheckFragmentSpread implements validator.FragmentSpreadRule.
 func (rule KnownFragmentNames) CheckFragmentSpread(
 	ctx *validator.ValidationContext,
+	parentType graphql.Type,
 	fragmentInfo *validator.FragmentInfo,
 	fragmentSpread *ast.FragmentSpread) validator.NextCheckAction {
 

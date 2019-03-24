@@ -335,6 +335,16 @@ func (set PossibleTypeSet) Iterator() Iterator {
 	return NewMapKeysIterator(set.types)
 }
 
+// DoesIntersect returns true if there is any intersect between set and the given one.
+func (set PossibleTypeSet) DoesIntersect(other PossibleTypeSet) bool {
+	for t := range set.types {
+		if other.Contains(t) {
+			return true
+		}
+	}
+	return false
+}
+
 // Union Type Definition
 //
 // When a field can return one of a heterogeneous set of types, a Union type is used to describe

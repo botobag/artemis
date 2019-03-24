@@ -34,6 +34,7 @@ type NoUnusedFragments struct{}
 // CheckFragmentSpread implements validator.FragmentSpreadRule.
 func (rule NoUnusedFragments) CheckFragmentSpread(
 	ctx *validator.ValidationContext,
+	parentType graphql.Type,
 	fragmentInfo *validator.FragmentInfo,
 	fragmentSpread *ast.FragmentSpread) validator.NextCheckAction {
 
