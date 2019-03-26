@@ -20,7 +20,6 @@ import (
 	"sort"
 
 	"github.com/botobag/artemis/graphql"
-	"github.com/botobag/artemis/graphql/ast"
 	messages "github.com/botobag/artemis/graphql/internal/validator"
 	"github.com/botobag/artemis/graphql/validator"
 	"github.com/botobag/artemis/internal/util"
@@ -35,12 +34,14 @@ type FieldsOnCorrectType struct{}
 // CheckField implements validator.FieldRule.
 func (rule FieldsOnCorrectType) CheckField(
 	ctx *validator.ValidationContext,
-	parentType graphql.Type,
-	fieldDef graphql.Field,
-	field *ast.Field) validator.NextCheckAction {
+	field *validator.FieldInfo) validator.NextCheckAction {
 
 	// A GraphQL document is only valid if all fields selected are defined by the parent type, or are
 	// an allowed meta field such as __typename.
+	var (
+		parentType = field.ParentType()
+		fieldDef   = field.Def()
+	)
 
 	if parentType == nil {
 		// If we're unable to resolve parent type statically, we cannot correctly reason the field type.
@@ -58,7 +59,8 @@ func (rule FieldsOnCorrectType) CheckField(
 	// This field doesn't exist, lets look for suggestions.
 	var (
 		schema              = ctx.Schema()
-		fieldName           = field.Name.Value()
+		fieldNode           = field.Node()
+		fieldName           = field.Name()
 		suggestedTypeNames  []string
 		suggestedFieldNames []string
 	)
@@ -79,7 +81,7 @@ func (rule FieldsOnCorrectType) CheckField(
 			suggestedTypeNames,
 			suggestedFieldNames,
 		),
-		graphql.ErrorLocationOfASTNode(field),
+		graphql.ErrorLocationOfASTNode(fieldNode),
 	)
 
 	return validator.ContinueCheck

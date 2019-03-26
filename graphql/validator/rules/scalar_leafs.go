@@ -18,7 +18,6 @@ package rules
 
 import (
 	"github.com/botobag/artemis/graphql"
-	"github.com/botobag/artemis/graphql/ast"
 	messages "github.com/botobag/artemis/graphql/internal/validator"
 	"github.com/botobag/artemis/graphql/validator"
 )
@@ -31,21 +30,23 @@ type ScalarLeafs struct{}
 // CheckField implements validator.FieldRule.
 func (rule ScalarLeafs) CheckField(
 	ctx *validator.ValidationContext,
-	parentType graphql.Type,
-	fieldDef graphql.Field,
-	field *ast.Field) validator.NextCheckAction {
+	field *validator.FieldInfo) validator.NextCheckAction {
 
 	// A GraphQL document is valid only if all leaf fields (fields without sub selections) are of
 	// scalar or enum types.
+	var (
+		fieldDef  = field.Def()
+		fieldNode = field.Node()
+	)
 
 	if fieldDef != nil {
 		fieldType := fieldDef.Type()
-		selectionSet := field.SelectionSet
+		selectionSet := fieldNode.SelectionSet
 		if graphql.IsLeafType(graphql.NamedTypeOf(fieldType)) {
 			if len(selectionSet) > 0 {
 				ctx.ReportError(
 					messages.NoSubselectionAllowedMessage(
-						field.Name.Value(),
+						field.Name(),
 						graphql.Inspect(fieldType),
 					),
 					graphql.ErrorLocationOfASTNode(selectionSet),
@@ -54,10 +55,10 @@ func (rule ScalarLeafs) CheckField(
 		} else if len(selectionSet) == 0 {
 			ctx.ReportError(
 				messages.RequiredSubselectionMessage(
-					field.Name.Value(),
+					field.Name(),
 					graphql.Inspect(fieldType),
 				),
-				graphql.ErrorLocationOfASTNode(field),
+				graphql.ErrorLocationOfASTNode(fieldNode),
 			)
 		}
 	}

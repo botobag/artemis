@@ -25,14 +25,16 @@ import (
 
 // rules contains a collection of actions to be performed on nodes for validation.
 type rules struct {
-	numRules            int
-	operationRules      operationRules
-	fragmentRules       fragmentRules
-	selectionSetRules   selectionSetRules
-	fieldRules          fieldRules
-	inlineFragmentRules inlineFragmentRules
-	fragmentSpreadRules fragmentSpreadRules
-	directiveRules      directiveRules
+	numRules               int
+	operationRules         operationRules
+	fragmentRules          fragmentRules
+	selectionSetRules      selectionSetRules
+	fieldRules             fieldRules
+	fieldArgumentRules     fieldArgumentRules
+	inlineFragmentRules    inlineFragmentRules
+	fragmentSpreadRules    fragmentSpreadRules
+	directiveRules         directiveRules
+	directiveArgumentRules directiveArgumentRules
 }
 
 func buildRules(rs ...interface{}) *rules {
@@ -69,6 +71,13 @@ func buildRules(rs ...interface{}) *rules {
 			isRule = true
 		}
 
+		if r, ok := rule.(FieldArgumentRule); ok {
+			fieldArgumentRules := &rules.fieldArgumentRules
+			fieldArgumentRules.indices = append(fieldArgumentRules.indices, i)
+			fieldArgumentRules.rules = append(fieldArgumentRules.rules, r)
+			isRule = true
+		}
+
 		if r, ok := rule.(InlineFragmentRule); ok {
 			inlineFragmentRules := &rules.inlineFragmentRules
 			inlineFragmentRules.indices = append(inlineFragmentRules.indices, i)
@@ -87,6 +96,13 @@ func buildRules(rs ...interface{}) *rules {
 			directiveRules := &rules.directiveRules
 			directiveRules.indices = append(directiveRules.indices, i)
 			directiveRules.rules = append(directiveRules.rules, r)
+			isRule = true
+		}
+
+		if r, ok := rule.(DirectiveArgumentRule); ok {
+			directiveArgumentRules := &rules.directiveArgumentRules
+			directiveArgumentRules.indices = append(directiveArgumentRules.indices, i)
+			directiveArgumentRules.rules = append(directiveArgumentRules.rules, r)
 			isRule = true
 		}
 
@@ -170,14 +186,36 @@ type fieldRules struct {
 	rules   []FieldRule
 }
 
-func (r *fieldRules) Run(ctx *ValidationContext, parentType graphql.Type, fieldDef graphql.Field, field *ast.Field) {
+func (r *fieldRules) Run(ctx *ValidationContext, field *FieldInfo) {
 	indices := r.indices
 	for i, rule := range r.rules {
 		index := indices[i]
 		// See whether we can run the rule.
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
-			setSkipping(ctx, index, field, rule.CheckField(ctx, parentType, fieldDef, field))
+			setSkipping(ctx, index, field.Node(), rule.CheckField(ctx, field))
+		}
+	}
+}
+
+type fieldArgumentRules struct {
+	indices []int
+	rules   []FieldArgumentRule
+}
+
+func (r *fieldArgumentRules) Run(
+	ctx *ValidationContext,
+	field *FieldInfo,
+	argDef *graphql.Argument,
+	arg *ast.Argument) {
+
+	indices := r.indices
+	for i, rule := range r.rules {
+		index := indices[i]
+		// See whether we can run the rule.
+		if !shouldSkipRule(ctx, index) {
+			// Run the rule and set skipping state.
+			setSkipping(ctx, index, arg, rule.CheckFieldArgument(ctx, field, argDef, arg))
 		}
 	}
 }
@@ -221,11 +259,28 @@ type directiveRules struct {
 	rules   []DirectiveRule
 }
 
-func (r *directiveRules) Run(
+func (r *directiveRules) Run(ctx *ValidationContext, directive *DirectiveInfo) {
+	indices := r.indices
+	for i, rule := range r.rules {
+		index := indices[i]
+		// See whether we can run the rule.
+		if !shouldSkipRule(ctx, index) {
+			// Run the rule and set skipping state.
+			setSkipping(ctx, index, directive.Node(), rule.CheckDirective(ctx, directive))
+		}
+	}
+}
+
+type directiveArgumentRules struct {
+	indices []int
+	rules   []DirectiveArgumentRule
+}
+
+func (r *directiveArgumentRules) Run(
 	ctx *ValidationContext,
-	directiveDef graphql.Directive,
-	directive *ast.Directive,
-	location graphql.DirectiveLocation) {
+	directive *DirectiveInfo,
+	argDef *graphql.Argument,
+	arg *ast.Argument) {
 
 	indices := r.indices
 	for i, rule := range r.rules {
@@ -233,7 +288,7 @@ func (r *directiveRules) Run(
 		// See whether we can run the rule.
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
-			setSkipping(ctx, index, directive, rule.CheckDirective(ctx, directiveDef, directive, location))
+			setSkipping(ctx, index, arg, rule.CheckDirectiveArgument(ctx, directive, argDef, arg))
 		}
 	}
 }
@@ -338,22 +393,53 @@ func walkSelection(ctx *ValidationContext, parentType graphql.Type, selection as
 	}
 }
 
+func walkFieldArguments(ctx *ValidationContext, field *FieldInfo) {
+	var (
+		arguments = field.Node().Arguments
+		fieldDef  = field.Def()
+	)
+	if fieldDef == nil {
+		for _, arg := range arguments {
+			ctx.rules.fieldArgumentRules.Run(ctx, field, nil, arg)
+		}
+	} else {
+		argDefs := fieldDef.Args()
+
+		for _, arg := range arguments {
+			var argDef *graphql.Argument
+
+			// Search definition for arg node from argDefs by name.
+			argName := arg.Name.Value()
+			for i := range argDefs {
+				if argDefs[i].Name() == argName {
+					argDef = &argDefs[i]
+					break
+				}
+			}
+
+			ctx.rules.fieldArgumentRules.Run(ctx, field, argDef, arg)
+		}
+	}
+}
+
 func walkField(ctx *ValidationContext, parentType graphql.Type, field *ast.Field) {
-	// Resolve field type.
-	fieldDef := ctx.TypeResolver().ResolveField(parentType, field)
+	info := &FieldInfo{
+		parentType: parentType,
+		def:        ctx.TypeResolver().ResolveField(parentType, field),
+		node:       field,
+	}
 
 	// Run field rules.
-	ctx.rules.fieldRules.Run(ctx, parentType, fieldDef, field)
+	ctx.rules.fieldRules.Run(ctx, info)
+
+	// Visit arguments.
+	walkFieldArguments(ctx, info)
 
 	// Visit directives.
 	walkDirectives(ctx, field.Directives, graphql.DirectiveLocationField)
 
 	// Visit selection set of field.
-	var fieldType graphql.Type
-	if fieldDef != nil {
-		fieldType = fieldDef.Type()
-	}
-	walkSelectionSet(ctx, fieldType, field.SelectionSet)
+	walkSelectionSet(ctx, info.Type(), field.SelectionSet)
 
 	// Call leave before return.
 	leaveNode(ctx, field)
@@ -395,19 +481,34 @@ func walkFragmentSpread(ctx *ValidationContext, parentType graphql.Type, fragmen
 	leaveNode(ctx, fragmentSpread)
 }
 
+func walkValue(ctx *ValidationContext, valueType graphql.Type, value ast.Value) {
+	// Run value rules.
+	ctx.rules.valueRules.Run(
+		ctx,
+		valueType,
+		value)
+}
+
 func walkDirectives(ctx *ValidationContext, directives ast.Directives, location graphql.DirectiveLocation) {
 	if len(directives) == 0 {
 		return
 	}
 
-	directiveDefs := ctx.schema.Directives()
+	var (
+		info = &DirectiveInfo{
+			location: location,
+		}
+		directiveDefs = ctx.schema.Directives()
+	)
 	for _, directive := range directives {
+		info.node = directive
+		info.def = directiveDefs.Lookup(directive.Name.Value())
+
 		// Run directive rules.
-		ctx.rules.directiveRules.Run(
-			ctx,
-			directiveDefs.Lookup(directive.Name.Value()),
-			directive,
-			location)
+		ctx.rules.directiveRules.Run(ctx, info)
+
+		// Visit arguments.
+		walkDirectiveArguments(ctx, info)
 
 		// Call leave.
 		leaveNode(ctx, directive)
@@ -415,4 +516,34 @@ func walkDirectives(ctx *ValidationContext, directives ast.Directives, location 
 
 	// Call leave before return.
 	leaveNode(ctx, directives)
+}
+
+func walkDirectiveArguments(ctx *ValidationContext, directive *DirectiveInfo) {
+	var (
+		arguments    = directive.Node().Arguments
+		directiveDef = directive.Def()
+	)
+
+	if directiveDef == nil {
+		for _, arg := range arguments {
+			ctx.rules.directiveArgumentRules.Run(ctx, directive, nil, arg)
+		}
+	} else {
+		argDefs := directiveDef.Args()
+
+		for _, arg := range arguments {
+			var argDef *graphql.Argument
+
+			// Search definition for arg node from argDefs by name.
+			argName := arg.Name.Value()
+			for i := range argDefs {
+				if argDefs[i].Name() == argName {
+					argDef = &argDefs[i]
+					break
+				}
+			}
+
+			ctx.rules.directiveArgumentRules.Run(ctx, directive, argDef, arg)
+		}
+	}
 }

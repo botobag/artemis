@@ -31,58 +31,41 @@ type KnownArgumentNames struct {
 	KnownArgumentNamesOnDirectives
 }
 
-// CheckField implements validator.FieldRule.
-func (rule KnownArgumentNames) CheckField(
+// CheckFieldArgument implements validator.FieldArgumentRule.
+func (rule KnownArgumentNames) CheckFieldArgument(
 	ctx *validator.ValidationContext,
-	parentType graphql.Type,
-	fieldDef graphql.Field,
-	field *ast.Field) validator.NextCheckAction {
+	field *validator.FieldInfo,
+	argDef *graphql.Argument,
+	arg *ast.Argument) validator.NextCheckAction {
 
 	// A GraphQL field is only valid if all supplied arguments are defined by that field.
 
-	if fieldDef == nil || parentType == nil {
-		// If we're unable to resolve field and parent type statically, we don't have argument
-		// definitions for the field. Skip the check.
+	if argDef != nil {
+		// Argument is defined.
 		return validator.ContinueCheck
 	}
 
 	var (
-		argsNode       = field.Arguments
-		argsDef        = fieldDef.Args()
-		knownArgsNames []string
+		fieldDef   = field.Def()
+		parentType = field.ParentType()
 	)
 
-	for _, argNode := range argsNode {
-		var argDef *graphql.Argument
-
-		// Search definition for argNode from argsDef by name.
-		argName := argNode.Name.Value()
-		for i := range argsDef {
-			if argsDef[i].Name() == argName {
-				argDef = &argsDef[i]
-				break
-			}
-		}
-
-		if argDef == nil {
-			if knownArgsNames == nil {
-				knownArgsNames = make([]string, len(argsDef))
-				for i := range argsDef {
-					knownArgsNames[i] = argsDef[i].Name()
-				}
-			}
-
-			ctx.ReportError(
-				messages.UnknownArgMessage(
-					argName,
-					fieldDef.Name(),
-					parentType.(graphql.TypeWithName).Name(),
-					util.SuggestionList(argName, knownArgsNames),
-				),
-				graphql.ErrorLocationOfASTNode(argNode),
-			)
-		} // if argDef == nil
+	// If we're unable to resolve field and parent type statically, we don't have argument
+	// definitions for the field. Don't throw error for this case.
+	if fieldDef == nil || parentType == nil {
+		return validator.ContinueCheck
 	}
+
+	argName := arg.Name.Value()
+	ctx.ReportError(
+		messages.UnknownArgMessage(
+			argName,
+			fieldDef.Name(),
+			parentType.(graphql.TypeWithName).Name(),
+			util.SuggestionList(argName, field.KnownArgNames()),
+		),
+		graphql.ErrorLocationOfASTNode(arg),
+	)
 
 	return validator.ContinueCheck
 }
@@ -92,52 +75,33 @@ func (rule KnownArgumentNames) CheckField(
 // See https://facebook.github.io/graphql/June2018/#sec-Argument-Names.
 type KnownArgumentNamesOnDirectives struct{}
 
-// CheckDirective implements validator.DirectiveRule.
-func (rule KnownArgumentNames) CheckDirective(
+// CheckDirectiveArgument implements validator.DirectiveArgumentRule.
+func (rule KnownArgumentNames) CheckDirectiveArgument(
 	ctx *validator.ValidationContext,
-	directiveDef graphql.Directive,
-	directive *ast.Directive,
-	location graphql.DirectiveLocation) validator.NextCheckAction {
+	directive *validator.DirectiveInfo,
+	argDef *graphql.Argument,
+	arg *ast.Argument) validator.NextCheckAction {
 
-	if directiveDef == nil {
+	if argDef != nil {
+		// Quick return for known arguments.
+		return validator.ContinueCheck
+	}
+
+	if directive.Def() == nil {
 		// We cannot run the validation if we're unable to find directive definition in schema. Quick
 		// return to Skip the check in this case.
 		return validator.ContinueCheck
 	}
 
-	var (
-		argsDef   = directiveDef.Args()
-		knownArgs []string
+	argName := arg.Name.Value()
+	ctx.ReportError(
+		messages.UnknownDirectiveArgMessage(
+			argName,
+			directive.Name(),
+			util.SuggestionList(argName, directive.KnownArgNames()),
+		),
+		graphql.ErrorLocationOfASTNode(arg),
 	)
-	for _, arg := range directive.Arguments {
-		// Find corresponding definition for arg.
-		var argDef *graphql.Argument
-		argName := arg.Name.Value()
-		for i := range argsDef {
-			if argsDef[i].Name() == argName {
-				argDef = &argsDef[i]
-				break
-			}
-		}
-
-		if argDef == nil {
-			if knownArgs == nil {
-				knownArgs = make([]string, len(argsDef))
-				for i := range argsDef {
-					knownArgs[i] = argsDef[i].Name()
-				}
-			}
-
-			ctx.ReportError(
-				messages.UnknownDirectiveArgMessage(
-					argName,
-					directive.Name.Value(),
-					util.SuggestionList(argName, knownArgs),
-				),
-				graphql.ErrorLocationOfASTNode(arg),
-			)
-		} // if argDef == nil
-	}
 
 	return validator.ContinueCheck
 }

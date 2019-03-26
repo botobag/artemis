@@ -18,7 +18,6 @@ package rules
 
 import (
 	"github.com/botobag/artemis/graphql"
-	"github.com/botobag/artemis/graphql/ast"
 	messages "github.com/botobag/artemis/graphql/internal/validator"
 	"github.com/botobag/artemis/graphql/validator"
 )
@@ -33,12 +32,11 @@ type ProvidedRequiredArguments struct {
 // CheckField implements validator.FieldRule.
 func (rule ProvidedRequiredArguments) CheckField(
 	ctx *validator.ValidationContext,
-	parentType graphql.Type,
-	fieldDef graphql.Field,
-	field *ast.Field) validator.NextCheckAction {
+	field *validator.FieldInfo) validator.NextCheckAction {
 
 	// A field or directive is only valid if all required (non-null without a default value) field
 	// arguments have been provided.
+	fieldDef := field.Def()
 
 	if fieldDef == nil {
 		// If we're unable to resolve field and parent type statically, we don't have argument
@@ -47,8 +45,9 @@ func (rule ProvidedRequiredArguments) CheckField(
 	}
 
 	var (
-		argNodes = field.Arguments
-		argDefs  = fieldDef.Args()
+		fieldNode = field.Node()
+		argNodes  = fieldNode.Arguments
+		argDefs   = fieldDef.Args()
 	)
 
 check_next_arg:
@@ -72,7 +71,7 @@ check_next_arg:
 				fieldDef.Name(),
 				graphql.Inspect(argDef.Type()),
 			),
-			graphql.ErrorLocationOfASTNode(field),
+			graphql.ErrorLocationOfASTNode(fieldNode),
 		)
 	}
 
@@ -88,9 +87,9 @@ type ProvidedRequiredArgumentsOnDirectives struct{}
 // CheckDirective implements validator.DirectiveRule.
 func (rule ProvidedRequiredArguments) CheckDirective(
 	ctx *validator.ValidationContext,
-	directiveDef graphql.Directive,
-	directive *ast.Directive,
-	location graphql.DirectiveLocation) validator.NextCheckAction {
+	directive *validator.DirectiveInfo) validator.NextCheckAction {
+
+	directiveDef := directive.Def()
 
 	if directiveDef == nil {
 		// We cannot run the validation if we're unable to find directive definition in schema. Quick
@@ -99,8 +98,9 @@ func (rule ProvidedRequiredArguments) CheckDirective(
 	}
 
 	var (
-		argNodes = directive.Arguments
-		argDefs  = directiveDef.Args()
+		directiveNode = directive.Node()
+		argNodes      = directiveNode.Arguments
+		argDefs       = directiveDef.Args()
 	)
 
 check_next_arg:
@@ -124,7 +124,7 @@ check_next_arg:
 				directiveDef.Name(),
 				graphql.Inspect(argDef.Type()),
 			),
-			graphql.ErrorLocationOfASTNode(directive),
+			graphql.ErrorLocationOfASTNode(directiveNode),
 		)
 	}
 

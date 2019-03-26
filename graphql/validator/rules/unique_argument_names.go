@@ -31,22 +31,19 @@ type UniqueArgumentNames struct{}
 // CheckField implements validator.FieldRule.
 func (rule UniqueArgumentNames) CheckField(
 	ctx *validator.ValidationContext,
-	parentType graphql.Type,
-	fieldDef graphql.Field,
-	field *ast.Field) validator.NextCheckAction {
+	field *validator.FieldInfo) validator.NextCheckAction {
 
 	// A GraphQL field or directive is only valid if all supplied arguments are uniquely named.
-	rule.checkUniqueArgNames(ctx, field.Arguments)
+	rule.checkUniqueArgNames(ctx, field.Node().Arguments)
 	return validator.ContinueCheck
 }
 
 // CheckDirective implements validator.DirectiveRule.
 func (rule UniqueArgumentNames) CheckDirective(
 	ctx *validator.ValidationContext,
-	directiveDef graphql.Directive,
-	directive *ast.Directive,
-	location graphql.DirectiveLocation) validator.NextCheckAction {
-	rule.checkUniqueArgNames(ctx, directive.Arguments)
+	directive *validator.DirectiveInfo) validator.NextCheckAction {
+
+	rule.checkUniqueArgNames(ctx, directive.Node().Arguments)
 	return validator.ContinueCheck
 }
 

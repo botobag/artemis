@@ -63,13 +63,80 @@ type SelectionSetRule interface {
 		selectionSet ast.SelectionSet) NextCheckAction
 }
 
+// FieldInfo provides information of the field to be checked for FieldRule and FieldArgumentRule.
+type FieldInfo struct {
+	parentType    graphql.Type
+	def           graphql.Field
+	node          *ast.Field
+	knownArgNames []string
+}
+
+// ParentType returns type of parent that includes the field; Must be a composite type (Object,
+// Union or Interface.)
+func (info *FieldInfo) ParentType() graphql.Type {
+	return info.parentType
+}
+
+// Def returns field definition corresponding to the node in schema (could be nil; For example, in
+// the case of unknown fields.)
+func (info *FieldInfo) Def() graphql.Field {
+	return info.def
+}
+
+// Type returns definition of the field type in schema. Could be nil if the field definition is not
+// available.
+func (info *FieldInfo) Type() graphql.Type {
+	if info.def != nil {
+		return info.def.Type()
+	}
+	return nil
+}
+
+// Node returns AST node that specifies the field
+func (info *FieldInfo) Node() *ast.Field {
+	return info.node
+}
+
+// Name returns field name.
+func (info *FieldInfo) Name() string {
+	return info.node.Name.Value()
+}
+
+// KnownArgNames returns list of argument names in the field. This is used by KnownArgumentNames
+// rule to make suggestion when an unknown argument is given. It is lazily computed on first call to
+// KnownArgName.
+func (info *FieldInfo) KnownArgNames() []string {
+	knownArgNames := info.knownArgNames
+	if knownArgNames != nil {
+		return knownArgNames
+	}
+
+	def := info.def
+	if def != nil {
+		argDefs := def.Args()
+		knownArgNames = make([]string, len(argDefs))
+		for i := range argDefs {
+			knownArgNames[i] = argDefs[i].Name()
+		}
+		// Cache in info.knownArgNames for later accesses.
+		info.knownArgNames = knownArgNames
+	}
+
+	return knownArgNames
+}
+
 // FieldRule validates a Field.
 type FieldRule interface {
-	CheckField(
+	CheckField(ctx *ValidationContext, field *FieldInfo) NextCheckAction
+}
+
+// FieldArgumentRule validates a Argument in a Field.
+type FieldArgumentRule interface {
+	CheckFieldArgument(
 		ctx *ValidationContext,
-		parentType graphql.Type,
-		fieldDef graphql.Field,
-		field *ast.Field) NextCheckAction
+		field *FieldInfo,
+		argDef *graphql.Argument,
+		arg *ast.Argument) NextCheckAction
 }
 
 // InlineFragmentRule validates a InlineFragment.
@@ -90,11 +157,68 @@ type FragmentSpreadRule interface {
 		fragmentSpread *ast.FragmentSpread) NextCheckAction
 }
 
+// DirectiveInfo provides information of the field to be checked for DirectiveRule and DirectiveArgumentRule.
+type DirectiveInfo struct {
+	def           graphql.Directive
+	node          *ast.Directive
+	location      graphql.DirectiveLocation
+	knownArgNames []string
+}
+
+// Def returns directive definition corresponding to the node in schema (could be nil; For example,
+// in the case of unknown directives.)
+func (info *DirectiveInfo) Def() graphql.Directive {
+	return info.def
+}
+
+// Node returns AST node that specifies the directive
+func (info *DirectiveInfo) Node() *ast.Directive {
+	return info.node
+}
+
+// Name returns directive name.
+func (info *DirectiveInfo) Name() string {
+	return info.node.Name.Value()
+}
+
+// Location indicates the place where the directive node appears in the document.
+func (info *DirectiveInfo) Location() graphql.DirectiveLocation {
+	return info.location
+}
+
+// KnownArgNames returns list of argument names to the directive. This is used by KnownArgumentNames
+// rule to make suggestion when an unknown argument is given. It is lazily computed on first call to
+// KnownArgName.
+func (info *DirectiveInfo) KnownArgNames() []string {
+	knownArgNames := info.knownArgNames
+	if knownArgNames != nil {
+		return knownArgNames
+	}
+
+	def := info.def
+	if def != nil {
+		argDefs := def.Args()
+		knownArgNames = make([]string, len(argDefs))
+		for i := range argDefs {
+			knownArgNames[i] = argDefs[i].Name()
+		}
+		// Cache in info.knownArgNames for later accesses.
+		info.knownArgNames = knownArgNames
+	}
+
+	return knownArgNames
+}
+
 // DirectiveRule validates a Directive.
 type DirectiveRule interface {
-	CheckDirective(
+	CheckDirective(ctx *ValidationContext, directive *DirectiveInfo) NextCheckAction
+}
+
+// DirectiveArgumentRule validates a Argument in a Directive.
+type DirectiveArgumentRule interface {
+	CheckDirectiveArgument(
 		ctx *ValidationContext,
-		directiveDef graphql.Directive,
-		directive *ast.Directive,
-		location graphql.DirectiveLocation) NextCheckAction
+		directive *DirectiveInfo,
+		argDef *graphql.Argument,
+		arg *ast.Argument) NextCheckAction
 }
