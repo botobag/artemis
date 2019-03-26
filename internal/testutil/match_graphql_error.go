@@ -55,6 +55,13 @@ func LocationsConsistOf(locations []graphql.ErrorLocation) ErrorFieldsMatcher {
 	}
 }
 
+// OriginalErrorMatch matches original error with the given one using gomega.MatchError.
+func OriginalErrorMatch(err interface{}) ErrorFieldsMatcher {
+	return func(fields gstruct.Fields) {
+		fields["Err"] = gomega.MatchError(err)
+	}
+}
+
 // KindIs matches the kind in the error to be the same as the given one.
 func KindIs(errKind graphql.ErrKind) ErrorFieldsMatcher {
 	return func(fields gstruct.Fields) {

@@ -18,6 +18,7 @@ package validator
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
@@ -35,6 +36,7 @@ type rules struct {
 	fragmentSpreadRules    fragmentSpreadRules
 	directiveRules         directiveRules
 	directiveArgumentRules directiveArgumentRules
+	valueRules             valueRules
 }
 
 func buildRules(rs ...interface{}) *rules {
@@ -89,6 +91,13 @@ func buildRules(rs ...interface{}) *rules {
 			fragmentSpreadRules := &rules.fragmentSpreadRules
 			fragmentSpreadRules.indices = append(fragmentSpreadRules.indices, i)
 			fragmentSpreadRules.rules = append(fragmentSpreadRules.rules, r)
+			isRule = true
+		}
+
+		if r, ok := rule.(ValueRule); ok {
+			valueRules := &rules.valueRules
+			valueRules.indices = append(valueRules.indices, i)
+			valueRules.rules = append(valueRules.rules, r)
 			isRule = true
 		}
 
@@ -254,6 +263,23 @@ func (r *fragmentSpreadRules) Run(ctx *ValidationContext, parentType graphql.Typ
 	}
 }
 
+type valueRules struct {
+	indices []int
+	rules   []ValueRule
+}
+
+func (r *valueRules) Run(ctx *ValidationContext, valueType graphql.Type, value ast.Value) {
+	indices := r.indices
+	for i, rule := range r.rules {
+		index := indices[i]
+		// See whether we can run the rule.
+		if !shouldSkipRule(ctx, index) {
+			// Run the rule and set skipping state.
+			setSkipping(ctx, index, value, rule.CheckValue(ctx, valueType, value))
+		}
+	}
+}
+
 type directiveRules struct {
 	indices []int
 	rules   []DirectiveRule
@@ -308,7 +334,7 @@ func walk(ctx *ValidationContext) {
 func leaveNode(ctx *ValidationContext, node ast.Node) {
 	skippingRules := ctx.skippingRules
 	for i, skipping := range skippingRules {
-		if skippingNode, ok := skipping.(ast.Node); ok && skippingNode == node {
+		if skippingNode, ok := skipping.(ast.Node); ok && reflect.DeepEqual(skippingNode, node) {
 			// Re-enable the rule.
 			skippingRules[i] = nil
 		}
@@ -340,10 +366,20 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 		location = graphql.DirectiveLocationSubscription
 	}
 
-	// Walk directives.
+	// Visit variables.
+	for _, varDef := range operation.VariableDefinitions {
+		if varDef.DefaultValue != nil {
+			walkValue(
+				ctx,
+				ctx.TypeResolver().ResolveType(varDef.Type),
+				varDef.DefaultValue)
+		}
+	}
+
+	// Visit directives.
 	walkDirectives(ctx, operation.Directives, location)
 
-	// Walk selection set.
+	// Visit selection set.
 	walkSelectionSet(ctx, object, operation.SelectionSet)
 
 	// Call leave before return.
@@ -401,23 +437,33 @@ func walkFieldArguments(ctx *ValidationContext, field *FieldInfo) {
 	if fieldDef == nil {
 		for _, arg := range arguments {
 			ctx.rules.fieldArgumentRules.Run(ctx, field, nil, arg)
+
+			// Visit argument value.
+			walkValue(ctx, nil, arg.Value)
 		}
 	} else {
 		argDefs := fieldDef.Args()
 
 		for _, arg := range arguments {
-			var argDef *graphql.Argument
+			var (
+				argDef  *graphql.Argument
+				argType graphql.Type
+			)
 
 			// Search definition for arg node from argDefs by name.
 			argName := arg.Name.Value()
 			for i := range argDefs {
 				if argDefs[i].Name() == argName {
 					argDef = &argDefs[i]
+					argType = argDef.Type()
 					break
 				}
 			}
 
 			ctx.rules.fieldArgumentRules.Run(ctx, field, argDef, arg)
+
+			// Visit argument value.
+			walkValue(ctx, argType, arg.Value)
 		}
 	}
 }
@@ -487,6 +533,37 @@ func walkValue(ctx *ValidationContext, valueType graphql.Type, value ast.Value) 
 		ctx,
 		valueType,
 		value)
+
+	switch value := value.(type) {
+	case ast.ListValue:
+		if listType, ok := graphql.NullableTypeOf(valueType).(graphql.List); ok {
+			elementType := listType.ElementType()
+			if !graphql.IsInputType(elementType) {
+				elementType = nil
+			}
+			for _, v := range value.Values() {
+				walkValue(ctx, elementType, v)
+			}
+		}
+
+	case ast.ObjectValue:
+		if objectType, ok := graphql.NamedTypeOf(valueType).(graphql.InputObject); ok {
+			fieldDefs := objectType.Fields()
+			for _, field := range value.Fields() {
+				var (
+					fieldDef  = fieldDefs[field.Name.Value()]
+					fieldType graphql.Type
+				)
+				if fieldDef != nil && graphql.IsInputType(fieldDef.Type()) {
+					fieldType = fieldDef.Type()
+				}
+				walkValue(ctx, fieldType, field.Value)
+			}
+		}
+	}
+
+	// Call leave before return.
+	leaveNode(ctx, value)
 }
 
 func walkDirectives(ctx *ValidationContext, directives ast.Directives, location graphql.DirectiveLocation) {
@@ -527,23 +604,33 @@ func walkDirectiveArguments(ctx *ValidationContext, directive *DirectiveInfo) {
 	if directiveDef == nil {
 		for _, arg := range arguments {
 			ctx.rules.directiveArgumentRules.Run(ctx, directive, nil, arg)
+
+			// Visit argument value.
+			walkValue(ctx, nil, arg.Value)
 		}
 	} else {
 		argDefs := directiveDef.Args()
 
 		for _, arg := range arguments {
-			var argDef *graphql.Argument
+			var (
+				argDef  *graphql.Argument
+				argType graphql.Type
+			)
 
 			// Search definition for arg node from argDefs by name.
 			argName := arg.Name.Value()
 			for i := range argDefs {
 				if argDefs[i].Name() == argName {
 					argDef = &argDefs[i]
+					argType = argDef.Type()
 					break
 				}
 			}
 
 			ctx.rules.directiveArgumentRules.Run(ctx, directive, argDef, arg)
+
+			// Visit argument value.
+			walkValue(ctx, argType, arg.Value)
 		}
 	}
 }

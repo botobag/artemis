@@ -271,3 +271,58 @@ func TypeIncompatibleSpreadMessage(fragName string, parentType string, fragType 
 	return fmt.Sprintf(`Fragment "%s" cannot be spread here as objects of type "%s" can never be of type "%s".`,
 		fragName, parentType, fragType)
 }
+
+// BadValueMessage returns message describing error occurred in rule "Value Type Correctness"
+// (rules.ValuesOfCorrectType).
+func BadValueMessage(typeName string, valueName string, suggestedNames []string) string {
+	var message util.StringBuilder
+
+	message.WriteString("Expected type ")
+	message.WriteString(typeName)
+	message.WriteString(", found ")
+	message.WriteString(valueName)
+
+	if len(suggestedNames) == 0 {
+		message.WriteRune('.')
+	} else {
+		message.WriteString("; Did you mean the enum value")
+		util.OrList(&message, suggestedNames, 5, false /*quoted*/)
+		message.WriteRune('?')
+	}
+
+	return message.String()
+}
+
+// BadScalarValueMessage returns message describing error occurred in rule "Value Type Correctness"
+// (rules.ValuesOfCorrectType).
+func BadScalarValueMessage(typeName string, valueName string, errMessage string) string {
+	return fmt.Sprintf("Expected type %s, found %s; %s", typeName, valueName, errMessage)
+}
+
+// RequiredFieldMessage returns message describing error occurred in rule "Value Type Correctness"
+// (rules.ValuesOfCorrectType).
+func RequiredFieldMessage(typeName string, fieldName string, fieldTypeName string) string {
+	return fmt.Sprintf("Field %s.%s of required type %s was not provided.",
+		typeName, fieldName, fieldTypeName)
+}
+
+// UnknownFieldMessage returns message describing error occurred in rule "Value Type Correctness"
+// (rules.ValuesOfCorrectType).
+func UnknownFieldMessage(typeName string, fieldName string, suggestedFields []string) string {
+	var message util.StringBuilder
+
+	message.WriteString(`Field "`)
+	message.WriteString(fieldName)
+	message.WriteString(`" is not defined by type `)
+	message.WriteString(typeName)
+
+	if len(suggestedFields) == 0 {
+		message.WriteRune('.')
+	} else {
+		message.WriteString("; Did you mean ")
+		util.OrList(&message, suggestedFields, 5, false /*quoted*/)
+		message.WriteRune('?')
+	}
+
+	return message.String()
+}

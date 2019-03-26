@@ -40,6 +40,7 @@ func init() {
 		NoFragmentCycles{},
 		KnownArgumentNames{},
 		UniqueArgumentNames{},
+		ValuesOfCorrectType{},
 		ProvidedRequiredArguments{},
 		OverlappingFieldsCanBeMerged{},
 	)

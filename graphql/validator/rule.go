@@ -222,3 +222,11 @@ type DirectiveArgumentRule interface {
 		argDef *graphql.Argument,
 		arg *ast.Argument) NextCheckAction
 }
+
+// ValueRule validates a Value.
+type ValueRule interface {
+	CheckValue(
+		ctx *ValidationContext,
+		valueType graphql.Type,
+		value ast.Value) NextCheckAction
+}
