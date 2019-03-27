@@ -35,6 +35,8 @@ func (rule ValuesOfCorrectType) CheckValue(
 	valueType graphql.Type,
 	value ast.Value) validator.NextCheckAction {
 
+	// A GraphQL document is only valid if all value literals are of the type expected at their
+	// position.
 	switch value := value.(type) {
 	case ast.NullValue:
 		if graphql.IsNonNullType(valueType) {
@@ -94,7 +96,8 @@ func (rule ValuesOfCorrectType) CheckValue(
 			}
 		}
 
-		// Ensure that objectType has fields specified in fieldNodes.
+		// Ensure that every input field provided in an input object value must be defined in the set of
+		// possible fields of that input object’s expected type.
 		var fieldNames []string
 		for _, fieldNode := range fieldNodes {
 			fieldName := fieldNode.Name.Value()
