@@ -489,6 +489,11 @@ type InputField interface {
 	DefaultValue() interface{}
 }
 
+// IsRequiredInputField returns true if value must be provided to the input field for execution.
+func IsRequiredInputField(field InputField) bool {
+	return IsNonNullType(field.Type()) && !field.HasDefaultValue()
+}
+
 //===------------------------------------------------------------------------------------------===//
 // List
 //===------------------------------------------------------------------------------------------===//

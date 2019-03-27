@@ -71,7 +71,7 @@ var _ = Describe("Type", func() {
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
-	// graphql-js/src/type/__tests__/predicate-test.js
+	// graphql-js/src/type/__tests__/predicate-test.js@d48e481
 	Describe("IsScalarType", func() {
 		It("returns true for spec defined scalar", func() {
 			Expect(graphql.IsScalarType(graphql.String())).Should(BeTrue())
@@ -425,4 +425,57 @@ var _ = Describe("Type", func() {
 			Expect(nonNullObjectType.UnwrappedType()).Should(Equal(ObjectType))
 		})
 	})
+
+	Describe("IsRequiredInputField", func() {
+		var (
+			requiredField graphql.InputField
+			optField1     graphql.InputField
+			optField2     graphql.InputField
+			optField3     graphql.InputField
+			optField4     graphql.InputField
+		)
+
+		BeforeEach(func() {
+			o := graphql.MustNewInputObject(&graphql.InputObjectConfig{
+				Name: "o",
+				Fields: graphql.InputFields{
+					"requiredField": {
+						Type: graphql.NonNullOfType(graphql.String()),
+					},
+					"optField1": {
+						Type: graphql.T(graphql.String()),
+					},
+					"optField2": {
+						Type:         graphql.T(graphql.String()),
+						DefaultValue: graphql.NilInputFieldDefaultValue,
+					},
+					"optField3": {
+						Type: graphql.ListOf(graphql.NonNullOfType(graphql.String())),
+					},
+					"optField4": {
+						Type:         graphql.NonNullOfType(graphql.String()),
+						DefaultValue: "default",
+					},
+				},
+			})
+
+			requiredField = o.Fields()["requiredField"]
+			optField1 = o.Fields()["optField1"]
+			optField2 = o.Fields()["optField2"]
+			optField3 = o.Fields()["optField3"]
+			optField4 = o.Fields()["optField4"]
+		})
+
+		It("returns true for required input field", func() {
+			Expect(graphql.IsRequiredInputField(requiredField)).Should(BeTrue())
+		})
+
+		It("returns false for optional input field", func() {
+			Expect(graphql.IsRequiredInputField(optField1)).Should(BeFalse())
+			Expect(graphql.IsRequiredInputField(optField2)).Should(BeFalse())
+			Expect(graphql.IsRequiredInputField(optField3)).Should(BeFalse())
+			Expect(graphql.IsRequiredInputField(optField4)).Should(BeFalse())
+		})
+	})
+
 })
