@@ -451,6 +451,8 @@ type InputFieldMap map[string]InputField
 // Reference: https://facebook.github.io/graphql/June2018/#sec-Input-Objects
 type InputObject interface {
 	Type
+	TypeWithName
+	TypeWithDescription
 
 	Fields() InputFieldMap
 
