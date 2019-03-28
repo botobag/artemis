@@ -209,6 +209,14 @@ func (info *DirectiveInfo) KnownArgNames() []string {
 	return knownArgNames
 }
 
+// DirectivesRule validates a Directive list.
+type DirectivesRule interface {
+	CheckDirectives(
+		ctx *ValidationContext,
+		directives ast.Directives,
+		location graphql.DirectiveLocation) NextCheckAction
+}
+
 // DirectiveRule validates a Directive.
 type DirectiveRule interface {
 	CheckDirective(ctx *ValidationContext, directive *DirectiveInfo) NextCheckAction

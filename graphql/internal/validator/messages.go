@@ -345,3 +345,9 @@ func UnknownDirectiveMessage(directiveName string) string {
 func MisplacedDirectiveMessage(directiveName string, location graphql.DirectiveLocation) string {
 	return fmt.Sprintf(`Directive "%s" may not be used on %s.`, directiveName, location)
 }
+
+// DuplicateDirectiveMessage returns message describing error occurred in rule "Directives Are
+// Unique Per Location" (rules.KnownDirectives).
+func DuplicateDirectiveMessage(directiveName string) string {
+	return fmt.Sprintf(`The directive "%s" can only be used once at this location.`, directiveName)
+}

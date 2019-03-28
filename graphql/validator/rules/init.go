@@ -40,6 +40,7 @@ func init() {
 		NoFragmentCycles{},
 		KnownDirectives{},
 		DirectivesInValidLocations{},
+		UniqueDirectivesPerLocation{},
 		KnownArgumentNames{},
 		UniqueArgumentNames{},
 		ValuesOfCorrectType{},

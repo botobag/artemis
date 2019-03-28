@@ -34,6 +34,7 @@ type rules struct {
 	fieldArgumentRules     fieldArgumentRules
 	inlineFragmentRules    inlineFragmentRules
 	fragmentSpreadRules    fragmentSpreadRules
+	directivesRules        directivesRules
 	directiveRules         directiveRules
 	directiveArgumentRules directiveArgumentRules
 	valueRules             valueRules
@@ -98,6 +99,13 @@ func buildRules(rs ...interface{}) *rules {
 			valueRules := &rules.valueRules
 			valueRules.indices = append(valueRules.indices, i)
 			valueRules.rules = append(valueRules.rules, r)
+			isRule = true
+		}
+
+		if r, ok := rule.(DirectivesRule); ok {
+			directivesRule := &rules.directivesRules
+			directivesRule.indices = append(directivesRule.indices, i)
+			directivesRule.rules = append(directivesRule.rules, r)
 			isRule = true
 		}
 
@@ -276,6 +284,23 @@ func (r *valueRules) Run(ctx *ValidationContext, valueType graphql.Type, value a
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
 			setSkipping(ctx, index, value, rule.CheckValue(ctx, valueType, value))
+		}
+	}
+}
+
+type directivesRules struct {
+	indices []int
+	rules   []DirectivesRule
+}
+
+func (r *directivesRules) Run(ctx *ValidationContext, directives ast.Directives, location graphql.DirectiveLocation) {
+	indices := r.indices
+	for i, rule := range r.rules {
+		index := indices[i]
+		// See whether we can run the rule.
+		if !shouldSkipRule(ctx, index) {
+			// Run the rule and set skipping state.
+			setSkipping(ctx, index, directives, rule.CheckDirectives(ctx, directives, location))
 		}
 	}
 }
@@ -583,6 +608,9 @@ func walkDirectives(ctx *ValidationContext, directives ast.Directives, location 
 	if len(directives) == 0 {
 		return
 	}
+
+	// Run directives rules.
+	ctx.rules.directivesRules.Run(ctx, directives, location)
 
 	var (
 		info = &DirectiveInfo{
