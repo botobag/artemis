@@ -332,3 +332,9 @@ func UnknownFieldMessage(typeName string, fieldName string, suggestedFields []st
 func DuplicateInputFieldMessage(fieldName string) string {
 	return fmt.Sprintf(`There can be only one input field named "%s".`, fieldName)
 }
+
+// UnknownDirectiveMessage returns message describing error occurred in rule "Directives Are
+// Defined" (rules.KnownDirectives).
+func UnknownDirectiveMessage(directiveName string) string {
+	return fmt.Sprintf(`Unknown directive "%s".`, directiveName)
+}

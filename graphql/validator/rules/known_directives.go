@@ -17,33 +17,30 @@
 package rules
 
 import (
+	"github.com/botobag/artemis/graphql"
+	messages "github.com/botobag/artemis/graphql/internal/validator"
 	"github.com/botobag/artemis/graphql/validator"
 )
 
-func init() {
-	// Initialize the set of standard rules in validator package.
-	//
-	// The order of the rules in this list has been adjusted to lead to the most clear output when
-	// encountering multiple validation errors.
-	validator.InitStandardRules(
-		UniqueOperationNames{},
-		LoneAnonymousOperation{},
-		SingleFieldSubscriptions{},
-		KnownTypeNames{},
-		FragmentsOnCompositeTypes{},
-		ScalarLeafs{},
-		FieldsOnCorrectType{},
-		UniqueFragmentNames{},
-		KnownFragmentNames{},
-		NoUnusedFragments{},
-		PossibleFragmentSpreads{},
-		NoFragmentCycles{},
-		KnownDirectives{},
-		KnownArgumentNames{},
-		UniqueArgumentNames{},
-		ValuesOfCorrectType{},
-		ProvidedRequiredArguments{},
-		OverlappingFieldsCanBeMerged{},
-		UniqueInputFieldNames{},
-	)
+// KnownDirectives implements the "Directives Are Defined" validation rule.
+//
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Directives-Are-Defined.
+type KnownDirectives struct{}
+
+// CheckDirective implements validator.DirectiveRule.
+func (rule KnownDirectives) CheckDirective(
+	ctx *validator.ValidationContext,
+	directive *validator.DirectiveInfo) validator.NextCheckAction {
+
+	// A GraphQL document is only valid if all `@directives` are known by the schema and legally
+	// positioned.
+
+	if directive.Def() == nil {
+		ctx.ReportError(
+			messages.UnknownDirectiveMessage(directive.Name()),
+			graphql.ErrorLocationOfASTNode(directive.Node()),
+		)
+	}
+
+	return validator.ContinueCheck
 }
