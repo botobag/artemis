@@ -536,7 +536,12 @@ func walkValue(ctx *ValidationContext, valueType graphql.Type, value ast.Value) 
 
 	switch value := value.(type) {
 	case ast.ListValue:
-		if listType, ok := graphql.NullableTypeOf(valueType).(graphql.List); ok {
+		listType, ok := graphql.NullableTypeOf(valueType).(graphql.List)
+		if !ok {
+			for _, v := range value.Values() {
+				walkValue(ctx, nil, v)
+			}
+		} else {
 			elementType := listType.ElementType()
 			if !graphql.IsInputType(elementType) {
 				elementType = nil
@@ -547,7 +552,12 @@ func walkValue(ctx *ValidationContext, valueType graphql.Type, value ast.Value) 
 		}
 
 	case ast.ObjectValue:
-		if objectType, ok := graphql.NamedTypeOf(valueType).(graphql.InputObject); ok {
+		objectType, ok := graphql.NamedTypeOf(valueType).(graphql.InputObject)
+		if !ok {
+			for _, field := range value.Fields() {
+				walkValue(ctx, nil, field.Value)
+			}
+		} else {
 			fieldDefs := objectType.Fields()
 			for _, field := range value.Fields() {
 				var (

@@ -326,3 +326,9 @@ func UnknownFieldMessage(typeName string, fieldName string, suggestedFields []st
 
 	return message.String()
 }
+
+// DuplicateInputFieldMessage returns message describing error occurred in rule "Input Object Field
+// Uniqueness" (rules.UniqueInputFieldNames).
+func DuplicateInputFieldMessage(fieldName string) string {
+	return fmt.Sprintf(`There can be only one input field named "%s".`, fieldName)
+}

@@ -43,5 +43,6 @@ func init() {
 		ValuesOfCorrectType{},
 		ProvidedRequiredArguments{},
 		OverlappingFieldsCanBeMerged{},
+		UniqueInputFieldNames{},
 	)
 }
