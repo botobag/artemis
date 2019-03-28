@@ -19,6 +19,7 @@ package validator
 import (
 	"fmt"
 
+	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/internal/util"
 )
 
@@ -337,4 +338,10 @@ func DuplicateInputFieldMessage(fieldName string) string {
 // Defined" (rules.KnownDirectives).
 func UnknownDirectiveMessage(directiveName string) string {
 	return fmt.Sprintf(`Unknown directive "%s".`, directiveName)
+}
+
+// MisplacedDirectiveMessage returns message describing error occurred in rule "Directives Are In
+// Valid Locations" (rules.DirectivesInValidLocations).
+func MisplacedDirectiveMessage(directiveName string, location graphql.DirectiveLocation) string {
+	return fmt.Sprintf(`Directive "%s" may not be used on %s.`, directiveName, location)
 }

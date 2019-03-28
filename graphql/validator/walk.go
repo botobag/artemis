@@ -374,6 +374,9 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 				ctx.TypeResolver().ResolveType(varDef.Type),
 				varDef.DefaultValue)
 		}
+
+		// Visit directives on variable definition.
+		walkDirectives(ctx, varDef.Directives, graphql.DirectiveLocationVariableDefinition)
 	}
 
 	// Visit directives.

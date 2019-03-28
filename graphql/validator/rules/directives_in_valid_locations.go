@@ -22,24 +22,39 @@ import (
 	"github.com/botobag/artemis/graphql/validator"
 )
 
-// KnownDirectives implements the "Directives Are Defined" validation rule.
+// DirectivesInValidLocations implements the "Directives Are In Valid Locations" validation rule.
 //
-// See https://graphql.github.io/graphql-spec/June2018/#sec-Directives-Are-Defined.
-type KnownDirectives struct{}
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Directives-Are-In-Valid-Locations.
+type DirectivesInValidLocations struct{}
 
 // CheckDirective implements validator.DirectiveRule.
-func (rule KnownDirectives) CheckDirective(
+func (rule DirectivesInValidLocations) CheckDirective(
 	ctx *validator.ValidationContext,
 	directive *validator.DirectiveInfo) validator.NextCheckAction {
 
-	// A GraphQL document is only valid if all `@directives` are known by the schema.
+	// A GraphQL document is only valid if all `@directives` are legally positioned.
 
-	if directive.Def() == nil {
-		ctx.ReportError(
-			messages.UnknownDirectiveMessage(directive.Name()),
-			graphql.ErrorLocationOfASTNode(directive.Node()),
-		)
+	var (
+		directiveDef = directive.Def()
+		directiveLoc = directive.Location()
+	)
+
+	if directiveDef == nil {
+		// Skip the check if we don't have directive definition because we don't known which locations
+		// are valid for the directive.
+		return validator.ContinueCheck
 	}
+
+	for _, candidateLoc := range directiveDef.Locations() {
+		if directiveLoc == candidateLoc {
+			return validator.ContinueCheck
+		}
+	}
+
+	ctx.ReportError(
+		messages.MisplacedDirectiveMessage(directive.Name(), directiveLoc),
+		graphql.ErrorLocationOfASTNode(directive.Node()),
+	)
 
 	return validator.ContinueCheck
 }

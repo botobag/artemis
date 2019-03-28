@@ -39,6 +39,7 @@ func init() {
 		PossibleFragmentSpreads{},
 		NoFragmentCycles{},
 		KnownDirectives{},
+		DirectivesInValidLocations{},
 		KnownArgumentNames{},
 		UniqueArgumentNames{},
 		ValuesOfCorrectType{},
