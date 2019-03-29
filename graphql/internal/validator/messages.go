@@ -372,3 +372,12 @@ func UndefinedVarMessage(variableName string, operationName string) string {
 	}
 	return fmt.Sprintf(`Variable "$%s" is not defined by operation "%s".`, variableName, operationName)
 }
+
+// UnusedVariableMessage returns message describing error occurred in rule "No Unused Variables"
+// (rules.NoUnusedVariables).
+func UnusedVariableMessage(variableName string, operationName string) string {
+	if len(operationName) == 0 {
+		return fmt.Sprintf(`Variable "$%s" is never used.`, variableName)
+	}
+	return fmt.Sprintf(`Variable "$%s" is never used in operation "%s".`, variableName, operationName)
+}

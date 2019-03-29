@@ -27,6 +27,7 @@ import (
 type VariableInfo struct {
 	node    *ast.VariableDefinition
 	typeDef graphql.Type
+	used    bool
 }
 
 // Node returns the AST node that specified the variable definition.
@@ -42,6 +43,16 @@ func (info *VariableInfo) Name() string {
 // TypeDef returns definition of the variable type in the schema.
 func (info *VariableInfo) TypeDef() graphql.Type {
 	return info.typeDef
+}
+
+// MarkUsed marks the variable to be used.
+func (info *VariableInfo) MarkUsed() {
+	info.used = true
+}
+
+// Used returns true if the variable is referenced somewhere in currently validating operation.
+func (info *VariableInfo) Used() bool {
+	return info.used
 }
 
 // FragmentInfo stores information about a fragment definition during validation. It is specifically

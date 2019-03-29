@@ -460,14 +460,16 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 		location = graphql.DirectiveLocationSubscription
 	}
 
-	// Visit variables.
-	walkVariables(ctx, varDefs)
-
 	// Visit directives.
 	walkDirectives(ctx, operation.Directives, location)
 
 	// Visit selection set.
 	walkSelectionSet(ctx, object, operation.SelectionSet)
+
+	// Visit variables. This must be the last one so uses of variables within the operation mark in
+	// corresponding VariableInfo (by NoUnusedVariables.CheckVariableUsage) before NoUnusedVariables
+	// to check unused variables (via NoUnusedVariables.CheckVariable).
+	walkVariables(ctx, varDefs)
 
 	// Call leave before return.
 	leaveNode(ctx, operation)
@@ -492,15 +494,16 @@ func walkVariables(ctx *ValidationContext, variables ast.VariableDefinitions) {
 			}
 		}
 
-		// Run variable rule.
-		ctx.rules.variableRules.Run(ctx, info)
-
 		if variable.DefaultValue != nil {
 			walkValue(ctx, info.TypeDef(), variable.DefaultValue)
 		}
 
 		// Visit directives on variable definition.
 		walkDirectives(ctx, variable.Directives, graphql.DirectiveLocationVariableDefinition)
+
+		// Run variable rules. These must be executed at the end so all variable usages are collected
+		// before NoUnusedVariables checks for unused variables.
+		ctx.rules.variableRules.Run(ctx, info)
 
 		// Call leave before return.
 		leaveNode(ctx, variable)
