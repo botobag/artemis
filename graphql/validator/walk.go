@@ -26,7 +26,7 @@ import (
 
 // rules contains a collection of actions to be performed on nodes for validation.
 type rules struct {
-	numRules               int
+	size                   int
 	operationRules         operationRules
 	variableRules          variableRules
 	fragmentRules          fragmentRules
@@ -35,15 +35,16 @@ type rules struct {
 	fieldArgumentRules     fieldArgumentRules
 	inlineFragmentRules    inlineFragmentRules
 	fragmentSpreadRules    fragmentSpreadRules
+	valueRules             valueRules
+	variableUsageRules     variableUsageRules
 	directivesRules        directivesRules
 	directiveRules         directiveRules
 	directiveArgumentRules directiveArgumentRules
-	valueRules             valueRules
 }
 
 func buildRules(rs ...interface{}) *rules {
 	rules := &rules{
-		numRules: len(rs),
+		size: len(rs),
 	}
 	for i, rule := range rs {
 		isRule := false
@@ -107,6 +108,13 @@ func buildRules(rs ...interface{}) *rules {
 			valueRules := &rules.valueRules
 			valueRules.indices = append(valueRules.indices, i)
 			valueRules.rules = append(valueRules.rules, r)
+			isRule = true
+		}
+
+		if r, ok := rule.(VariableUsageRule); ok {
+			variableUsageRules := &rules.variableUsageRules
+			variableUsageRules.indices = append(variableUsageRules.indices, i)
+			variableUsageRules.rules = append(variableUsageRules.rules, r)
 			isRule = true
 		}
 
@@ -313,6 +321,23 @@ func (r *valueRules) Run(ctx *ValidationContext, valueType graphql.Type, value a
 	}
 }
 
+type variableUsageRules struct {
+	indices []int
+	rules   []VariableUsageRule
+}
+
+func (r *variableUsageRules) Run(ctx *ValidationContext, variable ast.Variable) {
+	indices := r.indices
+	for i, rule := range r.rules {
+		index := indices[i]
+		// See whether we can run the rule.
+		if !shouldSkipRule(ctx, index) {
+			// Run the rule and set skipping state.
+			setSkipping(ctx, index, variable, rule.CheckVariableUsage(ctx, variable))
+		}
+	}
+}
+
 type directivesRules struct {
 	indices []int
 	rules   []DirectivesRule
@@ -410,6 +435,9 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 		ctx.variableInfos = variableInfos
 	}
 
+	// Allocate ctx.validatedFragments.
+	ctx.validatedFragments = map[string]bool{}
+
 	// Run operation rules.
 	ctx.rules.operationRules.Run(ctx, operation)
 
@@ -445,6 +473,7 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 	leaveNode(ctx, operation)
 
 	ctx.variableInfos = nil
+	ctx.validatedFragments = nil
 	ctx.currentOperation = nil
 }
 
@@ -613,18 +642,43 @@ func walkFragmentSpread(ctx *ValidationContext, parentType graphql.Type, fragmen
 	// Visit directives.
 	walkDirectives(ctx, fragmentSpread.Directives, graphql.DirectiveLocationFragmentSpread)
 
+	if ctx.currentOperation != nil && fragmentInfo != nil {
+		var (
+			validatedFragments = ctx.validatedFragments
+			fragmentName       = fragmentInfo.Name()
+		)
+
+		// Make sure the fragment hasn't been validated in current operation to avoid infinite
+		// recursion.
+		if !validatedFragments[fragmentName] {
+			validatedFragments[fragmentName] = true
+
+			// Use rulesForFragmentSpreads for visiting the selection set.
+			savedRules := ctx.rules
+			ctx.rules = ctx.rulesForFragmentSpreads
+
+			walkSelectionSet(ctx, fragmentInfo.TypeCondition(), fragmentInfo.Definition().SelectionSet)
+
+			// Backtrack the rule set.
+			ctx.rules = savedRules
+		}
+	}
+
 	// Call leave before return.
 	leaveNode(ctx, fragmentSpread)
 }
 
 func walkValue(ctx *ValidationContext, valueType graphql.Type, value ast.Value) {
 	// Run value rules.
-	ctx.rules.valueRules.Run(
-		ctx,
-		valueType,
-		value)
+	ctx.rules.valueRules.Run(ctx, valueType, value)
 
 	switch value := value.(type) {
+	case ast.Variable:
+		// Run variable usage rules.
+		if ctx.currentOperation != nil {
+			ctx.rules.variableUsageRules.Run(ctx, value)
+		}
+
 	case ast.ListValue:
 		listType, ok := graphql.NullableTypeOf(valueType).(graphql.List)
 		if !ok {

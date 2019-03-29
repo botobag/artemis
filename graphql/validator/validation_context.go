@@ -27,7 +27,6 @@ import (
 type VariableInfo struct {
 	node    *ast.VariableDefinition
 	typeDef graphql.Type
-	used    bool
 }
 
 // Node returns the AST node that specified the variable definition.
@@ -43,16 +42,6 @@ func (info *VariableInfo) Name() string {
 // TypeDef returns definition of the variable type in the schema.
 func (info *VariableInfo) TypeDef() graphql.Type {
 	return info.typeDef
-}
-
-// MarkUsed marks the variable to be used.
-func (info *VariableInfo) MarkUsed() {
-	info.used = true
-}
-
-// Used returns true if the variable is referenced somewhere in currently validating operation.
-func (info *VariableInfo) Used() bool {
-	return info.used
 }
 
 // FragmentInfo stores information about a fragment definition during validation. It is specifically
@@ -128,6 +117,12 @@ type ValidationContext struct {
 	document ast.Document
 	rules    *rules
 
+	// The rules set that are only applied when visiting the selection sets referenced via fragment
+	// spreads in an Operation. It is a subset of ctx.rules which currently contains only
+	// VariableUsageRule's. It is initialized on creation of a ValidationContext and is used
+	// repeatedly in walkFragmentSpread to save allocation.
+	rulesForFragmentSpreads *rules
+
 	// Map VariableInfo's in current operation from their names. This is only available when we're
 	// validating an Operation.
 	variableInfos map[string]*VariableInfo
@@ -155,6 +150,10 @@ type ValidationContext struct {
 
 	// Operation in the document that is being validated
 	currentOperation *ast.OperationDefinition
+
+	// Fragments that have been validated within current operation to prevent infinite recursion when
+	// encountering cyclic fragment spreads. See walkFragmentSpread for the usage.
+	validatedFragments map[string]bool
 
 	//===----------------------------------------------------------------------------------------====//
 	// States for rules package
@@ -187,13 +186,16 @@ type ValidationContext struct {
 }
 
 // newValidationContext initializes a validation context for validating given document.
-func newValidationContext(schema graphql.Schema, document ast.Document, rules *rules) *ValidationContext {
+func newValidationContext(schema graphql.Schema, document ast.Document, r *rules) *ValidationContext {
 	return &ValidationContext{
 		schema:   schema,
 		document: document,
-		rules:    rules,
+		rules:    r,
+		rulesForFragmentSpreads: &rules{
+			variableUsageRules: r.variableUsageRules,
+		},
 
-		skippingRules: make([]interface{}, rules.numRules),
+		skippingRules: make([]interface{}, r.size),
 
 		KnownOperationNames: map[string]ast.Name{},
 

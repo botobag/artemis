@@ -162,6 +162,21 @@ type FragmentSpreadRule interface {
 		fragmentSpread *ast.FragmentSpread) NextCheckAction
 }
 
+// ValueRule validates a Value.
+type ValueRule interface {
+	CheckValue(
+		ctx *ValidationContext,
+		valueType graphql.Type,
+		value ast.Value) NextCheckAction
+}
+
+// VariableUsageRule validates usage of Variable's in an Operation. Note that the rule also applies
+// to the variable values used by the fragments (via fragment spreads) in the Operation.
+type VariableUsageRule interface {
+	// ctx.CurrentOperation is guaranteed to be non-nil on invocation.
+	CheckVariableUsage(ctx *ValidationContext, variable ast.Variable) NextCheckAction
+}
+
 // DirectiveInfo provides information of the field to be checked for DirectiveRule and DirectiveArgumentRule.
 type DirectiveInfo struct {
 	def           graphql.Directive
@@ -234,12 +249,4 @@ type DirectiveArgumentRule interface {
 		directive *DirectiveInfo,
 		argDef *graphql.Argument,
 		arg *ast.Argument) NextCheckAction
-}
-
-// ValueRule validates a Value.
-type ValueRule interface {
-	CheckValue(
-		ctx *ValidationContext,
-		valueType graphql.Type,
-		value ast.Value) NextCheckAction
 }

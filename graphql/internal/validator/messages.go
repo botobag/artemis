@@ -363,3 +363,12 @@ func DuplicateVariableMessage(variableName string) string {
 func NonInputTypeOnVarMessage(variableName string, typeName string) string {
 	return fmt.Sprintf(`Variable "$%s" cannot be non-input type "%s".`, variableName, typeName)
 }
+
+// UndefinedVarMessage returns message describing error occurred in rule "All Variable Uses Defined"
+// (rules.NoUndefinedVariables).
+func UndefinedVarMessage(variableName string, operationName string) string {
+	if len(operationName) == 0 {
+		return fmt.Sprintf(`Variable "$%s" is not defined.`, variableName)
+	}
+	return fmt.Sprintf(`Variable "$%s" is not defined by operation "%s".`, variableName, operationName)
+}
