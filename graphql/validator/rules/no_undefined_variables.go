@@ -31,24 +31,23 @@ type NoUndefinedVariables struct{}
 // CheckVariableUsage implements validator.VariableUsageRule.
 func (rule NoUndefinedVariables) CheckVariableUsage(
 	ctx *validator.ValidationContext,
-	variable ast.Variable) validator.NextCheckAction {
+	variable ast.Variable,
+	info *validator.VariableInfo) validator.NextCheckAction {
 
 	// A GraphQL operation is only valid if all variables encountered, both directly and via fragment
 	// spreads, are defined by that operation.
 
-	var (
-		operation = ctx.CurrentOperation()
-		varName   = variable.Name.Value()
-	)
-	// Check the presence of VariableInfo to determine whether the variable is defined.
-	if ctx.VariableInfo(varName) == nil {
-		var operationName string
+	if info == nil {
+		var (
+			operationName string
+			operation     = ctx.CurrentOperation()
+		)
 		if !operation.Name.IsNil() {
 			operationName = operation.Name.Value()
 		}
 
 		ctx.ReportError(
-			messages.UndefinedVarMessage(varName, operationName),
+			messages.UndefinedVarMessage(variable.Name.Value(), operationName),
 			[]graphql.ErrorLocation{
 				graphql.ErrorLocationOfASTNode(variable),
 				graphql.ErrorLocationOfASTNode(operation),

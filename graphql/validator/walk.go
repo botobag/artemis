@@ -326,14 +326,14 @@ type variableUsageRules struct {
 	rules   []VariableUsageRule
 }
 
-func (r *variableUsageRules) Run(ctx *ValidationContext, variable ast.Variable) {
+func (r *variableUsageRules) Run(ctx *ValidationContext, variable ast.Variable, info *VariableInfo) {
 	indices := r.indices
 	for i, rule := range r.rules {
 		index := indices[i]
 		// See whether we can run the rule.
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
-			setSkipping(ctx, index, variable, rule.CheckVariableUsage(ctx, variable))
+			setSkipping(ctx, index, variable, rule.CheckVariableUsage(ctx, variable, info))
 		}
 	}
 }
@@ -676,7 +676,7 @@ func walkValue(ctx *ValidationContext, valueType graphql.Type, value ast.Value) 
 	case ast.Variable:
 		// Run variable usage rules.
 		if ctx.currentOperation != nil {
-			ctx.rules.variableUsageRules.Run(ctx, value)
+			ctx.rules.variableUsageRules.Run(ctx, value, ctx.VariableInfo(value.Name.Value()))
 		}
 
 	case ast.ListValue:

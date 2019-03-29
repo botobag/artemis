@@ -174,7 +174,10 @@ type ValueRule interface {
 // to the variable values used by the fragments (via fragment spreads) in the Operation.
 type VariableUsageRule interface {
 	// ctx.CurrentOperation is guaranteed to be non-nil on invocation.
-	CheckVariableUsage(ctx *ValidationContext, variable ast.Variable) NextCheckAction
+	CheckVariableUsage(
+		ctx *ValidationContext,
+		variable ast.Variable,
+		info *VariableInfo) NextCheckAction
 }
 
 // DirectiveInfo provides information of the field to be checked for DirectiveRule and DirectiveArgumentRule.
