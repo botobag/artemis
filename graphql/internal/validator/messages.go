@@ -351,3 +351,9 @@ func MisplacedDirectiveMessage(directiveName string, location graphql.DirectiveL
 func DuplicateDirectiveMessage(directiveName string) string {
 	return fmt.Sprintf(`The directive "%s" can only be used once at this location.`, directiveName)
 }
+
+// DuplicateVariableMessage returns message describing error occurred in rule "Variable Uniqueness"
+// (rules.UniqueVariableNames).
+func DuplicateVariableMessage(variableName string) string {
+	return fmt.Sprintf(`There can be only one variable named "%s".`, variableName)
+}

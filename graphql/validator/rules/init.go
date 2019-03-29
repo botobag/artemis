@@ -38,6 +38,7 @@ func init() {
 		NoUnusedFragments{},
 		PossibleFragmentSpreads{},
 		NoFragmentCycles{},
+		UniqueVariableNames{},
 		KnownDirectives{},
 		DirectivesInValidLocations{},
 		UniqueDirectivesPerLocation{},
