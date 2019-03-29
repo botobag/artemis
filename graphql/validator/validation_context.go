@@ -96,8 +96,7 @@ type ValidationContext struct {
 	document ast.Document
 	rules    *rules
 
-	// Mapping FragmentInfo's from their names; This is lazily computed on the first call to
-	// FragmentInfo.
+	// Map FragmentInfo's from their names. This is lazily computed on the first call to FragmentInfo.
 	fragmentInfos map[string]*FragmentInfo
 
 	// Error list

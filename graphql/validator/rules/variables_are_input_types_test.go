@@ -25,40 +25,51 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// graphql-js/src/validation/__tests__/UniqueVariableNames-test.js@8c96dc8
-var _ = Describe("Validate: Unique variable names", func() {
+// graphql-js/src/validation/__tests__/VariablesAreInputTypes-test.js@8c96dc8
+var _ = Describe("Validate: Variables are input types", func() {
 	expectErrors := func(queryStr string) GomegaAssertion {
-		return expectValidationErrors(rules.UniqueVariableNames{}, queryStr)
+		return expectValidationErrors(rules.VariablesAreInputTypes{}, queryStr)
 	}
 
 	expectValid := func(queryStr string) {
 		expectErrors(queryStr).Should(Equal(graphql.NoErrors()))
 	}
 
-	duplicateVariable := func(name string, l1 uint, c1 uint, l2 uint, c2 uint) error {
-		return graphql.NewError(validator.DuplicateVariableMessage(name), []graphql.ErrorLocation{
-			{Line: l1, Column: c1},
-			{Line: l2, Column: c2},
-		})
-	}
-
-	It("unique variable names", func() {
+	It("input types are valid", func() {
 		expectValid(`
-      query A($x: Int, $y: String) { __typename }
-      query B($x: String, $y: Int) { __typename }
+      query Foo($a: String, $b: [Boolean!]!, $c: ComplexInput) {
+        field(a: $a, b: $b, c: $c)
+      }
     `)
 	})
 
-	It("duplicate variable names", func() {
+	It("output types are invalid", func() {
 		expectErrors(`
-      query A($x: Int, $x: Int, $x: String) { __typename }
-      query B($x: String, $x: Int) { __typename }
-      query C($x: Int, $x: Int) { __typename }
+      query Foo($a: Dog, $b: [[CatOrDog!]]!, $c: Pet) {
+        field(a: $a, b: $b, c: $c)
+      }
     `).Should(Equal(graphql.ErrorsOf(
-			duplicateVariable("x", 2, 16, 2, 25),
-			duplicateVariable("x", 2, 16, 2, 34),
-			duplicateVariable("x", 3, 16, 3, 28),
-			duplicateVariable("x", 4, 16, 4, 25),
+			graphql.NewError(
+				validator.NonInputTypeOnVarMessage("a", "Dog"),
+				graphql.ErrorLocation{
+					Line:   2,
+					Column: 21,
+				},
+			),
+			graphql.NewError(
+				validator.NonInputTypeOnVarMessage("b", "[[CatOrDog!]]!"),
+				graphql.ErrorLocation{
+					Line:   2,
+					Column: 30,
+				},
+			),
+			graphql.NewError(
+				validator.NonInputTypeOnVarMessage("c", "Pet"),
+				graphql.ErrorLocation{
+					Line:   2,
+					Column: 50,
+				},
+			),
 		)))
 	})
 })

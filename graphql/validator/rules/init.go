@@ -31,6 +31,7 @@ func init() {
 		SingleFieldSubscriptions{},
 		KnownTypeNames{},
 		FragmentsOnCompositeTypes{},
+		VariablesAreInputTypes{},
 		ScalarLeafs{},
 		FieldsOnCorrectType{},
 		UniqueFragmentNames{},

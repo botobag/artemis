@@ -357,3 +357,9 @@ func DuplicateDirectiveMessage(directiveName string) string {
 func DuplicateVariableMessage(variableName string) string {
 	return fmt.Sprintf(`There can be only one variable named "%s".`, variableName)
 }
+
+// NonInputTypeOnVarMessage returns message describing error occurred in rule "Variables Are Input
+// Types" (rules.VariablesAreInputTypes).
+func NonInputTypeOnVarMessage(variableName string, typeName string) string {
+	return fmt.Sprintf(`Variable "$%s" cannot be non-input type "%s".`, variableName, typeName)
+}

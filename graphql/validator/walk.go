@@ -28,6 +28,7 @@ import (
 type rules struct {
 	numRules               int
 	operationRules         operationRules
+	variableRules          variableRules
 	fragmentRules          fragmentRules
 	selectionSetRules      selectionSetRules
 	fieldRules             fieldRules
@@ -50,6 +51,13 @@ func buildRules(rs ...interface{}) *rules {
 			operationRules := &rules.operationRules
 			operationRules.indices = append(operationRules.indices, i)
 			operationRules.rules = append(operationRules.rules, r)
+			isRule = true
+		}
+
+		if r, ok := rule.(VariableRule); ok {
+			variableRules := &rules.variableRules
+			variableRules.indices = append(variableRules.indices, i)
+			variableRules.rules = append(variableRules.rules, r)
 			isRule = true
 		}
 
@@ -160,6 +168,23 @@ func (r *operationRules) Run(ctx *ValidationContext, operation *ast.OperationDef
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
 			setSkipping(ctx, index, operation, rule.CheckOperation(ctx, operation))
+		}
+	}
+}
+
+type variableRules struct {
+	indices []int
+	rules   []VariableRule
+}
+
+func (r *variableRules) Run(ctx *ValidationContext, variable *ast.VariableDefinition, ttype graphql.Type) {
+	indices := r.indices
+	for i, rule := range r.rules {
+		index := indices[i]
+		// See whether we can run the rule.
+		if !shouldSkipRule(ctx, index) {
+			// Run the rule and set skipping state.
+			setSkipping(ctx, index, variable, rule.CheckVariable(ctx, variable, ttype))
 		}
 	}
 }
@@ -393,15 +418,8 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 
 	// Visit variables.
 	for _, varDef := range operation.VariableDefinitions {
-		if varDef.DefaultValue != nil {
-			walkValue(
-				ctx,
-				ctx.TypeResolver().ResolveType(varDef.Type),
-				varDef.DefaultValue)
-		}
-
-		// Visit directives on variable definition.
-		walkDirectives(ctx, varDef.Directives, graphql.DirectiveLocationVariableDefinition)
+		// Visit variable.
+		walkVariable(ctx, varDef)
 	}
 
 	// Visit directives.
@@ -414,6 +432,24 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 	leaveNode(ctx, operation)
 
 	ctx.currentOperation = nil
+}
+
+func walkVariable(ctx *ValidationContext, variable *ast.VariableDefinition) {
+	// Look up definition of variable type.
+	ttype := ctx.TypeResolver().ResolveType(variable.Type)
+
+	// Run variable rule.
+	ctx.rules.variableRules.Run(ctx, variable, ttype)
+
+	if variable.DefaultValue != nil {
+		walkValue(ctx, ttype, variable.DefaultValue)
+	}
+
+	// Visit directives on variable definition.
+	walkDirectives(ctx, variable.Directives, graphql.DirectiveLocationVariableDefinition)
+
+	// Call leave before return.
+	leaveNode(ctx, variable)
 }
 
 func walkFragmentDefinition(ctx *ValidationContext, fragment *ast.FragmentDefinition) {
