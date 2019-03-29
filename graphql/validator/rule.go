@@ -176,7 +176,9 @@ type VariableUsageRule interface {
 	// ctx.CurrentOperation is guaranteed to be non-nil on invocation.
 	CheckVariableUsage(
 		ctx *ValidationContext,
+		ttype graphql.Type,
 		variable ast.Variable,
+		hasLocationDefaultValue bool,
 		info *VariableInfo) NextCheckAction
 }
 

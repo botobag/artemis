@@ -31,7 +31,9 @@ type NoUndefinedVariables struct{}
 // CheckVariableUsage implements validator.VariableUsageRule.
 func (rule NoUndefinedVariables) CheckVariableUsage(
 	ctx *validator.ValidationContext,
+	ttype graphql.Type,
 	variable ast.Variable,
+	hasLocationDefaultValue bool,
 	info *validator.VariableInfo) validator.NextCheckAction {
 
 	// A GraphQL operation is only valid if all variables encountered, both directly and via fragment

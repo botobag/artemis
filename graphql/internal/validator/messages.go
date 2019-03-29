@@ -381,3 +381,10 @@ func UnusedVariableMessage(variableName string, operationName string) string {
 	}
 	return fmt.Sprintf(`Variable "$%s" is never used in operation "%s".`, variableName, operationName)
 }
+
+// BadVarPosMessage returns message describing error occurred in rule "All Variable Usages Are
+// Allowed" (rules.VariablesInAllowedPosition).
+func BadVarPosMessage(variableName string, variableType string, expectedType string) string {
+	return fmt.Sprintf(`Variable "$%s" of type "%s" used in position expecting type "%s".`,
+		variableName, variableType, expectedType)
+}

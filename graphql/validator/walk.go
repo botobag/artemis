@@ -326,14 +326,21 @@ type variableUsageRules struct {
 	rules   []VariableUsageRule
 }
 
-func (r *variableUsageRules) Run(ctx *ValidationContext, variable ast.Variable, info *VariableInfo) {
+func (r *variableUsageRules) Run(
+	ctx *ValidationContext,
+	ttype graphql.Type,
+	variable ast.Variable,
+	hasLocationDefaultValue bool,
+	info *VariableInfo) {
+
 	indices := r.indices
 	for i, rule := range r.rules {
 		index := indices[i]
 		// See whether we can run the rule.
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
-			setSkipping(ctx, index, variable, rule.CheckVariableUsage(ctx, variable, info))
+			setSkipping(ctx, index, variable,
+				rule.CheckVariableUsage(ctx, ttype, variable, hasLocationDefaultValue, info))
 		}
 	}
 }
@@ -495,7 +502,7 @@ func walkVariables(ctx *ValidationContext, variables ast.VariableDefinitions) {
 		}
 
 		if variable.DefaultValue != nil {
-			walkValue(ctx, info.TypeDef(), variable.DefaultValue)
+			walkValue(ctx, info.TypeDef(), variable.DefaultValue, false /* hasLocationDefaultValue */)
 		}
 
 		// Visit directives on variable definition.
@@ -561,15 +568,16 @@ func walkFieldArguments(ctx *ValidationContext, field *FieldInfo) {
 			ctx.rules.fieldArgumentRules.Run(ctx, field, nil, arg)
 
 			// Visit argument value.
-			walkValue(ctx, nil, arg.Value)
+			walkValue(ctx, nil, arg.Value, false /* hasLocationDefaultValue */)
 		}
 	} else {
 		argDefs := fieldDef.Args()
 
 		for _, arg := range arguments {
 			var (
-				argDef  *graphql.Argument
-				argType graphql.Type
+				argDef             *graphql.Argument
+				argType            graphql.Type
+				argHasDefaultValue bool
 			)
 
 			// Search definition for arg node from argDefs by name.
@@ -578,6 +586,7 @@ func walkFieldArguments(ctx *ValidationContext, field *FieldInfo) {
 				if argDefs[i].Name() == argName {
 					argDef = &argDefs[i]
 					argType = argDef.Type()
+					argHasDefaultValue = argDef.HasDefaultValue()
 					break
 				}
 			}
@@ -585,7 +594,7 @@ func walkFieldArguments(ctx *ValidationContext, field *FieldInfo) {
 			ctx.rules.fieldArgumentRules.Run(ctx, field, argDef, arg)
 
 			// Visit argument value.
-			walkValue(ctx, argType, arg.Value)
+			walkValue(ctx, argType, arg.Value, argHasDefaultValue)
 		}
 	}
 }
@@ -671,7 +680,7 @@ func walkFragmentSpread(ctx *ValidationContext, parentType graphql.Type, fragmen
 	leaveNode(ctx, fragmentSpread)
 }
 
-func walkValue(ctx *ValidationContext, valueType graphql.Type, value ast.Value) {
+func walkValue(ctx *ValidationContext, valueType graphql.Type, value ast.Value, hasLocationDefaultValue bool) {
 	// Run value rules.
 	ctx.rules.valueRules.Run(ctx, valueType, value)
 
@@ -679,14 +688,15 @@ func walkValue(ctx *ValidationContext, valueType graphql.Type, value ast.Value) 
 	case ast.Variable:
 		// Run variable usage rules.
 		if ctx.currentOperation != nil {
-			ctx.rules.variableUsageRules.Run(ctx, value, ctx.VariableInfo(value.Name.Value()))
+			ctx.rules.variableUsageRules.Run(
+				ctx, valueType, value, hasLocationDefaultValue, ctx.VariableInfo(value.Name.Value()))
 		}
 
 	case ast.ListValue:
 		listType, ok := graphql.NullableTypeOf(valueType).(graphql.List)
 		if !ok {
 			for _, v := range value.Values() {
-				walkValue(ctx, nil, v)
+				walkValue(ctx, nil, v, false /* hasLocationDefaultValue */)
 			}
 		} else {
 			elementType := listType.ElementType()
@@ -694,7 +704,7 @@ func walkValue(ctx *ValidationContext, valueType graphql.Type, value ast.Value) 
 				elementType = nil
 			}
 			for _, v := range value.Values() {
-				walkValue(ctx, elementType, v)
+				walkValue(ctx, elementType, v, false /* hasLocationDefaultValue */)
 			}
 		}
 
@@ -702,19 +712,21 @@ func walkValue(ctx *ValidationContext, valueType graphql.Type, value ast.Value) 
 		objectType, ok := graphql.NamedTypeOf(valueType).(graphql.InputObject)
 		if !ok {
 			for _, field := range value.Fields() {
-				walkValue(ctx, nil, field.Value)
+				walkValue(ctx, nil, field.Value, false /* hasLocationDefaultValue */)
 			}
 		} else {
 			fieldDefs := objectType.Fields()
 			for _, field := range value.Fields() {
 				var (
-					fieldDef  = fieldDefs[field.Name.Value()]
-					fieldType graphql.Type
+					fieldDef             = fieldDefs[field.Name.Value()]
+					fieldType            graphql.Type
+					fieldHasDefaultValue bool
 				)
 				if fieldDef != nil && graphql.IsInputType(fieldDef.Type()) {
 					fieldType = fieldDef.Type()
+					fieldHasDefaultValue = fieldDef.HasDefaultValue()
 				}
-				walkValue(ctx, fieldType, field.Value)
+				walkValue(ctx, fieldType, field.Value, fieldHasDefaultValue)
 			}
 		}
 	}
@@ -766,15 +778,16 @@ func walkDirectiveArguments(ctx *ValidationContext, directive *DirectiveInfo) {
 			ctx.rules.directiveArgumentRules.Run(ctx, directive, nil, arg)
 
 			// Visit argument value.
-			walkValue(ctx, nil, arg.Value)
+			walkValue(ctx, nil, arg.Value, false /* hasLocationDefaultValue */)
 		}
 	} else {
 		argDefs := directiveDef.Args()
 
 		for _, arg := range arguments {
 			var (
-				argDef  *graphql.Argument
-				argType graphql.Type
+				argDef             *graphql.Argument
+				argType            graphql.Type
+				argHasDefaultValue bool
 			)
 
 			// Search definition for arg node from argDefs by name.
@@ -783,6 +796,7 @@ func walkDirectiveArguments(ctx *ValidationContext, directive *DirectiveInfo) {
 				if argDefs[i].Name() == argName {
 					argDef = &argDefs[i]
 					argType = argDef.Type()
+					argHasDefaultValue = argDef.HasDefaultValue()
 					break
 				}
 			}
@@ -790,7 +804,7 @@ func walkDirectiveArguments(ctx *ValidationContext, directive *DirectiveInfo) {
 			ctx.rules.directiveArgumentRules.Run(ctx, directive, argDef, arg)
 
 			// Visit argument value.
-			walkValue(ctx, argType, arg.Value)
+			walkValue(ctx, argType, arg.Value, argHasDefaultValue)
 		}
 	}
 }

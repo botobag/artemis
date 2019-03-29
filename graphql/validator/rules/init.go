@@ -41,6 +41,7 @@ func init() {
 		NoFragmentCycles{},
 		UniqueVariableNames{},
 		NoUndefinedVariables{},
+		NoUnusedVariables{},
 		KnownDirectives{},
 		DirectivesInValidLocations{},
 		UniqueDirectivesPerLocation{},
@@ -48,6 +49,7 @@ func init() {
 		UniqueArgumentNames{},
 		ValuesOfCorrectType{},
 		ProvidedRequiredArguments{},
+		VariablesInAllowedPosition{},
 		OverlappingFieldsCanBeMerged{},
 		UniqueInputFieldNames{},
 	)

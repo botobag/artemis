@@ -34,7 +34,9 @@ type NoUnusedVariables struct{}
 // CheckVariableUsage implements validator.VariableUsageRule.
 func (rule NoUnusedVariables) CheckVariableUsage(
 	ctx *validator.ValidationContext,
+	ttype graphql.Type,
 	variable ast.Variable,
+	hasLocationDefaultValue bool,
 	info *validator.VariableInfo) validator.NextCheckAction {
 
 	if info != nil {
