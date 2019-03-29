@@ -23,6 +23,38 @@ import (
 	astutil "github.com/botobag/artemis/graphql/util/ast"
 )
 
+// VariableInfo stores information about a variable in the validating operation.
+type VariableInfo struct {
+	node    *ast.VariableDefinition
+	typeDef graphql.Type
+	used    bool
+}
+
+// Node returns the AST node that specified the variable definition.
+func (info *VariableInfo) Node() *ast.VariableDefinition {
+	return info.node
+}
+
+// Name returns the variable name.
+func (info *VariableInfo) Name() string {
+	return info.Node().Variable.Name.Value()
+}
+
+// TypeDef returns definition of the variable type in the schema.
+func (info *VariableInfo) TypeDef() graphql.Type {
+	return info.typeDef
+}
+
+// MarkUsed marks the variable to be used.
+func (info *VariableInfo) MarkUsed() {
+	info.used = true
+}
+
+// Used returns true if the variable is referenced somewhere in currently validating operation.
+func (info *VariableInfo) Used() bool {
+	return info.used
+}
+
 // FragmentInfo stores information about a fragment definition during validation. It is specifically
 // used as value type of the fragment map in ValidationContext and exposed to FragmentRule's and
 // FragmentSpreadRule's.
@@ -95,6 +127,10 @@ type ValidationContext struct {
 	schema   graphql.Schema
 	document ast.Document
 	rules    *rules
+
+	// Map VariableInfo's in current operation from their names. This is only available when we're
+	// validating an Operation.
+	variableInfos map[string]*VariableInfo
 
 	// Map FragmentInfo's from their names. This is lazily computed on the first call to FragmentInfo.
 	fragmentInfos map[string]*FragmentInfo
@@ -183,6 +219,13 @@ func (ctx *ValidationContext) TypeResolver() astutil.TypeResolver {
 	return astutil.TypeResolver{
 		Schema: ctx.schema,
 	}
+}
+
+// VariableInfo looks up the VariableInfo for given variable name in current operation. The return
+// value could be nil if we're not validating an operation (ctx.currentOperation is nil) or current
+// operation doesn't define the given variable.
+func (ctx *ValidationContext) VariableInfo(name string) *VariableInfo {
+	return ctx.variableInfos[name]
 }
 
 // FragmentInfo looks up the FragmentInfo for given fragment name in current document.

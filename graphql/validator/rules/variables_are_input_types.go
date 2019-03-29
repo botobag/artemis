@@ -31,19 +31,16 @@ type VariablesAreInputTypes struct{}
 // CheckVariable implements validator.VariableRule.
 func (rule VariablesAreInputTypes) CheckVariable(
 	ctx *validator.ValidationContext,
-	variable *ast.VariableDefinition,
-	ttype graphql.Type) validator.NextCheckAction {
+	info *validator.VariableInfo) validator.NextCheckAction {
 
 	// A GraphQL operation is only valid if all the variables it defines are of input types (scalar,
 	// enum, or input object).
+	ttype := info.TypeDef()
 
 	if ttype != nil && !graphql.IsInputType(ttype) {
-		var (
-			varName = variable.Variable.Name.Value()
-			varType = variable.Type
-		)
+		varType := info.Node().Type
 		ctx.ReportError(
-			messages.NonInputTypeOnVarMessage(varName, ast.Print(varType)),
+			messages.NonInputTypeOnVarMessage(info.Name(), ast.Print(varType)),
 			graphql.ErrorLocationOfASTNode(varType),
 		)
 	}

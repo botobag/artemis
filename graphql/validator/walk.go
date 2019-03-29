@@ -177,14 +177,14 @@ type variableRules struct {
 	rules   []VariableRule
 }
 
-func (r *variableRules) Run(ctx *ValidationContext, variable *ast.VariableDefinition, ttype graphql.Type) {
+func (r *variableRules) Run(ctx *ValidationContext, info *VariableInfo) {
 	indices := r.indices
 	for i, rule := range r.rules {
 		index := indices[i]
 		// See whether we can run the rule.
 		if !shouldSkipRule(ctx, index) {
 			// Run the rule and set skipping state.
-			setSkipping(ctx, index, variable, rule.CheckVariable(ctx, variable, ttype))
+			setSkipping(ctx, index, info.Node(), rule.CheckVariable(ctx, info))
 		}
 	}
 }
@@ -394,6 +394,22 @@ func leaveNode(ctx *ValidationContext, node ast.Node) {
 func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDefinition) {
 	ctx.currentOperation = operation
 
+	// Build ctx.variableInfos.
+	varDefs := operation.VariableDefinitions
+	if len(varDefs) > 0 {
+		var (
+			typeResolver  = ctx.TypeResolver()
+			variableInfos = make(map[string]*VariableInfo, len(varDefs))
+		)
+		for _, varDef := range varDefs {
+			variableInfos[varDef.Variable.Name.Value()] = &VariableInfo{
+				node:    varDef,
+				typeDef: typeResolver.ResolveType(varDef.Type),
+			}
+		}
+		ctx.variableInfos = variableInfos
+	}
+
 	// Run operation rules.
 	ctx.rules.operationRules.Run(ctx, operation)
 
@@ -417,10 +433,7 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 	}
 
 	// Visit variables.
-	for _, varDef := range operation.VariableDefinitions {
-		// Visit variable.
-		walkVariable(ctx, varDef)
-	}
+	walkVariables(ctx, varDefs)
 
 	// Visit directives.
 	walkDirectives(ctx, operation.Directives, location)
@@ -431,25 +444,38 @@ func walkOperationDefinition(ctx *ValidationContext, operation *ast.OperationDef
 	// Call leave before return.
 	leaveNode(ctx, operation)
 
+	ctx.variableInfos = nil
 	ctx.currentOperation = nil
 }
 
-func walkVariable(ctx *ValidationContext, variable *ast.VariableDefinition) {
-	// Look up definition of variable type.
-	ttype := ctx.TypeResolver().ResolveType(variable.Type)
+func walkVariables(ctx *ValidationContext, variables ast.VariableDefinitions) {
+	infos := ctx.variableInfos
 
-	// Run variable rule.
-	ctx.rules.variableRules.Run(ctx, variable, ttype)
+	for _, variable := range variables {
+		// Look up info for the variable by name.
+		info, exists := infos[variable.Variable.Name.Value()]
 
-	if variable.DefaultValue != nil {
-		walkValue(ctx, ttype, variable.DefaultValue)
+		// Check info.node.
+		if !exists || info.node != variable {
+			info = &VariableInfo{
+				node:    variable,
+				typeDef: ctx.TypeResolver().ResolveType(variable.Type),
+			}
+		}
+
+		// Run variable rule.
+		ctx.rules.variableRules.Run(ctx, info)
+
+		if variable.DefaultValue != nil {
+			walkValue(ctx, info.TypeDef(), variable.DefaultValue)
+		}
+
+		// Visit directives on variable definition.
+		walkDirectives(ctx, variable.Directives, graphql.DirectiveLocationVariableDefinition)
+
+		// Call leave before return.
+		leaveNode(ctx, variable)
 	}
-
-	// Visit directives on variable definition.
-	walkDirectives(ctx, variable.Directives, graphql.DirectiveLocationVariableDefinition)
-
-	// Call leave before return.
-	leaveNode(ctx, variable)
 }
 
 func walkFragmentDefinition(ctx *ValidationContext, fragment *ast.FragmentDefinition) {

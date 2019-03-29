@@ -49,10 +49,7 @@ type OperationRule interface {
 
 // VariableRule validates a VariableDefinition.
 type VariableRule interface {
-	CheckVariable(
-		ctx *ValidationContext,
-		variable *ast.VariableDefinition,
-		ttype graphql.Type) NextCheckAction
+	CheckVariable(ctx *ValidationContext, info *VariableInfo) NextCheckAction
 }
 
 // FragmentRule validates an FragmentDefinition.
