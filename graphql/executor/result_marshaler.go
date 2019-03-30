@@ -39,7 +39,7 @@ func (marshaler resultMarshaler) MarshalJSONTo(stream *jsonwriter.Stream) error 
 
 	// Specification [0] suggests placing the "errors" first in response to make it clear.
 	//
-	// [0]: See the note for https://facebook.github.io/graphql/June2018/#sec-Response-Format.
+	// [0]: See the note for https://graphql.github.io/graphql-spec/June2018/#sec-Response-Format.
 	if result.Errors.HaveOccurred() {
 		stream.WriteObjectField("errors")
 		stream.WriteValue(graphql.NewErrorsMarshaler(result.Errors))

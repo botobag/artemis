@@ -83,7 +83,7 @@ import (
 // more context about resolving field. For example, the field resolver now knows the parent node and
 // from there one can know what are the siblings by looking at the parent's child nodes.
 //
-// [0]: https://facebook.github.io/graphql/June2018/#CollectFields()
+// [0]: https://graphql.github.io/graphql-spec/June2018/#CollectFields()
 type ExecutionNode struct {
 	// Parent of this node in the graph; This is nil for root node.
 	Parent *ExecutionNode

@@ -70,7 +70,7 @@ func (args ArgumentValues) MarshalJSON() ([]byte, error) {
 // VariableValues contains values for variables defined by the query. It is immutable after it is
 // created.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Variables
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Language.Variables
 type VariableValues struct {
 	values map[string]interface{}
 }
@@ -112,7 +112,7 @@ func (vars VariableValues) MarshalJSON() ([]byte, error) {
 // FieldSelectionInfo is provided as part of ResolveInfo which contains the Selection [0] for the
 // resolving field and its parent fields.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#Field
+// Reference: https://graphql.github.io/graphql-spec/June2018/#Field
 type FieldSelectionInfo interface {
 	// A link to the parent field whose selection set contains this field selection
 	Parent() FieldSelectionInfo

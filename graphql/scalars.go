@@ -85,7 +85,7 @@ func (coercer *scalarCoercerBase) init(typeName string, impl typeutil.CoercionHe
 //===-----------------------------------------------------------------------------------------===//
 // The Int scalar type represents a signed 32‐bit numeric non‐fractional value as per spec.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Int
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Int
 
 // intCoercer implements input coercion and result coercion for Int type.
 type intCoercer struct {
@@ -111,7 +111,7 @@ func (coercer *intCoercer) RaiseNonValue(value interface{}, ctx *typeutil.Coerci
 func (coercer *intCoercer) CoerceBool(value bool, ctx *typeutil.CoercionContext) (interface{}, error) {
 	// Input mode only accepts integer values. See "Input Coercion" in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-Int
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Int
 	if ctx.Mode == typeutil.InputCoercionMode {
 		return nil, coercer.RaiseInvalidTypeError(value, ctx)
 	}
@@ -144,7 +144,7 @@ func (coercer *intCoercer) CoerceUnsignedInteger(value uint64, ctx *typeutil.Coe
 func (coercer *intCoercer) CoerceFloat(value float64, ctx *typeutil.CoercionContext) (interface{}, error) {
 	// Input mode only accepts integer values. See "Input Coercion" in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-Int
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Int
 	if ctx.Mode == typeutil.InputCoercionMode {
 		return nil, coercer.RaiseInvalidTypeError(value, ctx)
 	}
@@ -169,7 +169,7 @@ func (coercer *intCoercer) coerceStringImpl(value string, ctx *typeutil.Coercion
 func (coercer *intCoercer) CoerceString(value string, ctx *typeutil.CoercionContext) (interface{}, error) {
 	// Input mode only accepts integer values. See "Input Coercion" in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-Int
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Int
 	if ctx.Mode == typeutil.InputCoercionMode {
 		return nil, coercer.RaiseInvalidTypeError(value, ctx)
 	}
@@ -255,7 +255,7 @@ func Int() Scalar {
 // The Float scalar type represents signed double‐precision fractional values as specified by IEEE
 // 754.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Float
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Float
 
 // floatCoercer implements input coercion and result coercion for Float type.
 type floatCoercer struct {
@@ -290,7 +290,7 @@ func (coercer *floatCoercer) RaiseNonValue(value interface{}, ctx *typeutil.Coer
 func (coercer *floatCoercer) CoerceBool(value bool, ctx *typeutil.CoercionContext) (interface{}, error) {
 	// Input mode only accepts integer and float values. See "Input Coercion" in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-Float
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Float
 	if ctx.Mode == typeutil.InputCoercionMode {
 		return nil, coercer.RaiseInvalidTypeError(value, ctx)
 	}
@@ -358,7 +358,7 @@ func (coercer *floatCoercer) coerceStringImpl(value string, ctx *typeutil.Coerci
 func (coercer *floatCoercer) CoerceString(value string, ctx *typeutil.CoercionContext) (interface{}, error) {
 	// Input mode only accepts integer and float values. See "Input Coercion" in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-Float
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Float
 	if ctx.Mode == typeutil.InputCoercionMode {
 		return nil, coercer.RaiseInvalidTypeError(value, ctx)
 	}
@@ -444,7 +444,7 @@ func Float() Scalar {
 //===-----------------------------------------------------------------------------------------===//
 // String
 //===-----------------------------------------------------------------------------------------===//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-String
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-String
 
 // stringCoercer implements input coercion and result coercion for String type.
 type stringCoercer struct {
@@ -464,7 +464,7 @@ func (coercer *stringCoercer) init() {
 func (coercer *stringCoercer) CoerceBool(value bool, ctx *typeutil.CoercionContext) (interface{}, error) {
 	// Input mode only accepts string values. See "Input Coercion" in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-String
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-String
 	if ctx.Mode == typeutil.InputCoercionMode {
 		return nil, coercer.RaiseInvalidTypeError(value, ctx)
 	}
@@ -478,7 +478,7 @@ func (coercer *stringCoercer) CoerceBool(value bool, ctx *typeutil.CoercionConte
 func (coercer *stringCoercer) CoerceSignedInteger(value int64, ctx *typeutil.CoercionContext) (interface{}, error) {
 	// Input mode only accepts string values. See "Input Coercion" in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-String
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-String
 	if ctx.Mode == typeutil.InputCoercionMode {
 		return nil, coercer.RaiseInvalidTypeError(value, ctx)
 	}
@@ -489,7 +489,7 @@ func (coercer *stringCoercer) CoerceSignedInteger(value int64, ctx *typeutil.Coe
 func (coercer *stringCoercer) CoerceUnsignedInteger(value uint64, ctx *typeutil.CoercionContext) (interface{}, error) {
 	// Input mode only accepts string values. See "Input Coercion" in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-String
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-String
 	if ctx.Mode == typeutil.InputCoercionMode {
 		return nil, coercer.RaiseInvalidTypeError(value, ctx)
 	}
@@ -500,7 +500,7 @@ func (coercer *stringCoercer) CoerceUnsignedInteger(value uint64, ctx *typeutil.
 func (coercer *stringCoercer) CoerceFloat(value float64, ctx *typeutil.CoercionContext) (interface{}, error) {
 	// Input mode only accepts string values. See "Input Coercion" in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-String
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-String
 	if ctx.Mode == typeutil.InputCoercionMode {
 		return nil, coercer.RaiseInvalidTypeError(value, ctx)
 	}
@@ -583,7 +583,7 @@ func String() Scalar {
 //===-----------------------------------------------------------------------------------------===//
 // Boolean
 //===-----------------------------------------------------------------------------------------===//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Boolean
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Boolean
 
 type booleanCoercer struct {
 	scalarCoercerBase
@@ -614,7 +614,7 @@ func (coercer *booleanCoercer) CoerceBool(value bool, ctx *typeutil.CoercionCont
 func (coercer *booleanCoercer) CoerceSignedInteger(value int64, ctx *typeutil.CoercionContext) (interface{}, error) {
 	// Input mode only accepts boolean values. See "Input Coercion" in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-Boolean
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Boolean
 	if ctx.Mode == typeutil.InputCoercionMode {
 		return nil, coercer.RaiseInvalidTypeError(value, ctx)
 	}
@@ -625,7 +625,7 @@ func (coercer *booleanCoercer) CoerceSignedInteger(value int64, ctx *typeutil.Co
 func (coercer *booleanCoercer) CoerceUnsignedInteger(value uint64, ctx *typeutil.CoercionContext) (interface{}, error) {
 	// Input mode only accepts boolean values. See "Input Coercion" in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-Boolean
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Boolean
 	if ctx.Mode == typeutil.InputCoercionMode {
 		return nil, coercer.RaiseInvalidTypeError(value, ctx)
 	}
@@ -706,7 +706,7 @@ func Boolean() Scalar {
 //===-----------------------------------------------------------------------------------------===//
 // ID
 //===-----------------------------------------------------------------------------------------===//
-// Reference: https://facebook.github.io/graphql/June2018/#sec-ID
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-ID
 
 type idCoercer struct {
 	scalarCoercerBase

@@ -56,8 +56,8 @@ const (
 // made up of ResultNode's formed in a tree structure. ResultNode can be serialized to the response
 // format
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Executing-Operations
-// [1]: https://facebook.github.io/graphql/June2018/#sec-Data
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Executing-Operations
+// [1]: https://graphql.github.io/graphql-spec/June2018/#sec-Data
 type ResultNode struct {
 	// Pointer to the upper level of ResultNode in the result tree
 	Parent *ResultNode

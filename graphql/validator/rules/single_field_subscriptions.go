@@ -25,7 +25,7 @@ import (
 
 // SingleFieldSubscriptions implements the "Single root field" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Single-root-field.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Single-root-field.
 type SingleFieldSubscriptions struct{}
 
 // CheckOperation implements validator.OperationRule.

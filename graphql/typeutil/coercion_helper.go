@@ -27,7 +27,7 @@ type CoercionMode uint
 // Enumeration of CoercionMode; There are 2 kinds of coercions (Result Coercion and Input Coercion)
 // occurred in GraphQL and are described in [0] and for each builtin scalar type.
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Scalars
 const (
 	// The coercion is used to prepare values for result.
 	ResultCoercionMode CoercionMode = iota

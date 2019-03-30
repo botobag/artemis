@@ -25,7 +25,7 @@ import (
 
 // UniqueOperationNames implements the "Operation Name Uniqueness" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Operation-Name-Uniqueness.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Operation-Name-Uniqueness.
 type UniqueOperationNames struct{}
 
 // CheckOperation implements validator.OperationRule.

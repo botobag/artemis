@@ -25,7 +25,7 @@ import (
 
 // UniqueFragmentNames implements the "Unique Fragment Names" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Fragment-Name-Uniqueness.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Fragment-Name-Uniqueness.
 type UniqueFragmentNames struct{}
 
 // CheckFragment implements validator.FragmentRule.

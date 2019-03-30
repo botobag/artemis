@@ -25,7 +25,7 @@ import (
 
 // KnownFragmentNames implements the "Fragment spread target defined" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Fragment-spread-target-defined.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Fragment-spread-target-defined.
 type KnownFragmentNames struct{}
 
 // CheckFragmentSpread implements validator.FragmentSpreadRule.

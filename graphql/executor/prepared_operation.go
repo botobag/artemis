@@ -33,9 +33,9 @@ import (
 //
 // Note PreparedOperation is bound to an Executor.
 //
-// [0]: https://facebook.github.io/graphql/draft/#sec-Language.Operations
-// [1]: https://facebook.github.io/graphql/draft/#ExecutableDefinition
-// [2]: https://facebook.github.io/graphql/draft/#sec-Language.Document
+// [0]: https://graphql.github.io/graphql-spec/draft/#sec-Language.Operations
+// [1]: https://graphql.github.io/graphql-spec/draft/#ExecutableDefinition
+// [2]: https://graphql.github.io/graphql-spec/draft/#sec-Language.Document
 type PreparedOperation struct {
 	// Schema of the type system that is currently executing
 	schema graphql.Schema

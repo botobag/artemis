@@ -34,7 +34,7 @@ func toSnakeCaseLower(b byte) byte {
 // SnakeCase converts a string of the form "/[_A-Za-z][_0-9A-Za-z]*/" [0] into snake case. For
 // example, it returns "snake_case" for "SnakeCase".
 //
-// [0]: https://facebook.github.io/graphql/June2018/#Name
+// [0]: https://graphql.github.io/graphql-spec/June2018/#Name
 func SnakeCase(s string) string {
 	sLen := len(s)
 	if sLen == 0 {

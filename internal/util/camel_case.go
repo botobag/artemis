@@ -43,7 +43,7 @@ func toCamelCaseUpper(b byte) byte {
 // CamelCase converts a string of the form "/[_A-Za-z][_0-9A-Za-z]*/" [0] into camel case. For
 // example, it returns "CamelCase" for "camel_case".
 //
-// [0]: https://facebook.github.io/graphql/June2018/#Name
+// [0]: https://graphql.github.io/graphql-spec/June2018/#Name
 func CamelCase(s string) string {
 	sLen := len(s)
 	if sLen == 0 {

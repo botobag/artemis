@@ -24,8 +24,8 @@ import (
 // [1]. The fields are implicit and do not appear in any defined types. Executors take special cares
 // on them (by matching the field name in the query) to execute introspection queries.
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Type-Name-Introspection
-// [1]: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Type-Name-Introspection
+// [1]: https://graphql.github.io/graphql-spec/June2018/#sec-Schema-Introspection
 
 // List of meta-field names
 const (
@@ -69,7 +69,7 @@ func init() {
 //
 //	__schema: __Schema!
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Schema-Introspection
 type schemaMetaField struct{}
 
 // Name implements Field.
@@ -117,7 +117,7 @@ func (schemaMetaField) Deprecation() *Deprecation {
 //
 //	__type(name: String!): __Type
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Schema-Introspection
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Schema-Introspection
 type typeMetaField struct{}
 
 // Name implements Field.
@@ -163,7 +163,7 @@ func (typeMetaField) Deprecation() *Deprecation {
 // typenameMetaField implemens __typename meta-field [0] to access the name of the object type being
 // queried.
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Type-Name-Introspection
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Type-Name-Introspection
 type typenameMetaField struct{}
 
 // Name implements Field.

@@ -350,7 +350,7 @@ func (p *parser) parseOperationDefinition() (*ast.OperationDefinition, error) {
 //
 // For example: "{ field }"
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Operations
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Language.Operations
 func (p *parser) parseQueryShorthand() (*ast.OperationDefinition, error) {
 	selectionSet, err := p.parseSelectionSet()
 	if err != nil {

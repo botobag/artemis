@@ -78,7 +78,7 @@ type executor interface {
 	// execution. It implements error handling described in "Errors and Non-Nullability" [0] which
 	// propagate the field error until a nullable field was encountered.
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#sec-Errors-and-Non-Nullability
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Errors-and-Non-Nullability
 	AppendError(err *graphql.Error, result *ResultNode)
 }
 
@@ -86,7 +86,7 @@ func propagateExecutionError(result *ResultNode) {
 	// Impelement "Errors and Non-Nullability". Propagate the field error until a nullable field was
 	// encountered.
 	//
-	// Reference: https://facebook.github.io/graphql/June2018/#sec-Errors-and-Non-Nullability
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Errors-and-Non-Nullability
 	for result != nil && result.ShouldRejectNull() {
 		result = result.Parent
 		result.Kind = ResultKindNil
@@ -366,7 +366,7 @@ func (e *serialExecutor) Dispatch(task Task) {
 	if isTopLevelNode {
 		// Top-level fields are executed serially [0].
 		//
-		// [0]: https://facebook.github.io/graphql/June2018/#sec-Mutation
+		// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Mutation
 		e.rootTasks = append(e.rootTasks, task)
 	} else {
 		e.IncTaskCount()

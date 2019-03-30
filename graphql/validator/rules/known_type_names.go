@@ -26,7 +26,7 @@ import (
 
 // KnownTypeNames implements the "Fragment Spread Type Existence" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Fragment-Spread-Type-Existence.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Fragment-Spread-Type-Existence.
 type KnownTypeNames struct{}
 
 // A GraphQL document is only valid if referenced types (specifically variable definitions and

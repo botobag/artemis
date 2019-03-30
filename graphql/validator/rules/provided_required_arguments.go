@@ -24,7 +24,7 @@ import (
 
 // ProvidedRequiredArguments implements the "Required Arguments" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Required-Arguments.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Required-Arguments.
 type ProvidedRequiredArguments struct {
 	ProvidedRequiredArgumentsOnDirectives
 }
@@ -81,7 +81,7 @@ check_next_arg:
 // ProvidedRequiredArgumentsOnDirectives checks the "Required Arguments" validation rule on
 // directives.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Required-Arguments.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Required-Arguments.
 type ProvidedRequiredArgumentsOnDirectives struct{}
 
 // CheckDirective implements validator.DirectiveRule.

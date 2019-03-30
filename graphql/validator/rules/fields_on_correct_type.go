@@ -28,7 +28,7 @@ import (
 // FieldsOnCorrectType implements the "Field Selections on Objects, Interfaces, and Unions Types"
 // validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Field-Selections-on-Objects-Interfaces-and-Unions-Types.
 type FieldsOnCorrectType struct{}
 
 // CheckField implements validator.FieldRule.

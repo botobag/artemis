@@ -25,7 +25,7 @@ import (
 
 // FragmentsOnCompositeTypes implements the "Fragments on Composite Types" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Fragments-On-Composite-Types.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Fragments-On-Composite-Types.
 type FragmentsOnCompositeTypes struct{}
 
 // Fragments use a type condition to determine if they apply, since fragments can only be spread

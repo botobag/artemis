@@ -24,7 +24,7 @@ import (
 // A Rule implements an ast.Visitor to validate nodes in a GraphQL document according to one of the
 // sections under "Validation" in specification [0].
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Validation
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Validation
 
 // NextCheckAction is the type of return value from rule's Check function. It specifies which action
 // to take when the rule is invoked next time in current validation request.

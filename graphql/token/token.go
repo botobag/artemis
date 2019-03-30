@@ -26,7 +26,7 @@ type Kind int
 
 // Enumeration of Kind
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Appendix-Grammar-Summary.Lexical-Tokens.
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Appendix-Grammar-Summary.Lexical-Tokens.
 const (
 	// <SOF>
 	KindSOF Kind = iota + 1
@@ -60,17 +60,17 @@ const (
 	KindPipe
 	// }
 	KindRightBrace
-	// Reference: https://facebook.github.io/graphql/June2018/#Name
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#Name
 	KindName
-	// Reference: https://facebook.github.io/graphql/June2018/#IntValue
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#IntValue
 	KindInt
-	// Reference: https://facebook.github.io/graphql/June2018/#sec-Float-Value
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Float-Value
 	KindFloat
-	// Reference: https://facebook.github.io/graphql/June2018/#sec-String-Value
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-String-Value
 	KindString
-	// Reference: https://facebook.github.io/graphql/June2018/#sec-String-Value
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-String-Value
 	KindBlockString
-	// Reference: https://facebook.github.io/graphql/June2018/#sec-Comments
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Comments
 	KindComment
 )
 

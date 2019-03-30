@@ -25,7 +25,7 @@ import (
 
 // NoUnusedFragments implements the "Fragments must be used" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Fragments-Must-Be-Used.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Fragments-Must-Be-Used.
 type NoUnusedFragments struct{}
 
 // A GraphQL document is only valid if all fragment definitions are spread within operations, or

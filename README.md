@@ -6,7 +6,7 @@ Artemis is an implementation of GraphQL for Go. If you're working on GraphQL, yo
 
 The project goal of Artemis is to provide a GraphQL implementation and to integrate features that are essential to build production GraphQL services, all developed in Go. The following highlight some of its focuses:
 
-- **Beyond feature-complete**: We'll not only try to catch up [latest GraphQL specification](https://facebook.github.io/graphql/draft/) but also the experimental features that are already in [`graphql-js`](https://github.com/graphql-go/graphql).
+- **Beyond feature-complete**: We'll not only try to catch up [latest GraphQL specification](https://graphql.github.io/graphql-spec/draft/) but also the experimental features that are already in [`graphql-js`](https://github.com/graphql-go/graphql).
 - **Driven by community**: The development and design is driven by the needs of developers. Issues should be responded in short time. PRs welcome!
 
 ## Getting Started

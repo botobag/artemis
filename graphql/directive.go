@@ -19,7 +19,7 @@ package graphql
 // DirectiveLocation specifies a valid location for a directive to be used.
 type DirectiveLocation string
 
-// Reference: https://facebook.github.io/graphql/June2018/#DirectiveLocations
+// Reference: https://graphql.github.io/graphql-spec/June2018/#DirectiveLocations
 const (
 	// Executable directive location
 	DirectiveLocationQuery              DirectiveLocation = "QUERY"
@@ -80,7 +80,7 @@ func (config *DirectiveConfig) DeepCopy() *DirectiveConfig {
 // Directive are used by the GraphQL runtime as a way of modifying a validator, execution or client
 // tool behavior.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.Directives
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Type-System.Directives
 type Directive interface {
 	// Name of the directive
 	Name() string

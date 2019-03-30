@@ -24,7 +24,7 @@ import (
 
 // ScalarLeafs implements the "Leaf Field Selections" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Leaf-Field-Selections.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Leaf-Field-Selections.
 type ScalarLeafs struct{}
 
 // CheckField implements validator.FieldRule.

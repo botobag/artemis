@@ -26,7 +26,7 @@ import (
 
 // KnownArgumentNames implements the "Argument Names" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Argument-Names.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Argument-Names.
 type KnownArgumentNames struct {
 	KnownArgumentNamesOnDirectives
 }
@@ -72,7 +72,7 @@ func (rule KnownArgumentNames) CheckFieldArgument(
 
 // KnownArgumentNamesOnDirectives checks the "Argument Names" validation rule on directives.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Argument-Names.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Argument-Names.
 type KnownArgumentNamesOnDirectives struct{}
 
 // CheckDirectiveArgument implements validator.DirectiveArgumentRule.

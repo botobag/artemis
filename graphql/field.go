@@ -22,7 +22,7 @@ import (
 
 // FieldResolver resolves field value during execution.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#ResolveFieldValue()
+// Reference: https://graphql.github.io/graphql-spec/June2018/#ResolveFieldValue()
 type FieldResolver interface {
 	// Context carries deadlines and cancelation signals.
 	//
@@ -111,7 +111,7 @@ func BuildFieldMap(fieldConfigMap Fields, typeDefResolver typeDefinitionResolver
 
 // Field representing a field in an object or an interface. It yields a value of a specific type.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Objects
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Objects
 type Field interface {
 	// Name of the field
 	Name() string
@@ -127,7 +127,7 @@ type Field interface {
 
 	// Resolver determines the result value for the field from the value resolved by parent Object.
 	//
-	// Reference: https://facebook.github.io/graphql/June2018/#ResolveFieldValue()
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#ResolveFieldValue()
 	Resolver() FieldResolver
 
 	// Deprecation is non-nil when the field is tagged as deprecated.
@@ -231,7 +231,7 @@ func buildArguments(argConfigMap ArgumentConfigMap, typeDefResolver typeDefiniti
 
 // Argument is accepted in querying a field to further specify the return value.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Field-Arguments
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Field-Arguments
 type Argument struct {
 	name         string
 	description  string

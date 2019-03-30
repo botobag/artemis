@@ -30,7 +30,7 @@ import (
 
 // OverlappingFieldsCanBeMerged implements the "Field Selection Merging" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Field-Selection-Merging.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Field-Selection-Merging.
 type OverlappingFieldsCanBeMerged struct{}
 
 type fieldConflict struct {

@@ -25,7 +25,7 @@ import (
 
 // UniqueArgumentNames implements the "Argument Uniqueness" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Argument-Uniqueness.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Argument-Uniqueness.
 type UniqueArgumentNames struct{}
 
 // CheckField implements validator.FieldRule.

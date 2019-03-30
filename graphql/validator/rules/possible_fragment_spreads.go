@@ -25,7 +25,7 @@ import (
 
 // PossibleFragmentSpreads implements the "Fragment spread is possible" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Fragment-spread-is-possible.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Fragment-spread-is-possible.
 type PossibleFragmentSpreads struct{}
 
 // A fragment spread is only valid if the type condition could ever possibly be true: if there is a

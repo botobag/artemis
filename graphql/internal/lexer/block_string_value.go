@@ -30,7 +30,7 @@ var splitLinesRegex = regexp.MustCompile("\r\n|[\n\r]")
 //
 // Implementation was copied from graphql-go [1] which came from graphql-js [2].
 //
-// [0]: https://facebook.github.io/graphql/June2018/#BlockStringValue()
+// [0]: https://graphql.github.io/graphql-spec/June2018/#BlockStringValue()
 // [1]: https://github.com/graphql-go/graphql/blob/a7e15c0/language/lexer/lexer.go#L403
 // [2]: https://github.com/graphql/graphql-js/blob/7fff8b7/src/language/blockStringValue.js
 func BlockStringValue(in string) string {

@@ -360,7 +360,7 @@ func (lexer *Lexer) lexToken() (*token.Token, error) {
 //		Carriage Return (U+000D) [lookhead != New Line (U+000A)]
 //		Carriage Return (U+000D) New Line (U+000A)
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Comments
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Comments
 func (lexer *Lexer) lexComment() *token.Token {
 	// Remember where the token begins.
 	startPos := lexer.bytePos
@@ -383,8 +383,8 @@ func (lexer *Lexer) lexComment() *token.Token {
 // lexNumber reads a number token from the source file, either a float [0] or an int [1] depending
 // on whether a decimal point appears.
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Float-Value
-// [1]: https://facebook.github.io/graphql/June2018/#sec-Int-Value
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Float-Value
+// [1]: https://graphql.github.io/graphql-spec/June2018/#sec-Int-Value
 func (lexer *Lexer) lexNumber() (*token.Token, error) {
 	// Remember where the token begins.
 	startPos := lexer.bytePos
@@ -494,7 +494,7 @@ func (lexer *Lexer) lexNumber() (*token.Token, error) {
 //		SourceCharacter but not """ or \"""
 //		\"""
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-String-Value
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-String-Value
 func (lexer *Lexer) lexString() (*token.Token, error) {
 	// Note that the " was already consumed in lexToken.
 	startPos := lexer.bytePos - 1
@@ -706,7 +706,7 @@ func (lexer *Lexer) lexBlockString() (*token.Token, error) {
 //	Name ::
 //		/[_A-Za-z][_0-9A-Za-z]*/
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Names
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Names
 func (lexer *Lexer) lexName() *token.Token {
 	// Remember where the token begins.
 	startPos := lexer.bytePos

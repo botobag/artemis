@@ -25,7 +25,7 @@ import (
 
 // NoFragmentCycles implements the "Fragments must not form cycles" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Fragment-spreads-must-not-form-cycles.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Fragment-spreads-must-not-form-cycles.
 type NoFragmentCycles struct{}
 
 // CheckFragment implements validator.FragmentRule.

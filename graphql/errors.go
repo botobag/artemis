@@ -85,8 +85,8 @@ func NewSyntaxError(source *token.Source, location token.SourceLocation, descrip
 // 3. For coercion errors returning from Enum and Scalar's CoerceLiteralValue:
 //  - Currently it makes no difference than other errors.
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars
-// [1]: https://facebook.github.io/graphql/June2018/#CompleteValue()
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Scalars
+// [1]: https://graphql.github.io/graphql-spec/June2018/#CompleteValue()
 func NewCoercionError(format string, a ...interface{}) error {
 	return NewError(fmt.Sprintf(format, a...), ErrKindCoercion)
 }

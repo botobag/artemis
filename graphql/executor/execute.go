@@ -173,7 +173,7 @@ func buildChildExecutionNodesForSelectionSet(
 						// Schema doesn't contains the field. Note that we should skip the field without an
 						// error as per specification.
 						//
-						// Reference: 3.c. in https://facebook.github.io/graphql/June2018/#ExecuteSelectionSet().
+						// Reference: 3.c. in https://graphql.github.io/graphql-spec/June2018/#ExecuteSelectionSet().
 						break
 					}
 
@@ -248,7 +248,7 @@ func buildChildExecutionNodesForSelectionSet(
 // Determines if a field should be included based on the @include and @skip directives, where @skip
 // has higher precedence than @include.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec--include
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec--include
 func shouldIncludeNode(ctx *ExecutionContext, node ast.Selection) (bool, error) {
 	// Neither @skip nor @include has precedence over the other. In the case that both the @skip and
 	// @include directives are provided in on the same the field or fragment, it must be queried only
@@ -530,7 +530,7 @@ func (task *ExecuteNodeTask) handleNodeError(err error, result *ResultNode) {
 // completeValue implements "Value Completion" [0]. It ensures the value resolved from the field
 // resolver adheres to the expected return type.
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Value-Completion
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Value-Completion
 func (task *ExecuteNodeTask) completeValue(
 	returnType graphql.Type,
 	result *ResultNode,

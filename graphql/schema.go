@@ -190,7 +190,7 @@ type SchemaConfig struct {
 // Definitions including types and directives in schema are assumed to be immutable after creation.
 // This allows us to cache the results for some operations such as PossibleTypes.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Schema
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Schema
 type Schema interface {
 	// TypeMap keeps track of all named types referenced within the schema.
 	TypeMap() TypeMap
@@ -200,7 +200,7 @@ type Schema interface {
 
 	// The following provides root operation types defined in a GraphQL schema.
 	//
-	// Reference: https://facebook.github.io/graphql/June2018/#sec-Root-Operation-Types
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Root-Operation-Types
 	Query() Object
 	Mutation() Object
 	Subscription() Object

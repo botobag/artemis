@@ -292,7 +292,7 @@ type TypeResolver interface {
 	//
 	// Info contains a collection of information about the current execution state.
 	//
-	// Reference: https://facebook.github.io/graphql/June2018/#ResolveAbstractType()
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#ResolveAbstractType()
 	Resolve(ctx context.Context, value interface{}, info ResolveInfo) (Object, error)
 }
 

@@ -35,7 +35,7 @@ type Node interface {
 
 // Name represents a name.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Names
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Names
 type Name struct {
 	// Token is the lexical token that contains the name (usually scanned by lexer) and also
 	// indicates the location in the source; Its kind must be an token.KindName.
@@ -81,7 +81,7 @@ var (
 // or client. A document contains multiple definitions, either executable or representative of a
 // GraphQL type system.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Document
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Language.Document
 
 // Definitions represents a list of GraphQL definitions.
 type Definitions []Definition
@@ -105,7 +105,7 @@ func (nodes Definitions) TokenRange() token.Range {
 
 // Document represents a GraphQL Document.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#Document
+// Reference: https://graphql.github.io/graphql-spec/June2018/#Document
 type Document struct {
 	// Definitions defined in the document.
 	Definitions Definitions
@@ -123,7 +123,7 @@ func (node Document) TokenRange() token.Range {
 
 // Definition represents a GraphQL Definition.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#Definition
+// Reference: https://graphql.github.io/graphql-spec/June2018/#Definition
 type Definition interface {
 	Node
 
@@ -134,7 +134,7 @@ type Definition interface {
 
 // ExecutableDefinition represents an executable definition.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#ExecutableDefinition
+// Reference: https://graphql.github.io/graphql-spec/June2018/#ExecutableDefinition
 type ExecutableDefinition interface {
 	Definition
 
@@ -157,11 +157,11 @@ var (
 //	* mutation – a write followed by a fetch.
 // 	* subscription – a long‐lived request that fetches data in response to source events.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Operations
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Language.Operations
 
 // OperationType specifies the type of operation model.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#OperationType
+// Reference: https://graphql.github.io/graphql-spec/June2018/#OperationType
 type OperationType string
 
 // Enumeration of OperationType
@@ -173,7 +173,7 @@ const (
 
 // VariableDefinitions represents a list of VariableDefinition's.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#VariableDefinitions
+// Reference: https://graphql.github.io/graphql-spec/June2018/#VariableDefinitions
 type VariableDefinitions []*VariableDefinition
 
 var _ Node = VariableDefinitions{}
@@ -206,7 +206,7 @@ func (nodes VariableDefinitions) TokenRange() token.Range {
 
 // OperationDefinition represents a GraphQL operation.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#OperationDefinition
+// Reference: https://graphql.github.io/graphql-spec/June2018/#OperationDefinition
 type OperationDefinition struct {
 	// Type is a Name token that contains operation type.
 	Type *token.Token
@@ -269,11 +269,11 @@ func (definition *OperationDefinition) OperationType() OperationType {
 // An operation selects the set of information it needs, and will receive exactly that information
 // and nothing more, avoiding over‐fetching and under‐fetching data.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Selection-Sets
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Selection-Sets
 
 // SelectionSet specifies the information to be fetched.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#SelectionSet
+// Reference: https://graphql.github.io/graphql-spec/June2018/#SelectionSet
 type SelectionSet []Selection
 
 var _ Node = SelectionSet{}
@@ -311,7 +311,7 @@ func (set SelectionSet) TokenRange() token.Range {
 //		FragmentSpread
 //		InlineFragment
 //
-// Reference: https://facebook.github.io/graphql/June2018/#Selection
+// Reference: https://graphql.github.io/graphql-spec/June2018/#Selection
 type Selection interface {
 	Node
 
@@ -335,16 +335,16 @@ var (
 // A selection set is primarily composed of fields. A field describes one discrete piece of
 // information available to request within a selection set.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Fields
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Language.Fields
 
 // Field describes a field selection.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#Field
+// Reference: https://graphql.github.io/graphql-spec/June2018/#Field
 type Field struct {
 	// Alias specifies a different name of the key to be used in response object for returning the
 	// field value.
 	//
-	// Reference: https://facebook.github.io/graphql/June2018/#sec-Field-Alias
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Field-Alias
 	Alias Name `ast:"optional"`
 
 	// Name of the field
@@ -410,11 +410,11 @@ func (node *Field) ResponseKey() string {
 // Fields are conceptually functions which return values, and occasionally accept arguments which
 // alter their behavior.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Arguments
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Language.Arguments
 
 // Arguments specifies a list of Arguments.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#Arguments
+// Reference: https://graphql.github.io/graphql-spec/June2018/#Arguments
 type Arguments []*Argument
 
 var _ Node = Arguments{}
@@ -447,7 +447,7 @@ func (nodes Arguments) TokenRange() token.Range {
 
 // An Argument is an argument taken by a field.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#Argument
+// Reference: https://graphql.github.io/graphql-spec/June2018/#Argument
 type Argument struct {
 	// Name of the argument
 	Name Name
@@ -472,11 +472,11 @@ func (node *Argument) TokenRange() token.Range {
 // Fragments allow for the reuse of common repeated selections of fields, reducing duplicated text
 // in the document.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Fragments
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Language.Fragments
 
 // FragmentDefinition represents a reusable selections of fields.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#FragmentDefinition
+// Reference: https://graphql.github.io/graphql-spec/June2018/#FragmentDefinition
 type FragmentDefinition struct {
 	// Name of the fragment
 	Name Name
@@ -516,7 +516,7 @@ func (definition *FragmentDefinition) GetSelectionSet() SelectionSet {
 // FragmentSpread uses the spread operator (...) on a fragment to adds a set of fields defined by
 // the fragment to selection set.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#FragmentSpread
+// Reference: https://graphql.github.io/graphql-spec/June2018/#FragmentSpread
 type FragmentSpread struct {
 	// Name of the fragment to be consumed by the selection set
 	Name Name
@@ -550,7 +550,7 @@ func (node *FragmentSpread) GetDirectives() Directives {
 
 // InlineFragment defines a fragment inline within a selection set.
 //
-// ReF: https://facebook.github.io/graphql/June2018/#sec-Inline-Fragments
+// ReF: https://graphql.github.io/graphql-spec/June2018/#sec-Inline-Fragments
 type InlineFragment struct {
 	// TypeCondition specifies the type this inline fragment applies to.
 	TypeCondition NamedType `ast:"optional"`
@@ -599,11 +599,11 @@ func (node *InlineFragment) GetDirectives() Directives {
 // Field and directive arguments accept input values of various literal primitives; input values can
 // be scalars, enumeration values, lists, or input objects.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Input-Values
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Input-Values
 
 // Value represents a node containing a value.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#Value
+// Reference: https://graphql.github.io/graphql-spec/June2018/#Value
 type Value interface {
 	Node
 
@@ -630,7 +630,7 @@ var (
 
 // IntValue represents a value node containing an integer.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#IntValue
+// Reference: https://graphql.github.io/graphql-spec/June2018/#IntValue
 type IntValue struct {
 	// Token is the lexical token that contains the value (usually scanned by lexer) and also
 	// indicates the location in the source; Its kind must be an token.KindInt.
@@ -686,7 +686,7 @@ func (value IntValue) Int64Value() (int64, error) {
 
 // FloatValue represents a value node containing a float.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#FloatValue
+// Reference: https://graphql.github.io/graphql-spec/June2018/#FloatValue
 type FloatValue struct {
 	// Token is the lexical token that contains the value (usually scanned by lexer) and also
 	// indicates the location in the source; Its kind must be an token.KindFloat.
@@ -725,7 +725,7 @@ func (value FloatValue) FloatValue() (float64, error) {
 
 // StringValue represents a value node containing a string.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#StringValue
+// Reference: https://graphql.github.io/graphql-spec/June2018/#StringValue
 type StringValue struct {
 	// Token is the lexical token that contains the value (usually scanned by lexer) and also
 	// indicates the location in the source; Its kind must be an token.KindString or
@@ -761,7 +761,7 @@ func (value StringValue) Value() string {
 
 // BooleanValue represents a value node containing a boolean.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#BooleanValue
+// Reference: https://graphql.github.io/graphql-spec/June2018/#BooleanValue
 type BooleanValue struct {
 	// Token is the lexical token that contains the value (usually scanned by lexer) and also
 	// indicates the location in the source; It should be a token.KindName containing either "true" or
@@ -792,7 +792,7 @@ func (BooleanValue) valueNode() {}
 
 // NullValue represents the keyword "null".
 //
-// Reference: https://facebook.github.io/graphql/June2018/#NullValue
+// Reference: https://graphql.github.io/graphql-spec/June2018/#NullValue
 type NullValue struct {
 	// Token is the lexical token that contains the value (usually scanned by lexer) and also
 	// indicates the location in the source; It should be an token.KindName containing a "null".
@@ -817,7 +817,7 @@ func (NullValue) valueNode() {}
 
 // EnumValue represents a value node containing a boolean.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#EnumValue
+// Reference: https://graphql.github.io/graphql-spec/June2018/#EnumValue
 type EnumValue struct {
 	// Token is the lexical token that contains the value (usually scanned by lexer) and also
 	// indicates the location in the source; Its kind must be an token.KindName.
@@ -847,7 +847,7 @@ func (value EnumValue) Value() string {
 
 // ListValue represents a value node containing list of values.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#ListValue
+// Reference: https://graphql.github.io/graphql-spec/June2018/#ListValue
 type ListValue struct {
 	// This field contains either []Value or a *token.Token.
 	//
@@ -915,7 +915,7 @@ func (ListValue) valueNode() {}
 
 // ObjectValue represents a value node containing list of values
 //
-// Reference: https://facebook.github.io/graphql/June2018/#ObjectValue
+// Reference: https://graphql.github.io/graphql-spec/June2018/#ObjectValue
 type ObjectValue struct {
 	// This field contains either []*ObjectField or a *token.Token.
 	//
@@ -984,7 +984,7 @@ func (ObjectValue) valueNode() {}
 
 // ObjectField represent a node that assigns a value to an object field.
 //
-// https://facebook.github.io/graphql/June2018/#ObjectField
+// https://graphql.github.io/graphql-spec/June2018/#ObjectField
 type ObjectField struct {
 	// Name of the field being assigned
 	Name Name
@@ -1009,11 +1009,11 @@ func (node *ObjectField) TokenRange() token.Range {
 // A GraphQL query can be parameterized with variables, maximizing query reuse, and avoiding costly
 // string building in clients at runtime.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Variables
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Language.Variables
 
 // Variable refers to a variable with a name.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#Variable
+// Reference: https://graphql.github.io/graphql-spec/June2018/#Variable
 type Variable struct {
 	// Name of the reference
 	Name Name
@@ -1044,7 +1044,7 @@ func (Variable) valueNode() {}
 
 // VariableDefinition defines a variable.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#VariableDefinition
+// Reference: https://graphql.github.io/graphql-spec/June2018/#VariableDefinition
 type VariableDefinition struct {
 	// Variable that is defined by this node
 	Variable Variable
@@ -1084,7 +1084,7 @@ func (value *VariableDefinition) TokenRange() token.Range {
 // GraphQL describes the types of data expected by query variables. Input types may be lists of
 // another input type, or a non‐null variant of any other input type.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Type-References
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Type-References
 
 // Type describes a type of data.
 //
@@ -1093,7 +1093,7 @@ func (value *VariableDefinition) TokenRange() token.Range {
 //		ListType
 //		NonNullType
 //
-// Reference: https://facebook.github.io/graphql/June2018/#Type
+// Reference: https://graphql.github.io/graphql-spec/June2018/#Type
 type Type interface {
 	Node
 
@@ -1216,11 +1216,11 @@ func (NonNullType) typeNode() {}
 // Directives provide a way to describe alternate runtime execution and type validation behavior in
 // a GraphQL document.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Language.Directives
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Language.Directives
 
 // Directives specifies a list of directives.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#Directives
+// Reference: https://graphql.github.io/graphql-spec/June2018/#Directives
 type Directives []*Directive
 
 var _ Node = Directives{}

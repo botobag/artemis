@@ -25,7 +25,7 @@ import (
 
 // LoneAnonymousOperation implements the "Lone Anonymous Operation" validation rule.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Lone-Anonymous-Operation.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Lone-Anonymous-Operation.
 type LoneAnonymousOperation struct{}
 
 // CheckOperation implements validator.OperationRule.

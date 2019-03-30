@@ -22,7 +22,7 @@ import (
 
 // Type interfaces provided by a GraphQL type.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Types
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Types
 type Type interface {
 	// graphqlType is a special mark to indicate a Type. It makes sure that only
 	// a set of object can be assigned to Type.
@@ -33,8 +33,8 @@ type Type interface {
 // terminates. Currently only Scalar and Enum are valid types for leaf nodes in GraphQL. See [0] and
 // [1].
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars
-// [1]: https://facebook.github.io/graphql/June2018/#sec-Enums
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Scalars
+// [1]: https://graphql.github.io/graphql-spec/June2018/#sec-Enums
 type LeafType interface {
 	Type
 	TypeWithName
@@ -49,7 +49,7 @@ type LeafType interface {
 
 // AbstractType indicates a GraphQL abstract type. Namely, interfaces and unions.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Types
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Types
 type AbstractType interface {
 	Type
 	TypeWithName
@@ -58,7 +58,7 @@ type AbstractType interface {
 	// TypeResolver returns resolver that could determine the concrete Object type for the abstract
 	// type from resolved value.
 	//
-	// Reference: https://facebook.github.io/graphql/June2018/#ResolveAbstractType()
+	// Reference: https://graphql.github.io/graphql-spec/June2018/#ResolveAbstractType()
 	TypeResolver() TypeResolver
 
 	// graphqlAbstractType puts a special mark for an abstract type.
@@ -68,7 +68,7 @@ type AbstractType interface {
 // WrappingType is a type that wraps another type. There are two wrapping type in GraphQL: List and
 // NonNull.
 //
-// Reference: https://facebook.github.io/graphql/draft/#sec-Wrapping-Types
+// Reference: https://graphql.github.io/graphql-spec/draft/#sec-Wrapping-Types
 type WrappingType interface {
 	Type
 
@@ -80,7 +80,7 @@ type WrappingType interface {
 
 // Deprecation contains information about deprecation for a field or an enum value.
 //
-// See https://facebook.github.io/graphql/June2018/#sec-Deprecation.
+// See https://graphql.github.io/graphql-spec/June2018/#sec-Deprecation.
 type Deprecation struct {
 	// Reason provides a description of why the subject is deprecated.
 	Reason string
@@ -117,7 +117,7 @@ type TypeWithDescription interface {
 // defined with a name and a series of functions used to parse input from ast or variables and to
 // ensure validity.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Scalars
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Scalars
 type Scalar interface {
 	LeafType
 
@@ -147,12 +147,12 @@ func (*ThisIsScalarType) graphqlScalarType() {}
 // ScalarResultCoercer coerces result value into a value represented in the Scalar type. Please read
 // "Result Coercion" in [0] to provide appropriate implementation.
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Scalars
 type ScalarResultCoercer interface {
 	// CoerceResultValue coerces the given value for the field to return. It is called in
 	// CompleteValue() [0] as per spec.
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#CompleteValue()
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#CompleteValue()
 	CoerceResultValue(value interface{}) (interface{}, error)
 }
 
@@ -171,16 +171,16 @@ var _ ScalarResultCoercer = (CoerceScalarResultFunc)(nil)
 // ScalarInputCoercer coerces input values in the GraphQL requests into a value represented the
 // Scalar type. Please read "Input Coercion" in [0] to provide appropriate implementation.
 //
-// [0]: https://facebook.github.io/graphql/June2018/#sec-Scalars
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Scalars
 type ScalarInputCoercer interface {
 	// CoerceVariableValue coerces a scalar value in input query variables [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#CoerceVariableValues()
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#CoerceVariableValues()
 	CoerceVariableValue(value interface{}) (interface{}, error)
 
 	// CoerceLiteralValue coerces a scalar value in input field arguments [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#CoerceLiteralValues()
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#CoerceLiteralValues()
 	CoerceLiteralValue(value ast.Value) (interface{}, error)
 }
 
@@ -239,7 +239,7 @@ type ScalarAlias interface {
 // types describe the leaf values of these hierarchical queries, Objects describe the intermediate
 // levels.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Objects
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Objects
 type Object interface {
 	Type
 	TypeWithName
@@ -274,7 +274,7 @@ func (*ThisIsObjectType) graphqlObjectType() {}
 // what types are possible, what fields are in common across all types, as well as a function to
 // determine which type is actually used when the field is resolved.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Interfaces
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Interfaces
 type Interface interface {
 	AbstractType
 
@@ -351,7 +351,7 @@ func (set PossibleTypeSet) DoesIntersect(other PossibleTypeSet) bool {
 // what types are possible as well as providing a function to determine which type is actually used
 // when the field is resolved.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Unions
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Unions
 type Union interface {
 	AbstractType
 
@@ -394,7 +394,7 @@ func (m EnumValueMap) Lookup(name string) EnumValue {
 // Note: If a value is not provided in a definition, the name of the enum value will be used as its
 //			 internal value.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Enums
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Enums
 type Enum interface {
 	LeafType
 
@@ -419,7 +419,7 @@ func (*ThisIsEnumType) graphqlEnumType() {}
 
 // EnumValue provides definition for a value in enum.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#EnumValue
+// Reference: https://graphql.github.io/graphql-spec/June2018/#EnumValue
 type EnumValue interface {
 	// Name of enum value.
 	Name() string
@@ -448,7 +448,7 @@ type InputFieldMap map[string]InputField
 // used as an input argument. More specifically, fields in an Input Object type cannot define
 // arguments or contain references to interfaces and unions.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Input-Objects
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Input-Objects
 type InputObject interface {
 	Type
 	TypeWithName
@@ -503,7 +503,7 @@ func IsRequiredInputField(field InputField) bool {
 // A list is a wrapping type which points to another type. Lists are often created within the
 // context of defining the fields of an object type.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.List
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Type-System.List
 type List interface {
 	WrappingType
 
@@ -539,7 +539,7 @@ func (*ThisIsListType) graphqlListType() {}
 //
 // Note: the enforcement of non-nullability occurs within the executor.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#sec-Type-System.Non-Null
+// Reference: https://graphql.github.io/graphql-spec/June2018/#sec-Type-System.Non-Null
 type NonNull interface {
 	WrappingType
 
@@ -569,7 +569,7 @@ func (*ThisIsNonNullType) graphqlNonNullType() {}
 // NamedTypeOf returns the given type if it is a non-wrapping type. Otherwise, return the underlying
 // type of a wrapping type.
 //
-// Reference: https://facebook.github.io/graphql/draft/#sec-Wrapping-Types
+// Reference: https://graphql.github.io/graphql-spec/draft/#sec-Wrapping-Types
 func NamedTypeOf(t Type) Type {
 	for {
 		switch ttype := t.(type) {
@@ -602,7 +602,7 @@ func NullableTypeOf(t Type) Type {
 
 // IsInputType returns true if the given type is valid for values in input arguments and variables.
 //
-// Reference: https://facebook.github.io/graphql/June2018/#IsInputType()
+// Reference: https://graphql.github.io/graphql-spec/June2018/#IsInputType()
 func IsInputType(t Type) bool {
 	switch NamedTypeOf(t).(type) {
 	case Scalar, Enum, InputObject:
@@ -614,7 +614,7 @@ func IsInputType(t Type) bool {
 
 // IsOutputType returns true if the given type is valid for values in field output.
 //
-// Reference: https://facebook.github.io/graphql/draft/#IsOutputType()
+// Reference: https://graphql.github.io/graphql-spec/draft/#IsOutputType()
 func IsOutputType(t Type) bool {
 	switch NamedTypeOf(t).(type) {
 	case Scalar, Object, Interface, Union, Enum:
@@ -642,7 +642,7 @@ func IsNullableType(t Type) bool {
 
 // IsNamedType returns true if the type is a non-wrapping type.
 //
-// Reference: https://facebook.github.io/graphql/draft/#sec-Wrapping-Types
+// Reference: https://graphql.github.io/graphql-spec/draft/#sec-Wrapping-Types
 func IsNamedType(t Type) bool {
 	return !IsWrappingType(t)
 }

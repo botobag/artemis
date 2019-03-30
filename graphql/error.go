@@ -238,7 +238,7 @@ type ErrorWithExtensions interface {
 // It also includes Op and ErrKind which will show when printing the error value. This makes it
 // helpful for programmers.
 //
-// [0] https://facebook.github.io/graphql/June2018/#sec-Errors
+// [0] https://graphql.github.io/graphql-spec/June2018/#sec-Errors
 type Error struct {
 	// Message describes the error for debugging purposes. It is required by a GraphQL Error as per
 	// spec..
@@ -257,7 +257,7 @@ type Error struct {
 	// presented when an error can be associated to a particular field in the GraphQL result as per
 	// spec.. Currently, it is only included for errors during execution. See example in [0].
 	//
-	// [0]: https://facebook.github.io/graphql/June2018/#example-90475
+	// [0]: https://graphql.github.io/graphql-spec/June2018/#example-90475
 	Path ResponsePath
 
 	// Extensions contains data to be added to in the error response
