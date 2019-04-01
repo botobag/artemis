@@ -41,7 +41,11 @@ func executeQueryWithParams(schema graphql.Schema, query string, params map[stri
 	Expect(err).ShouldNot(HaveOccurred())
 
 	operation, errs := executor.Prepare(schema, document)
-	Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
+	if errs.HaveOccurred() {
+		return executor.ExecutionResult{
+			Errors: errs,
+		}
+	}
 
 	var result executor.ExecutionResult
 	Eventually(

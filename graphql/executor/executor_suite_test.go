@@ -51,12 +51,16 @@ func MatchResultInJSON(resultJSON string) types.GomegaMatcher {
 type ExecuteFunc func(schema graphql.Schema, document ast.Document, opts ...interface{}) <-chan executor.ExecutionResult
 
 // execute is a convenient function using in test that wraps executor.Prepare and
-// PreparedOperation.Execute. Options passed in opts must each be either an executor.PrepareOption
-// or an executor.ExecuteOption, or it panics.
+// PreparedOperation.Execute. Note that validation is disabled which match the behavior in
+// graphql-js where "execute" only performs execution. Options passed in opts must each be either an
+// executor.PrepareOption or an executor.ExecuteOption, or it panics.
 func execute(schema graphql.Schema, document ast.Document, opts ...interface{}) <-chan executor.ExecutionResult {
 	// Packing options.
 	var (
-		prepareOpts []executor.PrepareOption
+		prepareOpts = []executor.PrepareOption{
+			// Disable validation.
+			executor.WithoutValidation(),
+		}
 		executeOpts []executor.ExecuteOption
 	)
 

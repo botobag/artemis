@@ -23,6 +23,9 @@ import (
 	"github.com/botobag/artemis/concurrent"
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
+	"github.com/botobag/artemis/graphql/validator"
+	// Load standard rules required by specification for validating queries.
+	_ "github.com/botobag/artemis/graphql/validator/rules"
 )
 
 // PreparedOperation is like "prepared statement" in conventional DBMS. In GraphQL, an Operation [0]
@@ -62,6 +65,16 @@ type prepareOptions struct {
 	// The name of the Operation in the Document to execute.
 	OperationName string
 
+	// Rules to be checked on the Document. This could be:
+	//
+	//  nil (default): use the "standard" rule set (returned by validator.StandardRules()) which are
+	//  required to be checked on the Document by GraphQL Specification.
+	//
+	//  []interface{}{} (empty array): disable validation.
+	//
+	//  non-empty rule set: validate Document with the specified rules.
+	ValidationRules []interface{}
+
 	// Resolver to be used to fields without providing custom resolvers; If not provided,
 	// defaultFieldResolver will be used.
 	DefaultFieldResolver graphql.FieldResolver
@@ -92,6 +105,28 @@ func DefaultFieldResolver(resolver graphql.FieldResolver) PrepareOption {
 	}
 }
 
+// ValidationRules specifies the set of rules to be checked when validating the provided Document.
+// The specified rules should meet the requirements for passing to validator.ValidateWithRules. Note
+// that if no rule is provided, it is equivalent to WithoutValidation.
+func ValidationRules(rules ...interface{}) PrepareOption {
+	if len(rules) == 0 {
+		return WithoutValidation()
+	}
+
+	return func(options *prepareOptions) {
+		options.ValidationRules = rules
+	}
+}
+
+var noValidationRules = []interface{}{}
+
+// WithoutValidation skips validation for the provided Document.
+func WithoutValidation() PrepareOption {
+	return func(options *prepareOptions) {
+		options.ValidationRules = noValidationRules
+	}
+}
+
 // Prepare creates a PreparedOperation for executing a document.
 func Prepare(schema graphql.Schema, document ast.Document, opts ...PrepareOption) (*PreparedOperation, graphql.Errors) {
 	var (
@@ -107,7 +142,16 @@ func Prepare(schema graphql.Schema, document ast.Document, opts ...PrepareOption
 		opt(&options)
 	}
 
-	// TODO: Validate schema and document.
+	// Validate schema and document.
+	if options.ValidationRules != nil {
+		errs = validator.ValidateWithRules(schema, document, options.ValidationRules...)
+	} else {
+		// Validate with the "standard" rules by using validator.Validate.
+		errs = validator.Validate(schema, document)
+	}
+	if errs.HaveOccurred() {
+		return nil, errs
+	}
 
 	// Find the definition for the operation to be executed from document.
 	operationName := options.OperationName

@@ -310,7 +310,7 @@ var _ = Describe("Enum", func() {
 			Expect(executeQuery(schema, query)).Should(testutil.SerializeToJSONAs(map[string]interface{}{
 				"errors": []interface{}{
 					map[string]interface{}{
-						"message": `Argument "fromEnum" has invalid value "GREEN".`,
+						"message": `Expected type Color, found "GREEN"; Did you mean the enum value GREEN?`,
 						"locations": []interface{}{
 							map[string]interface{}{
 								"line":   1,
@@ -327,7 +327,7 @@ var _ = Describe("Enum", func() {
 			Expect(executeQuery(schema, query)).Should(testutil.SerializeToJSONAs(map[string]interface{}{
 				"errors": []interface{}{
 					map[string]interface{}{
-						"message": `Argument "fromEnum" has invalid value "GREENISH".`,
+						"message": `Expected type Color, found GREENISH; Did you mean the enum value GREEN?`,
 						"locations": []interface{}{
 							map[string]interface{}{
 								"line":   1,
@@ -344,7 +344,7 @@ var _ = Describe("Enum", func() {
 			Expect(executeQuery(schema, query)).Should(testutil.SerializeToJSONAs(map[string]interface{}{
 				"errors": []interface{}{
 					map[string]interface{}{
-						"message": `Argument "fromEnum" has invalid value "green".`,
+						"message": `Expected type Color, found green; Did you mean the enum value GREEN?`,
 						"locations": []interface{}{
 							map[string]interface{}{
 								"line":   1,
@@ -382,7 +382,7 @@ var _ = Describe("Enum", func() {
 			Expect(executeQuery(schema, query)).Should(testutil.SerializeToJSONAs(map[string]interface{}{
 				"errors": []interface{}{
 					map[string]interface{}{
-						"message": `Argument "fromEnum" has invalid value 1.`,
+						"message": `Expected type Color, found 1.`,
 						"locations": []interface{}{
 							map[string]interface{}{
 								"line":   1,
@@ -399,7 +399,7 @@ var _ = Describe("Enum", func() {
 			Expect(executeQuery(schema, query)).Should(testutil.SerializeToJSONAs(map[string]interface{}{
 				"errors": []interface{}{
 					map[string]interface{}{
-						"message": `Argument "fromInt" has invalid value "GREEN".`,
+						"message": `Expected type Int, found GREEN.`,
 						"locations": []interface{}{
 							map[string]interface{}{
 								"line":   1,
@@ -473,33 +473,19 @@ var _ = Describe("Enum", func() {
 				"color": "BLUE",
 			}
 			Expect(executeQueryWithParams(schema, query, params)).Should(testutil.SerializeToJSONAs(map[string]interface{}{
-				// FIXME: This should be a validation error.
-				// "errors": []interface{}{
-				// 	"message": `Variable "$color" of type "String!" used in position expecting type "Color".`,
-				// 	"locations": []interface{}{
-				// 		map[string]interface{}{
-				// 			"line":   1,
-				// 			"column": 8,
-				// 		},
-				// 		map[string]interface{}{
-				// 			"line":   1,
-				// 			"column": 47,
-				// 		},
-				// 	},
-				// },
-				"data": map[string]interface{}{
-					"colorEnum": nil,
-				},
 				"errors": []interface{}{
 					map[string]interface{}{
-						"message": `Expected a value of type "Color" but received: BLUE`,
+						"message": `Variable "$color" of type "String!" used in position expecting type "Color".`,
 						"locations": []interface{}{
 							map[string]interface{}{
 								"line":   1,
-								"column": 27,
+								"column": 8,
+							},
+							map[string]interface{}{
+								"line":   1,
+								"column": 47,
 							},
 						},
-						"path": []interface{}{"colorEnum"},
 					},
 				},
 			}))
@@ -511,24 +497,20 @@ var _ = Describe("Enum", func() {
 				"color": 2,
 			}
 			Expect(executeQueryWithParams(schema, query, params)).Should(testutil.SerializeToJSONAs(map[string]interface{}{
-				// FIXME: This should be a validation error.
-				// "errors": []interface{}{
-				// 	map[string]interface{}{
-				// 		"message": `Variable "$color" of type "Int!" used in position expecting type "Color".`,
-				// 		"locations": []interface{}{
-				// 			map[string]interface{}{
-				// 				"line":   1,
-				// 				"column": 8,
-				// 			},
-				// 			map[string]interface{}{
-				// 				"line":   1,
-				// 				"column": 47,
-				// 			},
-				// 		},
-				// 	},
-				// },
-				"data": map[string]interface{}{
-					"colorEnum": "BLUE",
+				"errors": []interface{}{
+					map[string]interface{}{
+						"message": `Variable "$color" of type "Int!" used in position expecting type "Color".`,
+						"locations": []interface{}{
+							map[string]interface{}{
+								"line":   1,
+								"column": 8,
+							},
+							map[string]interface{}{
+								"line":   1,
+								"column": 44,
+							},
+						},
+					},
 				},
 			}))
 		})

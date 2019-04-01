@@ -1113,7 +1113,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		_, errs := executor.Prepare(schema, document)
+		_, errs := executor.Prepare(schema, document, executor.WithoutValidation())
 		Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 			testutil.MessageEqual("Must provide an operation."),
 		)))
@@ -1150,14 +1150,18 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 
 		It("errors if no operation name is provided", func() {
-			_, errs := executor.Prepare(schema, document)
+			_, errs := executor.Prepare(schema, document, executor.WithoutValidation())
 			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Must provide operation name if query contains multiple operations."),
 			)))
 		})
 
 		It("errors if unknown operation name is provided", func() {
-			_, errs := executor.Prepare(schema, document, executor.OperationName("UnknownExample"))
+			_, errs := executor.Prepare(
+				schema,
+				document,
+				executor.WithoutValidation(),
+				executor.OperationName("UnknownExample"))
 			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual(`Unknown operation named "UnknownExample".`),
 			)))
