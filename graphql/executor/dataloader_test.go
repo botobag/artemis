@@ -298,10 +298,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -338,10 +335,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -406,10 +400,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{

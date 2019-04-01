@@ -164,10 +164,7 @@ var _ = DescribeExecute("Execute: Union and intersection types", func(runner con
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		return operation.Execute(context.Background(), executor.ExecuteParams{

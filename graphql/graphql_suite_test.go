@@ -40,10 +40,7 @@ func executeQueryWithParams(schema graphql.Schema, query string, params map[stri
 	}))
 	Expect(err).ShouldNot(HaveOccurred())
 
-	operation, errs := executor.Prepare(executor.PrepareParams{
-		Schema:   schema,
-		Document: document,
-	})
+	operation, errs := executor.Prepare(schema, document)
 	Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 	var result executor.ExecutionResult

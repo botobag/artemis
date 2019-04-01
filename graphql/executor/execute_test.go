@@ -116,10 +116,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -315,10 +312,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -422,10 +416,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -476,10 +467,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		rootValue := map[string]interface{}{
@@ -543,10 +531,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -598,10 +583,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -742,10 +724,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -963,10 +942,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
     `))}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1045,10 +1021,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
     `))}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1104,10 +1077,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1140,10 +1110,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1177,11 +1144,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:        schema,
-			Document:      document,
-			OperationName: "OtherExample",
-		})
+		operation, errs := executor.Prepare(schema, document, executor.OperationName("OtherExample"))
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1213,10 +1176,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		_, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		_, errs := executor.Prepare(schema, document)
 		Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 			testutil.MessageEqual("Must provide an operation."),
 		)))
@@ -1253,21 +1213,14 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 
 		It("errors if no operation name is provided", func() {
-			_, errs := executor.Prepare(executor.PrepareParams{
-				Schema:   schema,
-				Document: document,
-			})
+			_, errs := executor.Prepare(schema, document)
 			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual("Must provide operation name if query contains multiple operations."),
 			)))
 		})
 
 		It("errors if unknown operation name is provided", func() {
-			_, errs := executor.Prepare(executor.PrepareParams{
-				Schema:        schema,
-				Document:      document,
-				OperationName: "UnknownExample",
-			})
+			_, errs := executor.Prepare(schema, document, executor.OperationName("UnknownExample"))
 			Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
 				testutil.MessageEqual(`Unknown operation named "UnknownExample".`),
 			)))
@@ -1332,11 +1285,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 
 		It("uses the query schema for queries", func() {
-			operation, errs := executor.Prepare(executor.PrepareParams{
-				Schema:        schema,
-				Document:      document,
-				OperationName: "Q",
-			})
+			operation, errs := executor.Prepare(schema, document, executor.OperationName("Q"))
 			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 			result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1347,11 +1296,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 
 		It("uses the mutation schema for mutations", func() {
-			operation, errs := executor.Prepare(executor.PrepareParams{
-				Schema:        schema,
-				Document:      document,
-				OperationName: "M",
-			})
+			operation, errs := executor.Prepare(schema, document, executor.OperationName("M"))
 			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 			result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1362,11 +1307,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 
 		It("uses the subscription schema for subscriptions", func() {
-			operation, errs := executor.Prepare(executor.PrepareParams{
-				Schema:        schema,
-				Document:      document,
-				OperationName: "S",
-			})
+			operation, errs := executor.Prepare(schema, document, executor.OperationName("S"))
 			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 			result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1400,10 +1341,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1460,10 +1398,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1505,10 +1440,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1559,10 +1491,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1609,11 +1538,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			return info.Field().Name(), nil
 		})
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:               schema,
-			Document:             document,
-			DefaultFieldResolver: fieldResolver,
-		})
+		operation, errs := executor.Prepare(schema, document, executor.DefaultFieldResolver(fieldResolver))
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -1650,10 +1575,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			Expect(err).ShouldNot(HaveOccurred())
 
 			var errs graphql.Errors
-			operation, errs = executor.Prepare(executor.PrepareParams{
-				Schema:   schema,
-				Document: document,
-			})
+			operation, errs = executor.Prepare(schema, document)
 			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 			values = make([]interface{}, 100)

@@ -1509,14 +1509,11 @@ var _ = Describe("Introspection", func() {
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-			DefaultFieldResolver: graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+		operation, errs := executor.Prepare(schema, document, executor.DefaultFieldResolver(
+			graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
 				calledForFields[fmt.Sprintf("%s::%s", info.Object().Name(), info.Field().Name())] = true
 				return nil, nil
-			}),
-		})
+			})))
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		var result executor.ExecutionResult

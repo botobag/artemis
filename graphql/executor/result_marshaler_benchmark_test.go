@@ -127,10 +127,7 @@ func queryStarWarsCharacterFriends(b *testing.B) *executor.ExecutionResult {
 		b.Fatal(err)
 	}
 
-	operation, errs := executor.Prepare(executor.PrepareParams{
-		Schema:   schema,
-		Document: document,
-	})
+	operation, errs := executor.Prepare(schema, document)
 	if errs.HaveOccurred() {
 		b.Fatal(errs)
 	}

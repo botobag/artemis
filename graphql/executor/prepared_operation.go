@@ -57,34 +57,60 @@ type PreparedOperation struct {
 	defaultFieldResolver graphql.FieldResolver
 }
 
-// PrepareParams specifies parameters to Prepare. All data are required except DefaultFieldResolver.
-type PrepareParams struct {
-	// Schema of the type system that this operation is executing on
-	Schema graphql.Schema
-
-	// Document that contains operations to be prepared for execution
-	Document ast.Document
-
+// prepareOptions contains optional settings to set up a PreparedOperation.
+type prepareOptions struct {
 	// The name of the Operation in the Document to execute.
 	OperationName string
 
-	// Resolver to be used to fields without providing custom resolvers.
+	// Resolver to be used to fields without providing custom resolvers; If not provided,
+	// defaultFieldResolver will be used.
 	DefaultFieldResolver graphql.FieldResolver
 }
 
-// Prepare prepares an operation for execution. It creates a PreparedOperation.
-func Prepare(params PrepareParams) (*PreparedOperation, graphql.Errors) {
-	var errs graphql.Errors
+// PrepareOption specifies an option to Prepare.
+type PrepareOption func(*prepareOptions)
 
-	schema := params.Schema
-	document := params.Document
+// OperationName specifies the name of the Operation to be executed in the Document.
+func OperationName(name string) PrepareOption {
+	return func(options *prepareOptions) {
+		options.OperationName = name
+	}
+}
+
+// defaultFieldResolverInstance is the default value to the prepareOptions.DefaultFieldResolver.
+var defaultFieldResolverInstance = NewDefaultFieldResolver()
+
+// DefaultFieldResolver specifies resolver to be used for fields that don't provide resolvers. Note
+// that if a nil resolver is given, the one created from NewDefaultFieldResolver will be used (which
+// is also the default one if no any default field resolver is given).
+func DefaultFieldResolver(resolver graphql.FieldResolver) PrepareOption {
+	if resolver == nil {
+		resolver = defaultFieldResolverInstance
+	}
+	return func(options *prepareOptions) {
+		options.DefaultFieldResolver = resolver
+	}
+}
+
+// Prepare creates a PreparedOperation for executing a document.
+func Prepare(schema graphql.Schema, document ast.Document, opts ...PrepareOption) (*PreparedOperation, graphql.Errors) {
+	var (
+		options = prepareOptions{
+			DefaultFieldResolver: defaultFieldResolverInstance,
+		}
+		errs      graphql.Errors
+		operation *ast.OperationDefinition
+	)
+
+	// Apply options.
+	for _, opt := range opts {
+		opt(&options)
+	}
 
 	// TODO: Validate schema and document.
 
 	// Find the definition for the operation to be executed from document.
-	var operation *ast.OperationDefinition
-
-	operationName := params.OperationName
+	operationName := options.OperationName
 	// Also build map for fragmentMap.
 	fragmentMap := map[string]*ast.FragmentDefinition{}
 
@@ -149,18 +175,13 @@ func Prepare(params PrepareParams) (*PreparedOperation, graphql.Errors) {
 			[]graphql.ErrorLocation{graphql.ErrorLocationOfASTNode(operation)})
 	}
 
-	defaultFieldResolver := params.DefaultFieldResolver
-	if defaultFieldResolver == nil {
-		defaultFieldResolver = NewDefaultFieldResolver()
-	}
-
 	return &PreparedOperation{
 		schema:               schema,
 		document:             document,
 		definition:           operation,
 		rootType:             rootType,
 		fragmentMap:          fragmentMap,
-		defaultFieldResolver: defaultFieldResolver,
+		defaultFieldResolver: options.DefaultFieldResolver,
 	}, graphql.NoErrors()
 }
 

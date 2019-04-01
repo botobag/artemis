@@ -138,10 +138,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
     }`))}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -263,10 +260,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
     }`))}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -344,10 +338,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -402,10 +393,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -455,10 +443,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{
@@ -532,10 +517,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{})
@@ -603,10 +585,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(executor.PrepareParams{
-			Schema:   schema,
-			Document: document,
-		})
+		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		result := operation.Execute(context.Background(), executor.ExecuteParams{})

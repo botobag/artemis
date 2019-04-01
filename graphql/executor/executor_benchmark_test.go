@@ -46,11 +46,7 @@ func BenchmarkSimpleHelloWorldQueryWithoutPreparedOperation(b *testing.B) {
 			Body: token.SourceBody([]byte("{hello}")),
 		}))
 
-		operation, _ := executor.Prepare(executor.PrepareParams{
-			Schema:   helloWorldSchema,
-			Document: document,
-		})
-
+		operation, _ := executor.Prepare(helloWorldSchema, document)
 		operation.Execute(context.Background(), executor.ExecuteParams{})
 	}
 }
@@ -60,10 +56,7 @@ func BenchmarkSimpleHelloWorldQueryWithPreparedOperation(b *testing.B) {
 		Body: token.SourceBody([]byte("{hello}")),
 	}))
 
-	operation, _ := executor.Prepare(executor.PrepareParams{
-		Schema:   helloWorldSchema,
-		Document: document,
-	})
+	operation, _ := executor.Prepare(helloWorldSchema, document)
 
 	for i := 0; i < b.N; i++ {
 		operation.Execute(context.Background(), executor.ExecuteParams{})

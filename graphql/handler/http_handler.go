@@ -243,12 +243,12 @@ func (builder DefaultRequestBuilder) Build(r *http.Request, h HTTPHandler) (*Req
 
 		// Prepare operation for executing the query.
 		var errs graphql.Errors
-		operation, errs = executor.Prepare(executor.PrepareParams{
-			Schema:               h.Schema(),
-			Document:             document,
-			OperationName:        parsedReq.OperationName,
-			DefaultFieldResolver: builder.Config.DefaultFieldResolver,
-		})
+		operation, errs = executor.Prepare(
+			h.Schema(),
+			document,
+			executor.OperationName(parsedReq.OperationName),
+			executor.DefaultFieldResolver(builder.Config.DefaultFieldResolver),
+		)
 		if errs.HaveOccurred() {
 			return nil, &ErrPrepare{
 				Request:       r,
