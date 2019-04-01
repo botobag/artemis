@@ -151,12 +151,7 @@ func Prepare(params PrepareParams) (*PreparedOperation, graphql.Errors) {
 
 	defaultFieldResolver := params.DefaultFieldResolver
 	if defaultFieldResolver == nil {
-		defaultFieldResolver = &DefaultFieldResolver{
-			UnresolvedAsError:   true,
-			ScanAnonymousFields: true,
-			ScanMethods:         true,
-			FieldTagName:        "graphql",
-		}
+		defaultFieldResolver = NewDefaultFieldResolver()
 	}
 
 	return &PreparedOperation{

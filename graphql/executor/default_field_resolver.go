@@ -26,24 +26,92 @@ import (
 	"github.com/botobag/artemis/internal/util"
 )
 
-// DefaultFieldResolverOpt configures a DefaultFieldResolver instance.
-type DefaultFieldResolverOpt func(*DefaultFieldResolver)
+// DefaultFieldResolverOption specifies an option to configure field resolver instance created by
+// NewDefaultFieldResolver.
+type DefaultFieldResolverOption func(*defaultFieldResolver)
 
-// DefaultFieldResolver is used when a resolve function is not given to a field. It takes the
-// property of the source object of the same name as the field and returns it as the result, or if
-// it's a function, returns the result of calling that function while passing along args and context
-// value.
-type DefaultFieldResolver struct {
-	UnresolvedAsError   bool
-	ScanAnonymousFields bool
-	ScanMethods         bool
-	FieldTagName        string
+// defaultFieldResolver is used when no resolve function is given to a field. It resolves the field
+// value to the value of field in source object value whose name, or if it's a function,
+// returns the result of calling that function while passing along args and context value.
+type defaultFieldResolver struct {
+	UnresolvedAsError   bool   // default: true
+	ScanAnonymousFields bool   // default: true
+	ScanMethods         bool   // default: true
+	FieldTagName        string // default: "graphql"
 }
 
-var _ = (*DefaultFieldResolver)(nil)
+// NewDefaultFieldResolver configures a field resolver which is useful as "default" resolver for
+// fields without resolve function. A default field resolver can be provided to a prepare operation
+// via DefaultFieldResolver option which will be used when encountering a field without custom
+// resolver during execution.
+//
+// When source value is an object, the created resolver takes the value from the field with the
+// matching name in the object as the field result. Additional capabilities can be enabled via
+// various options.
+func NewDefaultFieldResolver(opts ...DefaultFieldResolverOption) graphql.FieldResolver {
+	resolver := &defaultFieldResolver{
+		UnresolvedAsError:   true,
+		ScanAnonymousFields: true,
+		ScanMethods:         true,
+		FieldTagName:        "graphql",
+	}
+
+	// Configure resolver with options.
+	for _, opt := range opts {
+		opt(resolver)
+	}
+
+	return resolver
+}
+
+// UnresolvedAsError specifies whether error should be returned for fields that cannot be
+// successfully resolved by the resolver. The feature is enabled by default.
+// UnresolvedAsError(false) has to be explicitly specified to disable the feature.
+func UnresolvedAsError(enabled bool) DefaultFieldResolverOption {
+	return func(resolver *defaultFieldResolver) {
+		resolver.UnresolvedAsError = enabled
+	}
+}
+
+// ScanAnonymousFields specifies whether anonymous fields contained the object should be inspected
+// further to find matching field. The feature is enabled by default. Therefore,
+// ScanAnonymousFields(false) has to be explicitly specified to disable the feature.
+func ScanAnonymousFields(enabled bool) DefaultFieldResolverOption {
+	return func(resolver *defaultFieldResolver) {
+		resolver.ScanAnonymousFields = enabled
+	}
+}
+
+// ScanMethods specifies whether public methods exposed by the source object value should also be
+// taken into consideration to search for field value. If enabled, it matches method named with the
+// field name in camel case. For example, "FooBar()" will be used for field named "foo_bar". The
+// matching method will be invoked with the context and ResolveInfo and the return value is used as
+// field result. The feature is enabled by default. Therefore, ScanMethods(false) has to be
+// explicitly specified to disable the feature.
+func ScanMethods(enabled bool) DefaultFieldResolverOption {
+	return func(resolver *defaultFieldResolver) {
+		resolver.ScanMethods = enabled
+	}
+}
+
+// FieldTagName specifies the struct field tag that is used to specify custom name in source object
+// field for matching targeting field. For example,
+//
+//	type Foo struct {
+//		Bar string `graphql:"baz"`
+//	}
+//
+// value in field Bar could be returned as result for fields named "bar" and "baz".
+//
+// The feature is enabled by default and can be disabled by FieldTagName("").
+func FieldTagName(name string) DefaultFieldResolverOption {
+	return func(resolver *defaultFieldResolver) {
+		resolver.FieldTagName = name
+	}
+}
 
 // Resolve implements graphql.FieldResolver.
-func (resolver *DefaultFieldResolver) Resolve(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
+func (resolver *defaultFieldResolver) Resolve(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
 	value := reflect.ValueOf(source)
 	if !value.IsValid() {
 		return nil, resolver.unresolvedError(info)
@@ -68,7 +136,7 @@ func (resolver *DefaultFieldResolver) Resolve(ctx context.Context, source interf
 	return nil, resolver.unresolvedError(info)
 }
 
-func (resolver *DefaultFieldResolver) unresolvedErrorWithMessage(message string) error {
+func (resolver *defaultFieldResolver) unresolvedErrorWithMessage(message string) error {
 	if !resolver.UnresolvedAsError {
 		return nil
 	}
@@ -76,7 +144,7 @@ func (resolver *DefaultFieldResolver) unresolvedErrorWithMessage(message string)
 	return graphql.NewError(message)
 }
 
-func (resolver *DefaultFieldResolver) unresolvedError(info graphql.ResolveInfo) error {
+func (resolver *defaultFieldResolver) unresolvedError(info graphql.ResolveInfo) error {
 	if !resolver.UnresolvedAsError {
 		return nil
 	}
@@ -85,7 +153,7 @@ func (resolver *DefaultFieldResolver) unresolvedError(info graphql.ResolveInfo) 
 		info.Object().Name(), info.Field().Name()))
 }
 
-func (resolver *DefaultFieldResolver) resolveFromFunc(
+func (resolver *defaultFieldResolver) resolveFromFunc(
 	ctx context.Context,
 	source interface{},
 	methodName string,
@@ -113,7 +181,7 @@ func (resolver *DefaultFieldResolver) resolveFromFunc(
 	}
 }
 
-func (resolver *DefaultFieldResolver) resolveFromValueOrFunc(
+func (resolver *defaultFieldResolver) resolveFromValueOrFunc(
 	ctx context.Context,
 	source interface{},
 	valueName string,
@@ -127,7 +195,7 @@ func (resolver *DefaultFieldResolver) resolveFromValueOrFunc(
 	return value.Interface(), nil
 }
 
-func (resolver *DefaultFieldResolver) resolveFromStruct(
+func (resolver *defaultFieldResolver) resolveFromStruct(
 	ctx context.Context,
 	source interface{},
 	sourceValue reflect.Value,
@@ -190,7 +258,7 @@ func (resolver *DefaultFieldResolver) resolveFromStruct(
 	return nil, resolver.unresolvedError(info)
 }
 
-func (resolver *DefaultFieldResolver) resolveFromMap(
+func (resolver *defaultFieldResolver) resolveFromMap(
 	ctx context.Context,
 	source interface{},
 	sourceValue reflect.Value,
