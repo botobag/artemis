@@ -26,15 +26,36 @@ import (
 // Validation runs synchronously, returning a graphql.Errors containing encountered errors, or
 // graphql.NoErrors if no errors were encountered and the document is valid.
 //
-// A list of specific validation rules may be provided. If not provided, the default list of rules
-// defined by the GraphQL specification will be used.
-func Validate(schema graphql.Schema, document ast.Document, rs ...interface{}) graphql.Errors {
-	// Validate document with standard rule set by default.
-	r := standardRules
-	if len(rs) > 0 {
-		r = buildRules(rs...)
+// It uses the rules defined by the GraphQL specification to validate the given document.
+func Validate(schema graphql.Schema, document ast.Document) graphql.Errors {
+	ctx := newValidationContext(schema, document, StandardRules())
+	walk(ctx)
+	return ctx.errs
+}
+
+// ValidateWithRules runs a list of specific validation rules on the given document. Every rule in
+// rs must implement at least one of the following interfaces:
+//
+//  OperationRule
+//  VariableRule
+//  FragmentRule
+//  SelectionSetRule
+//  FieldRule
+//  FieldArgumentRule
+//  InlineFragmentRule
+//  FragmentSpreadRule
+//  ValueRule
+//  VariableUsageRule
+//  DirectivesRule
+//  DirectiveRule
+//  DirectiveArgumentRule
+func ValidateWithRules(schema graphql.Schema, document ast.Document, rs ...interface{}) graphql.Errors {
+	if len(rs) == 0 {
+		// No validation are provided to run which disable validation effectively.
+		return graphql.NoErrors()
 	}
-	ctx := newValidationContext(schema, document, r)
+
+	ctx := newValidationContext(schema, document, buildRules(rs...))
 	walk(ctx)
 	return ctx.errs
 }

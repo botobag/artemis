@@ -17,22 +17,17 @@
 package validator_test
 
 import (
+	"github.com/botobag/artemis/graphql/ast"
 	"github.com/botobag/artemis/graphql/validator"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Validator: Standard Rules", func() {
-	It("panics when calling InitStandardRules from places other than rules.init", func() {
+var _ = Describe("Validator: Validate", func() {
+	It("panics when neither specific rules are provided nor standard rules are loaded", func() {
 		Expect(func() {
-			validator.InitStandardRules()
-		}).Should(Panic())
-	})
-
-	It("panics when use standard rules without import validator/rules package to load it", func() {
-		Expect(func() {
-			validator.StandardRules()
+			validator.Validate(nil, ast.Document{})
 		}).Should(Panic())
 	})
 })

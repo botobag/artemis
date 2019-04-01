@@ -40,3 +40,33 @@ func InitStandardRules(rules ...interface{}) {
 
 	standardRules = buildRules(rules...)
 }
+
+// StandardRules returns rule set that required by specification for validating query documents.
+func StandardRules() *rules {
+	if standardRules == nil {
+		pc, f, _, ok := runtime.Caller(1)
+		if ok {
+			// validator.Validate also calls StandardRules to obtain the standard rules. In this case,
+			// skip one more frame to get the actual caller.
+			if fu := runtime.FuncForPC(pc); fu != nil && fu.Name() == "github.com/botobag/artemis/graphql/validator.Validate" {
+				_, f, _, ok = runtime.Caller(2)
+			}
+		}
+
+		if ok {
+			f = fmt.Sprintf(`in "%s"`, f)
+		} else {
+			f = "at where validator.StandardRules being called"
+		}
+		panic(fmt.Sprintf(`Please import "github.com/botobag/artemis/graphql/validator/rules" %s for loading standard validation rules:
+
+import (
+	...
+
+	// Load standard rules required by specification for validating queries.
+	_ "github.com/botobag/artemis/graphql/validator/rules"
+)
+`, f))
+	}
+	return standardRules
+}

@@ -530,7 +530,7 @@ func expectValidationErrorsWithSchema(schema graphql.Schema, rule interface{}, q
 	}))
 	Expect(err).ShouldNot(HaveOccurred())
 
-	return Expect(validator.Validate(schema, doc, rule))
+	return Expect(validator.ValidateWithRules(schema, doc, rule))
 }
 
 func init() {
