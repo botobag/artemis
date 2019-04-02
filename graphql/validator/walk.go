@@ -403,12 +403,16 @@ func (r *directiveArgumentRules) Run(
 
 func walk(ctx *ValidationContext) {
 	for _, definitions := range ctx.Document().Definitions {
-		switch def := definitions.(type) {
-		case *ast.OperationDefinition:
-			walkOperationDefinition(ctx, def)
+		if operation, ok := definitions.(*ast.OperationDefinition); ok {
+			walkOperationDefinition(ctx, operation)
+		}
+	}
 
-		case *ast.FragmentDefinition:
-			walkFragmentDefinition(ctx, def)
+	// Fragment validation must come after all Operations have been validated so all uses of fragments
+	// from operations can be seen by NoUnusedFragments.
+	for _, definitions := range ctx.Document().Definitions {
+		if fragment, ok := definitions.(*ast.FragmentDefinition); ok {
+			walkFragmentDefinition(ctx, fragment)
 		}
 	}
 }
