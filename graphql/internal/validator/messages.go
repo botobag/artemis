@@ -286,7 +286,7 @@ func BadValueMessage(typeName string, valueName string, suggestedNames []string)
 	if len(suggestedNames) == 0 {
 		message.WriteRune('.')
 	} else {
-		message.WriteString("; Did you mean the enum value")
+		message.WriteString("; Did you mean the enum value ")
 		util.OrList(&message, suggestedNames, 5, false /*quoted*/)
 		message.WriteRune('?')
 	}
