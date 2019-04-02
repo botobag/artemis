@@ -132,7 +132,7 @@ func queryStarWarsCharacterFriends(b *testing.B) *executor.ExecutionResult {
 		b.Fatal(errs)
 	}
 
-	result := <-operation.Execute(context.Background(), executor.ExecuteParams{})
+	result := <-operation.Execute(context.Background())
 
 	return &result
 }

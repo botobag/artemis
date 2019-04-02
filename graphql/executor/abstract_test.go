@@ -141,10 +141,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
-
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"pets": [
@@ -263,10 +260,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
-
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"pets": [
@@ -341,10 +335,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
-
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"foo": null
@@ -396,10 +387,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
-
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"foo": null
@@ -446,10 +434,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
-
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"foo": null
@@ -520,7 +505,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{})
+		result := operation.Execute(context.Background())
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"foo": {
@@ -588,7 +573,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{})
+		result := operation.Execute(context.Background())
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"foo": {

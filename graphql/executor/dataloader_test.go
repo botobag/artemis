@@ -301,11 +301,11 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:            runner,
-			DataLoaderManager: dataloaderManager,
-		})
-
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.DataLoaderManager(dataloaderManager),
+		)
 		Eventually(result).Should(MatchResultInJSON(`{
       "data": {
         "character": {
@@ -338,11 +338,11 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:            runner,
-			DataLoaderManager: dataloaderManager,
-		})
-
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.DataLoaderManager(dataloaderManager),
+		)
 		Eventually(result).Should(MatchResultInJSON(`{
       "data": {
         "character": {
@@ -403,11 +403,11 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:            runner,
-			DataLoaderManager: dataloaderManager,
-		})
-
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.DataLoaderManager(dataloaderManager),
+		)
 		Eventually(result).Should(MatchResultInJSON(`{
       "data": {
         "character": {

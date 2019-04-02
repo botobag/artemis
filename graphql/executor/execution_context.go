@@ -49,22 +49,22 @@ type ExecutionContext struct {
 
 // newExecutionContext initializes an ExecutionContext given the operation to execute and the
 // request data.
-func newExecutionContext(ctx context.Context, operation *PreparedOperation, params *ExecuteParams) (*ExecutionContext, graphql.Errors) {
+func newExecutionContext(ctx context.Context, operation *PreparedOperation, options *executeOptions) (*ExecutionContext, graphql.Errors) {
 	// Run input coercion on variable values.
 	variableValues, errs := value.CoerceVariableValues(
 		operation.Schema(),
 		operation.VariableDefinitions(),
-		params.VariableValues)
+		options.VariableValues)
 	if errs.HaveOccurred() {
 		return nil, errs
 	}
 
 	return &ExecutionContext{
 		ctx:               ctx,
-		dataLoaderManager: params.DataLoaderManager,
+		dataLoaderManager: options.DataLoaderManager,
 		operation:         operation,
-		rootValue:         params.RootValue,
-		appContext:        params.AppContext,
+		rootValue:         options.RootValue,
+		appContext:        options.AppContext,
 		variableValues:    variableValues,
 	}, graphql.NoErrors()
 }

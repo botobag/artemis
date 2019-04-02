@@ -201,33 +201,69 @@ func (operation *PreparedOperation) VariableDefinitions() []*ast.VariableDefinit
 	return operation.definition.VariableDefinitions
 }
 
-// ExecuteParams specifies parameter to execute a prepared operation.
-type ExecuteParams struct {
-	// Runner specifies executor to run the execution. If it is not provided, Execute blocks the
-	// calling goroutine to complete the execution.
-	Runner concurrent.Executor
-
-	// DataLoaderManager that manages dispatch for data loaders being used during execution; User can
-	// also tracks DataLoader instances being used during the execution.
+// executeOptions contains parameter to execute a prepared operation.
+type executeOptions struct {
+	Runner            concurrent.Executor
 	DataLoaderManager graphql.DataLoaderManager
+	RootValue         interface{}
+	AppContext        interface{}
+	VariableValues    map[string]interface{}
+}
 
-	// RootValue is an initial value corresponding to the root type being executed. Conceptually, an
-	// initial value represents the “universe” of data available via a GraphQL Service. It is common
-	// for a GraphQL Service to always use the same initial value for every request.
-	RootValue interface{}
+// ExecuteOption configures execution of a PreparedOperation.
+type ExecuteOption func(*executeOptions)
 
-	// AppContext is an application-specific data that will get passed to all resolve functions.
-	AppContext interface{}
+// Runner specifies executor to run the execution. If it is not provided, Execute blocks the calling
+// goroutine to complete the execution.
+func Runner(runner concurrent.Executor) ExecuteOption {
+	return func(options *executeOptions) {
+		options.Runner = runner
+	}
+}
 
-	// VariableValues contains values for any Variables defined by the Operation.
-	VariableValues map[string]interface{}
+// DataLoaderManager that manages dispatches for data loaders being used during execution; User can
+// also tracks DataLoader instances being used during the execution.
+func DataLoaderManager(manager graphql.DataLoaderManager) ExecuteOption {
+	return func(options *executeOptions) {
+		options.DataLoaderManager = manager
+	}
+}
+
+// RootValue is an initial value corresponding to the root type being executed. Conceptually, an
+// initial value represents the “universe” of data available via a GraphQL Service. It is common for
+// a GraphQL Service to always use the same initial value for every request.
+func RootValue(value interface{}) ExecuteOption {
+	return func(options *executeOptions) {
+		options.RootValue = value
+	}
+}
+
+// AppContext is an application-specific data that will get passed to all resolve functions.
+func AppContext(ctx interface{}) ExecuteOption {
+	return func(options *executeOptions) {
+		options.AppContext = ctx
+	}
+}
+
+// VariableValues contains values for any Variables defined by the Operation.
+func VariableValues(variables map[string]interface{}) ExecuteOption {
+	return func(options *executeOptions) {
+		options.VariableValues = variables
+	}
 }
 
 // Execute executes the given operation.  ctx specifies deadline and/or cancellation for
 // executor, etc..
-func (operation *PreparedOperation) Execute(c context.Context, params ExecuteParams) <-chan ExecutionResult {
+func (operation *PreparedOperation) Execute(c context.Context, opts ...ExecuteOption) <-chan ExecutionResult {
+	var options executeOptions
+
+	// Get options.
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	// Initialize an ExecutionContext for executing operation.
-	ctx, errs := newExecutionContext(c, operation, &params)
+	ctx, errs := newExecutionContext(c, operation, &options)
 	if errs.HaveOccurred() {
 		// Create a channel to return the error.
 		result := make(chan ExecutionResult, 1)
@@ -238,13 +274,16 @@ func (operation *PreparedOperation) Execute(c context.Context, params ExecutePar
 	}
 
 	// Create executor.
-	var e executor
-	if params.Runner == nil {
+	var (
+		e      executor
+		runner = options.Runner
+	)
+	if runner == nil {
 		e = newBlockingExecutor()
 	} else if operation.Type() == ast.OperationTypeMutation {
-		e = newSerialExecutor(params.Runner)
+		e = newSerialExecutor(runner)
 	} else {
-		e = newParallelExecutor(params.Runner)
+		e = newParallelExecutor(runner)
 	}
 
 	// Run the execution.

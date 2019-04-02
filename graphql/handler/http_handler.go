@@ -265,8 +265,8 @@ func (builder DefaultRequestBuilder) Build(r *http.Request, h HTTPHandler) (*Req
 	return &Request{
 		Ctx:       r.Context(),
 		Operation: operation,
-		Params: &executor.ExecuteParams{
-			VariableValues: parsedReq.Variables,
+		ExecuteOpts: []executor.ExecuteOption{
+			executor.VariableValues(parsedReq.Variables),
 		},
 	}, nil
 }

@@ -92,9 +92,9 @@ func (handler *LLHandler) OperationCache() OperationCache {
 
 // Request contains parameter required by Serve.
 type Request struct {
-	Ctx       context.Context
-	Operation *executor.PreparedOperation
-	Params    *executor.ExecuteParams
+	Ctx         context.Context
+	Operation   *executor.PreparedOperation
+	ExecuteOpts []executor.ExecuteOption
 }
 
 // RequestMiddleware applies changes on Request before its operation gets executed. It can be used
@@ -208,5 +208,5 @@ func (handler *LLHandler) Serve(request *Request) <-chan executor.ExecutionResul
 	}
 
 	// Apply RequestMiddleware before execution.
-	return request.Operation.Execute(request.Ctx, *request.Params)
+	return request.Operation.Execute(request.Ctx, request.ExecuteOpts...)
 }

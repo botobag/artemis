@@ -47,7 +47,7 @@ func BenchmarkSimpleHelloWorldQueryWithoutPreparedOperation(b *testing.B) {
 		}))
 
 		operation, _ := executor.Prepare(helloWorldSchema, document)
-		operation.Execute(context.Background(), executor.ExecuteParams{})
+		operation.Execute(context.Background())
 	}
 }
 
@@ -59,6 +59,6 @@ func BenchmarkSimpleHelloWorldQueryWithPreparedOperation(b *testing.B) {
 	operation, _ := executor.Prepare(helloWorldSchema, document)
 
 	for i := 0; i < b.N; i++ {
-		operation.Execute(context.Background(), executor.ExecuteParams{})
+		operation.Execute(context.Background())
 	}
 }

@@ -167,11 +167,11 @@ var _ = DescribeExecute("Execute: Union and intersection types", func(runner con
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		return operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:     runner,
-			RootValue:  rootValue,
-			AppContext: appContext,
-		})
+		return operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.RootValue(rootValue),
+			executor.AppContext(appContext))
 	}
 
 	var (

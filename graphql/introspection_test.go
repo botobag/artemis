@@ -1517,7 +1517,7 @@ var _ = Describe("Introspection", func() {
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
 		var result executor.ExecutionResult
-		Eventually(operation.Execute(context.Background(), executor.ExecuteParams{})).Should(Receive(&result))
+		Eventually(operation.Execute(context.Background())).Should(Receive(&result))
 
 		Expect(calledForFields).Should(BeEmpty())
 	})

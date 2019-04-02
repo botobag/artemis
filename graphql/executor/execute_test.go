@@ -119,11 +119,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:    runner,
-			RootValue: "rootValue",
-		})
-
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.RootValue("rootValue"),
+		)
 		Eventually(result).Should(MatchResultInJSON(`{
       "data": { "a": "rootValue" }
     }`))
@@ -315,14 +315,14 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:    runner,
-			RootValue: data,
-			VariableValues: map[string]interface{}{
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.RootValue(data),
+			executor.VariableValues(map[string]interface{}{
 				"size": 100,
-			},
-		})
-
+			}),
+		)
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"a": "Apple",
@@ -419,10 +419,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
-
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"a": "Apple",
@@ -473,13 +470,14 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		rootValue := map[string]interface{}{
 			"root": "val",
 		}
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:    runner,
-			RootValue: rootValue,
-			VariableValues: map[string]interface{}{
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.RootValue(rootValue),
+			executor.VariableValues(map[string]interface{}{
 				"var": "abc",
-			},
-		})
+			}),
+		)
 		Eventually(result).Should(Receive(MatchFields(IgnoreExtras, Fields{
 			"Errors": Equal(graphql.NoErrors()),
 		})))
@@ -534,10 +532,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:    runner,
-			RootValue: data,
-		})
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.RootValue(data),
+		)
 		Eventually(result).Should(Receive(MatchFields(IgnoreExtras, Fields{
 			"Errors": Equal(graphql.NoErrors()),
 		})))
@@ -586,9 +585,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(Receive(MatchFields(IgnoreExtras, Fields{
 			"Errors": Equal(graphql.NoErrors()),
 		})))
@@ -727,10 +724,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:    runner,
-			RootValue: data,
-		})
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.RootValue(data),
+		)
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"sync": "sync",
@@ -945,9 +943,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(MatchResultInJSON(`{
 				"data": { "foods": null },
 				"errors": [
@@ -1024,9 +1020,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"nullableA": {
@@ -1080,10 +1074,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:    runner,
-			RootValue: data,
-		})
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.RootValue(data),
+		)
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 	})
 
@@ -1113,10 +1108,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:    runner,
-			RootValue: data,
-		})
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.RootValue(data),
+		)
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 	})
 
@@ -1147,10 +1143,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document, executor.OperationName("OtherExample"))
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:    runner,
-			RootValue: data,
-		})
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.RootValue(data),
+		)
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"second":"b"}}`))
 	})
 
@@ -1288,10 +1285,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			operation, errs := executor.Prepare(schema, document, executor.OperationName("Q"))
 			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-			result := operation.Execute(context.Background(), executor.ExecuteParams{
-				Runner:    runner,
-				RootValue: rootValue,
-			})
+			result := operation.Execute(
+				context.Background(),
+				executor.Runner(runner),
+				executor.RootValue(rootValue),
+			)
 			Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 		})
 
@@ -1299,10 +1297,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			operation, errs := executor.Prepare(schema, document, executor.OperationName("M"))
 			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-			result := operation.Execute(context.Background(), executor.ExecuteParams{
-				Runner:    runner,
-				RootValue: rootValue,
-			})
+			result := operation.Execute(
+				context.Background(),
+				executor.Runner(runner),
+				executor.RootValue(rootValue),
+			)
 			Eventually(result).Should(MatchResultInJSON(`{"data":{"c":"d"}}`))
 		})
 
@@ -1310,10 +1309,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			operation, errs := executor.Prepare(schema, document, executor.OperationName("S"))
 			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-			result := operation.Execute(context.Background(), executor.ExecuteParams{
-				Runner:    runner,
-				RootValue: rootValue,
-			})
+			result := operation.Execute(
+				context.Background(),
+				executor.Runner(runner),
+				executor.RootValue(rootValue),
+			)
 			Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 		})
 	})
@@ -1344,16 +1344,17 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-			RootValue: map[string]interface{}{
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.RootValue(map[string]interface{}{
 				"a": "a",
 				"b": &ReadyOnNextPollFuture{data: "b"},
 				"c": "c",
 				"d": &ReadyOnNextPollFuture{data: "d"},
 				"e": "e",
-			},
-		})
+			}),
+		)
 		Eventually(result).Should(MatchResultInJSON(`{
 				"data": {
 					"a": "a",
@@ -1401,10 +1402,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner:    runner,
-			RootValue: data,
-		})
+		result := operation.Execute(
+			context.Background(),
+			executor.Runner(runner),
+			executor.RootValue(data),
+		)
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 	})
 
@@ -1443,9 +1445,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(MatchResultInJSON(`{"data":{}}`))
 	})
 
@@ -1494,9 +1494,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document)
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"field": "{\"a\":true,\"c\":false,\"e\":0}"
@@ -1541,9 +1539,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		operation, errs := executor.Prepare(schema, document, executor.DefaultFieldResolver(fieldResolver))
 		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-		result := operation.Execute(context.Background(), executor.ExecuteParams{
-			Runner: runner,
-		})
+		result := operation.Execute(context.Background(), executor.Runner(runner))
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"foo":"foo"}}`))
 	})
 
@@ -1590,17 +1586,19 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 
 			expectedJSON := `{"data":{"foo":` + string(valuesJSON) + `}}`
 
-			result := operation.Execute(context.Background(), executor.ExecuteParams{
-				Runner:    runner,
-				RootValue: &TestIterable{values},
-			})
+			result := operation.Execute(
+				context.Background(),
+				executor.Runner(runner),
+				executor.RootValue(&TestIterable{values}),
+			)
 			Eventually(result).Should(MatchResultInJSON(expectedJSON))
 
 			// Also test iterable with size hint.
-			result = operation.Execute(context.Background(), executor.ExecuteParams{
-				Runner:    runner,
-				RootValue: &SizedTestIterable{TestIterable{values}},
-			})
+			result = operation.Execute(
+				context.Background(),
+				executor.Runner(runner),
+				executor.RootValue(&SizedTestIterable{TestIterable{values}}),
+			)
 			Eventually(result).Should(MatchResultInJSON(expectedJSON))
 		})
 
@@ -1608,10 +1606,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			// Set an error value in the middle of values.
 			values[len(values)/2] = errors.New("iterator error")
 
-			result := operation.Execute(context.Background(), executor.ExecuteParams{
-				Runner:    runner,
-				RootValue: &TestIterable{values},
-			})
+			result := operation.Execute(
+				context.Background(),
+				executor.Runner(runner),
+				executor.RootValue(&TestIterable{values}),
+			)
 			Eventually(result).Should(MatchResultInJSON(`{
 				"errors": [
 					{

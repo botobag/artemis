@@ -253,9 +253,9 @@ type ResolveInfo interface {
 	// RootValue is an initial value corresponding to the root type being executed.
 	RootValue() interface{}
 
-	// AppContext contains an application-specific data. It is what you passed to the AppContext in
-	// executor.ExecuteParams. It is commonly used to represent an authenticated user, or
-	// request-specific caches.
+	// AppContext contains an application-specific data. It is what you passed to
+	// PreparedOperation.Execute via AppContext. It is commonly used to represent an authenticated
+	// user, or request-specific caches.
 	AppContext() interface{}
 
 	// VariableValues contains values to the parameters in current query. The values has passed

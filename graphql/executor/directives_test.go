@@ -69,9 +69,7 @@ var _ = Describe("Execute: handles directives", func() {
 			operation, errs := executor.Prepare(schema, document)
 			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
 
-			return operation.Execute(context.Background(), executor.ExecuteParams{
-				RootValue: rootValue,
-			})
+			return operation.Execute(context.Background(), executor.RootValue(rootValue))
 		}
 	})
 
