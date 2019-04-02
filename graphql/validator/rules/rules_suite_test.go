@@ -525,9 +525,7 @@ func expectValidationErrors(rule interface{}, queryStr string) GomegaAssertion {
 
 func expectValidationErrorsWithSchema(schema graphql.Schema, rule interface{}, queryStr string) GomegaAssertion {
 	// Parse queryStr.
-	doc, err := parser.Parse(token.NewSource(queryStr))
-	Expect(err).ShouldNot(HaveOccurred())
-
+	doc := parser.MustParse(token.NewSource(queryStr))
 	return Expect(validator.ValidateWithRules(schema, doc, rule))
 }
 

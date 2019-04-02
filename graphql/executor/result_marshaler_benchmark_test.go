@@ -87,7 +87,7 @@ func queryStarWarsCharacterFriends(b *testing.B) *executor.ExecutionResult {
 
 	characterType.Fields = characterFields
 
-	schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+	schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 		Query: graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
@@ -107,7 +107,7 @@ func queryStarWarsCharacterFriends(b *testing.B) *executor.ExecutionResult {
 		}),
 	})
 
-	document, err := parser.Parse(token.NewSource(`{
+	document := parser.MustParse(token.NewSource(`{
 				character(id: "1000") {
 					id
 					name
@@ -121,9 +121,6 @@ func queryStarWarsCharacterFriends(b *testing.B) *executor.ExecutionResult {
 					}
 				}
 			}`))
-	if err != nil {
-		b.Fatal(err)
-	}
 
 	operation, errs := executor.Prepare(schema, document)
 	if errs.HaveOccurred() {

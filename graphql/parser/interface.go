@@ -70,7 +70,16 @@ func Parse(source *token.Source, options ...ParseOption) (ast.Document, error) {
 	return parser.parseDocument()
 }
 
-// ParseValue parses the AST for string containing a GraphQL value (e.g., `[42]`).
+// MustParse parses the given GraphQL source into a Document and panics on errors.
+func MustParse(source *token.Source, options ...ParseOption) ast.Document {
+	doc, err := Parse(source, options...)
+	if err != nil {
+		panic(err)
+	}
+	return doc
+}
+
+// ParseValue parses an AST value from a string (e.g., `[42]`).
 func ParseValue(source *token.Source) (ast.Value, error) {
 	parser, err := newParser(source, &parseOptions{})
 	if err != nil {
@@ -91,6 +100,15 @@ func ParseValue(source *token.Source) (ast.Value, error) {
 	}
 
 	return value, nil
+}
+
+// MustParseValue parses an AST value from a string and panics on errors.
+func MustParseValue(source *token.Source) ast.Value {
+	value, err := ParseValue(source)
+	if err != nil {
+		panic(err)
+	}
+	return value
 }
 
 // ParseType parses the AST for string containing a GraphQL Type (e.g., `[Int!]`).
@@ -115,3 +133,14 @@ func ParseType(source *token.Source) (ast.Type, error) {
 
 	return t, nil
 }
+
+// MustParseType parses an AST type from a string and panics on errors.
+func MustParseType(source *token.Source) ast.Type {
+	t, err := ParseType(source)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ParseType parses the AST for string containing a GraphQL Type (e.g., `[Int!]`).

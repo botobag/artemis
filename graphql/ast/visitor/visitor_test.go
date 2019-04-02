@@ -30,9 +30,7 @@ import (
 )
 
 func parse(s string) ast.Document {
-	doc, err := parser.Parse(token.NewSource(s))
-	Expect(err).ShouldNot(HaveOccurred(), "%s", s)
-	return doc
+	return parser.MustParse(token.NewSource(s))
 }
 
 func nodeKind(node ast.Node) string {
@@ -148,10 +146,9 @@ var _ = Describe("Visitor", func() {
 	It("Experimental: visits variables defined in fragments", func() {
 		var visited [][2]interface{}
 
-		doc, err := parser.Parse(
+		doc := parser.MustParse(
 			token.NewSource("fragment a($v: Boolean = false) on t { f }"),
 			parser.EnableFragmentVariables())
-		Expect(err).ShouldNot(HaveOccurred())
 
 		visitor.Walk(doc, nil, visitor.NewNodeVisitor(
 			visitor.NodeVisitActionFunc(func(node ast.Node, ctx interface{}) visitor.Result {
@@ -186,8 +183,7 @@ var _ = Describe("Visitor", func() {
 		kitchenSink, err := ioutil.ReadFile("../../parser/kitchen-sink.graphql")
 		Expect(err).ShouldNot(HaveOccurred())
 
-		doc, err := parser.Parse(token.NewSourceFromBytes(kitchenSink))
-		Expect(err).ShouldNot(HaveOccurred())
+		doc := parser.MustParse(token.NewSourceFromBytes(kitchenSink))
 
 		var visited [][2]interface{}
 

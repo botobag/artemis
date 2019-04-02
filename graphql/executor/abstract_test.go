@@ -126,7 +126,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		document, err := parser.Parse(token.NewSource(`{
+		document := parser.MustParse(token.NewSource(`{
       pets {
         name
         ... on Dog {
@@ -137,7 +137,6 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
         }
       }
     }`))
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
@@ -239,7 +238,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		document, err := parser.Parse(token.NewSource(`{
+		document := parser.MustParse(token.NewSource(`{
       pets {
         ... on Dog {
           name
@@ -251,7 +250,6 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
         }
       }
     }`))
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
@@ -319,8 +317,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		document, err := parser.Parse(token.NewSource("{ foo { bar } }"))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource("{ foo { bar } }"))
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
@@ -365,8 +362,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		document, err := parser.Parse(token.NewSource("{ foo { bar } }"))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource("{ foo { bar } }"))
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
@@ -406,8 +402,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		document, err := parser.Parse(token.NewSource("{ foo }"))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource("{ foo }"))
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
@@ -471,8 +466,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		document, err := parser.Parse(token.NewSource("{ foo { bar } }"))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource("{ foo { bar } }"))
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
@@ -533,8 +527,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 			}
 		}`
 
-		document, err := parser.Parse(token.NewSource(query))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource(query))
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {

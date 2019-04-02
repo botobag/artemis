@@ -355,12 +355,11 @@ var _ = Describe("Error", func() {
 
 	Describe("ErrorWithASTNodes", func() {
 		It("pulls locations from AST nodes", func() {
-			document, err := parser.Parse(token.NewSource(`
+			document := parser.MustParse(token.NewSource(`
       mutation {
         mutationField
       }
     `))
-			Expect(err).ShouldNot(HaveOccurred())
 
 			nodes := []ast.Node{document}
 

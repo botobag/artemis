@@ -1504,8 +1504,7 @@ var _ = Describe("Introspection", func() {
 		query := introspection.Query()
 		calledForFields := map[string]bool{}
 
-		document, err := parser.Parse(token.NewSource(query))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource(query))
 
 		operation, errs := executor.Prepare(schema, document, executor.DefaultFieldResolver(
 			graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {

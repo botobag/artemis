@@ -35,20 +35,20 @@ import (
 	"github.com/onsi/gomega/types"
 )
 
-func parse(s string) (ast.Document, error) {
-	return parser.Parse(token.NewSource(s))
+func parse(s string) ast.Document {
+	return parser.MustParse(token.NewSource(s))
 }
 
-func parseValue(s string) (ast.Value, error) {
-	return parser.ParseValue(token.NewSource(s))
+func parseValue(s string) ast.Value {
+	return parser.MustParseValue(token.NewSource(s))
 }
 
-func parseType(s string) (ast.Type, error) {
-	return parser.ParseType(token.NewSource(s))
+func parseType(s string) ast.Type {
+	return parser.MustParseType(token.NewSource(s))
 }
 
 func expectSyntaxError(text string, message string, location graphql.ErrorLocation) {
-	_, err := parse(text)
+	_, err := parser.Parse(token.NewSource(text))
 	Expect(err).Should(testutil.MatchGraphQLError(
 		testutil.MessageContainSubstring(message),
 		testutil.LocationEqual(location),
@@ -120,16 +120,25 @@ var _ = Describe("Parser", func() {
 	It("asserts that an invalid source to parse was provided", func() {
 		_, err := parser.Parse(nil)
 		Expect(err).Should(MatchError("Must provide Source. Received: nil"))
+		Expect(func() {
+			parser.MustParse(nil)
+		}).Should(Panic())
 
 		_, err = parser.ParseValue(nil)
 		Expect(err).Should(MatchError("Must provide Source. Received: nil"))
+		Expect(func() {
+			parser.MustParseValue(nil)
+		}).Should(Panic())
 
 		_, err = parser.ParseType(nil)
 		Expect(err).Should(MatchError("Must provide Source. Received: nil"))
+		Expect(func() {
+			parser.MustParseType(nil)
+		}).Should(Panic())
 	})
 
 	It("parse provides useful errors", func() {
-		_, err := parse("{")
+		_, err := parser.Parse(token.NewSource("{"))
 		Expect(err).Should(PointTo(MatchFields(IgnoreExtras, Fields{
 			"Message": Equal("Syntax Error: Expected Name, found <EOF>"),
 			"Locations": Equal([]graphql.ErrorLocation{
@@ -170,8 +179,7 @@ var _ = Describe("Parser", func() {
 	})
 
 	It("parses variable inline values", func() {
-		_, err := parse("{ field(complex: { a: { b: [ $var ] } }) }")
-		Expect(err).ShouldNot(HaveOccurred())
+		Expect(parse("{ field(complex: { a: { b: [ $var ] } }) }")).ShouldNot(BeNil())
 	})
 
 	It("parses constant default values", func() {
@@ -185,8 +193,7 @@ var _ = Describe("Parser", func() {
 	})
 
 	It("parses variable definition directives", func() {
-		_, err := parse("query Foo($x: Boolean = false @bar) { field }")
-		Expect(err).ShouldNot(HaveOccurred())
+		Expect(parse("query Foo($x: Boolean = false @bar) { field }")).ShouldNot(BeNil())
 	})
 
 	It(`does not accept fragments named "on"`, func() {
@@ -208,12 +215,11 @@ var _ = Describe("Parser", func() {
 
 	It("parses multi-byte characters", func() {
 		// Note: \u0A0A could be naively interpreted as two line-feed chars.
-		document, err := parse(`
+		document := parse(`
       # This comment has a \u0A0A multi-byte character.
       { field(arg: "Has a \u0A0A multi-byte character.") }
     `)
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(
 			document.
 				Definitions[0].(ast.ExecutableDefinition).
@@ -228,8 +234,7 @@ var _ = Describe("Parser", func() {
 		kitchenSink, err := ioutil.ReadFile("./kitchen-sink.graphql")
 		Expect(err).ShouldNot(HaveOccurred())
 
-		_, err = parser.Parse(token.NewSourceFromBytes(kitchenSink))
-		Expect(err).ShouldNot(HaveOccurred())
+		parser.MustParse(token.NewSourceFromBytes(kitchenSink))
 	})
 
 	It("allows non-keywords anywhere a Name is allowed", func() {
@@ -277,43 +282,43 @@ var _ = Describe("Parser", func() {
 	})
 
 	It("parses anonymous mutation operations", func() {
-		_, err := parse(`
+		_, err := parser.Parse(token.NewSource(`
       mutation {
         mutationField
       }
-    `)
+    `))
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	It("parses anonymous subscription operations", func() {
-		_, err := parse(`
+		_, err := parser.Parse(token.NewSource(`
       subscription {
         subscriptionField
       }
-    `)
+    `))
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	It("parses anonymous subscription operations", func() {
-		_, err := parse(`
+		_, err := parser.Parse(token.NewSource(`
       mutation Foo {
         mutationField
       }
-    `)
+    `))
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	It("parses named subscription operations", func() {
-		_, err := parse(`
+		_, err := parser.Parse(token.NewSource(`
       subscription Foo {
         subscriptionField
       }
-    `)
+    `))
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	It("creates ast", func() {
-		result, err := parse(`
+		result := parse(`
       {
         node(id: 4) {
           id,
@@ -321,7 +326,6 @@ var _ = Describe("Parser", func() {
         }
       }
     `)
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Expect(result).Should(MatchAllFields(Fields{
 			"Definitions": ConsistOf(PointTo(MatchAllFields(Fields{
@@ -388,14 +392,13 @@ var _ = Describe("Parser", func() {
 	})
 
 	It("creates ast from nameless query without variables", func() {
-		result, err := parse(`
+		result := parse(`
       query {
         node {
           id
         }
       }
     `)
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Expect(result).Should(MatchAllFields(Fields{
 			"Definitions": ConsistOf(PointTo(MatchAllFields(Fields{
@@ -446,14 +449,12 @@ var _ = Describe("Parser", func() {
 			Column: 11,
 		})
 
-		_, err := parser.Parse(token.NewSource(document), parser.EnableFragmentVariables())
-		Expect(err).ShouldNot(HaveOccurred())
+		parser.MustParse(token.NewSource(document), parser.EnableFragmentVariables())
 	})
 
 	It("contains location information", func() {
 		source := token.NewSource("{ id }")
-		result, err := parser.Parse(source)
-		Expect(err).ShouldNot(HaveOccurred())
+		result := parser.MustParse(source)
 
 		sourceRange := result.TokenRange().SourceRange()
 		// Note that "result" is an ast.Document whose first token is set to SOF and has
@@ -463,18 +464,14 @@ var _ = Describe("Parser", func() {
 	})
 
 	It("contains references to start and end tokens", func() {
-		result, err := parse(`{ id }`)
-		Expect(err).ShouldNot(HaveOccurred())
-
-		tokenRange := result.TokenRange()
+		tokenRange := parse(`{ id }`).TokenRange()
 		Expect(tokenRange.First.Kind).Should(Equal(token.KindSOF))
 		Expect(tokenRange.Last.Kind).Should(Equal(token.KindEOF))
 	})
 
 	Describe("ParseValue", func() {
 		It("parses null value", func() {
-			result, err := parseValue("null")
-			Expect(err).ShouldNot(HaveOccurred())
+			result := parseValue("null")
 
 			value, ok := result.(ast.NullValue)
 			Expect(ok).Should(BeTrue())
@@ -488,8 +485,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("parses list values", func() {
-			result, err := parseValue(`[123 "abc"]`)
-			Expect(err).ShouldNot(HaveOccurred())
+			result := parseValue(`[123 "abc"]`)
 
 			value, ok := result.(ast.ListValue)
 			Expect(ok).Should(BeTrue())
@@ -517,8 +513,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("parses block strings", func() {
-			result, err := parseValue(`["""long""" "short"]`)
-			Expect(err).ShouldNot(HaveOccurred())
+			result := parseValue(`["""long""" "short"]`)
 
 			value, ok := result.(ast.ListValue)
 			Expect(ok).Should(BeTrue())
@@ -546,8 +541,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("parse nested list value", func() {
-			result, err := parseValue(`[[[[123]]]]`)
-			Expect(err).ShouldNot(HaveOccurred())
+			result := parseValue(`[[[[123]]]]`)
 
 			list1, ok := result.(ast.ListValue)
 			Expect(ok).Should(BeTrue())
@@ -583,8 +577,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("parses an empty list", func() {
-			result, err := parseValue(`    []`)
-			Expect(err).ShouldNot(HaveOccurred())
+			result := parseValue(`    []`)
 
 			value, ok := result.(ast.ListValue)
 			Expect(ok).Should(BeTrue())
@@ -605,8 +598,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("parses an empty object", func() {
-			result, err := parseValue(`  {    }  `)
-			Expect(err).ShouldNot(HaveOccurred())
+			result := parseValue(`  {    }  `)
 
 			value, ok := result.(ast.ObjectValue)
 			Expect(ok).Should(BeTrue())
@@ -629,8 +621,7 @@ var _ = Describe("Parser", func() {
 		It("parses boolean values", func() {
 			tests := []string{"true", "false"}
 			for _, test := range tests {
-				result, err := parseValue(test)
-				Expect(err).ShouldNot(HaveOccurred())
+				result := parseValue(test)
 
 				value, ok := result.(ast.BooleanValue)
 				Expect(ok).Should(BeTrue())
@@ -693,8 +684,7 @@ var _ = Describe("Parser", func() {
 			}
 
 			for test, expectedValue := range allTests {
-				result, err := parseValue(test)
-				Expect(err).ShouldNot(HaveOccurred())
+				result := parseValue(test)
 
 				value, ok := result.(ast.IntValue)
 				Expect(ok).Should(BeTrue())
@@ -724,6 +714,7 @@ var _ = Describe("Parser", func() {
 				Expect(value.String()).Should(Equal(test))
 				Expect(value.Interface()).Should(Equal(expectedValue))
 
+				var err error
 				if _, isLargeNumber := largeNumberTests[test]; isLargeNumber {
 					_, err = value.Uint32Value()
 					Expect(err).Should(HaveOccurred())
@@ -763,8 +754,7 @@ var _ = Describe("Parser", func() {
 			}
 
 			for _, test := range tests {
-				result, err := parseValue(test.s)
-				Expect(err).ShouldNot(HaveOccurred())
+				result := parseValue(test.s)
 
 				value, ok := result.(ast.FloatValue)
 				Expect(ok).Should(BeTrue())
@@ -804,7 +794,8 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("rejects multiple values", func() {
-			_, err := parseValue(`1 2`)
+			_, err := parser.ParseValue(token.NewSource(`1 2`))
+
 			Expect(err).Should(testutil.MatchGraphQLError(
 				testutil.MessageContainSubstring(`Expected <EOF>, found Int "2"`),
 				testutil.LocationEqual(graphql.ErrorLocation{
@@ -816,7 +807,8 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("reject invalid values", func() {
-			_, err := parseValue("@deprecated")
+			_, err := parser.ParseValue(token.NewSource("@deprecated"))
+
 			Expect(err).Should(testutil.MatchGraphQLError(
 				testutil.MessageContainSubstring("Unexpected @"),
 				testutil.LocationEqual(graphql.ErrorLocation{
@@ -830,8 +822,7 @@ var _ = Describe("Parser", func() {
 
 	Describe("ParseType", func() {
 		It("parses well known types", func() {
-			result, err := parseType("String")
-			Expect(err).ShouldNot(HaveOccurred())
+			result := parseType("String")
 
 			t, ok := result.(ast.NamedType)
 			Expect(ok).Should(BeTrue())
@@ -845,8 +836,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("parses custom types", func() {
-			result, err := parseType("MyType")
-			Expect(err).ShouldNot(HaveOccurred())
+			result := parseType("MyType")
 
 			t, ok := result.(ast.NamedType)
 			Expect(ok).Should(BeTrue())
@@ -860,8 +850,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("parses list types", func() {
-			result, err := parseType("[MyType]")
-			Expect(err).ShouldNot(HaveOccurred())
+			result := parseType("[MyType]")
 
 			t, ok := result.(ast.ListType)
 			Expect(ok).Should(BeTrue())
@@ -904,8 +893,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("parses non-null types", func() {
-			result, err := parseType("MyType!")
-			Expect(err).ShouldNot(HaveOccurred())
+			result := parseType("MyType!")
 
 			t, ok := result.(ast.NonNullType)
 			Expect(ok).Should(BeTrue())
@@ -949,8 +937,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("parses nested types", func() {
-			result, err := parseType("[MyType!]")
-			Expect(err).ShouldNot(HaveOccurred())
+			result := parseType("[MyType!]")
 
 			t, ok := result.(ast.ListType)
 			Expect(ok).Should(BeTrue())
@@ -1009,7 +996,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("rejects incompleted list types", func() {
-			_, err := parseType("[[[MyType]]")
+			_, err := parser.ParseType(token.NewSource("[[[MyType]]"))
 			Expect(err).Should(testutil.MatchGraphQLError(
 				testutil.MessageContainSubstring("Expected ], found <EOF>"),
 				testutil.LocationEqual(graphql.ErrorLocation{
@@ -1021,7 +1008,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("rejects list type without item type", func() {
-			_, err := parseType("[]")
+			_, err := parser.ParseType(token.NewSource("[]"))
 			Expect(err).Should(testutil.MatchGraphQLError(
 				testutil.MessageContainSubstring("Expected Name, found ]"),
 				testutil.LocationEqual(graphql.ErrorLocation{
@@ -1033,7 +1020,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("rejects non-null type without item type", func() {
-			_, err := parseType("!")
+			_, err := parser.ParseType(token.NewSource("!"))
 			Expect(err).Should(testutil.MatchGraphQLError(
 				testutil.MessageContainSubstring("Expected Name, found !"),
 				testutil.LocationEqual(graphql.ErrorLocation{
@@ -1045,7 +1032,7 @@ var _ = Describe("Parser", func() {
 		})
 
 		It("rejects non-null type with non-null item type", func() {
-			_, err := parseType("MyType!!")
+			_, err := parser.ParseType(token.NewSource("MyType!!"))
 			Expect(err).Should(testutil.MatchGraphQLError(
 				testutil.MessageContainSubstring("Expected <EOF>, found !"),
 				testutil.LocationEqual(graphql.ErrorLocation{
@@ -1055,7 +1042,7 @@ var _ = Describe("Parser", func() {
 				testutil.KindIs(graphql.ErrKindSyntax),
 			))
 
-			_, err = parseType("[[MyType!]!!]")
+			_, err = parser.ParseType(token.NewSource("[[MyType!]!!]"))
 			Expect(err).Should(testutil.MatchGraphQLError(
 				testutil.MessageContainSubstring("Expected ], found !"),
 				testutil.LocationEqual(graphql.ErrorLocation{
@@ -1078,8 +1065,7 @@ var _ = Describe("Parser", func() {
 		source := token.NewSourceFromBytes(query.Bytes())
 
 		b.Time("parse time", func() {
-			_, err := parser.Parse(source)
-			Expect(err).ShouldNot(HaveOccurred())
+			parser.MustParse(source)
 		})
 	}, 10)
 })

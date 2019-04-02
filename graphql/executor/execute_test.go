@@ -98,8 +98,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("accepts positional arguments", func() {
-		document, err := parser.Parse(token.NewSource("{ a }"))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource("{ a }"))
 
 		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
 			Query: graphql.MustNewObject(&graphql.ObjectConfig{
@@ -200,7 +199,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			},
 		}
 
-		document, err := parser.Parse(token.NewSource(`
+		document := parser.MustParse(token.NewSource(`
       query ($size: Int) {
         a,
         b,
@@ -229,7 +228,6 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
         e
       }
     `))
-		Expect(err).ShouldNot(HaveOccurred())
 
 		var (
 			dataTypeDef *graphql.ObjectConfig = &graphql.ObjectConfig{
@@ -347,7 +345,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("merges parallel fragments", func() {
-		document, err := parser.Parse(token.NewSource(`
+		document := parser.MustParse(token.NewSource(`
 				{ a, ...FragOne, ...FragTwo }
 
 				fragment FragOne on Type {
@@ -360,7 +358,6 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 					deep { c, deeper: deep { c } }
 				}
     `))
-		Expect(err).ShouldNot(HaveOccurred())
 
 		typeDef := &graphql.ObjectConfig{
 			Name: "Type",
@@ -419,8 +416,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("provides info about current execution state", func() {
-		document, err := parser.Parse(token.NewSource(`query ($var: String) { result: test }`))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource(`query ($var: String) { result: test }`))
 
 		var resolvedInfo graphql.ResolveInfo
 
@@ -474,8 +470,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("threads root value context correctly", func() {
-		document, err := parser.Parse(token.NewSource(`query Example { a }`))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource(`query Example { a }`))
 
 		data := map[string]string{
 			"contextThing": "thing",
@@ -511,12 +506,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("correctly threads arguments", func() {
-		document, err := parser.Parse(token.NewSource(`
+		document := parser.MustParse(token.NewSource(`
 				query Example {
 					b(numArg: 123, stringArg: "foo")
 				}
     `))
-		Expect(err).ShouldNot(HaveOccurred())
 
 		var resolvedArgs graphql.ArgumentValues
 
@@ -556,7 +550,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("nulls out error subtrees", func() {
-		document, err := parser.Parse(token.NewSource(`
+		document := parser.MustParse(token.NewSource(`
       {
         sync
         syncError
@@ -572,7 +566,6 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
         asyncReturnError
         asyncReturnErrorWithExtensions
       }`))
-		Expect(err).ShouldNot(HaveOccurred())
 
 		data := struct {
 			Sync                string
@@ -883,14 +876,13 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		document, err := parser.Parse(token.NewSource(`
+		document := parser.MustParse(token.NewSource(`
       query {
         foods {
           name
         }
       }
     `))
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 				"data": { "foods": null },
@@ -949,7 +941,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		document, err := parser.Parse(token.NewSource(`
+		document := parser.MustParse(token.NewSource(`
       query {
         nullableA {
           aliasedA: nullableA {
@@ -962,7 +954,6 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
         }
       }
     `))
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
@@ -992,8 +983,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("uses the inline operation if no operation name is provided", func() {
-		document, err := parser.Parse(token.NewSource(`{ a }`))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource(`{ a }`))
 
 		data := map[string]string{"a": "b"}
 
@@ -1017,8 +1007,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("uses the only operation if no operation name is provided", func() {
-		document, err := parser.Parse(token.NewSource(`query Example { a }`))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource(`query Example { a }`))
 
 		data := map[string]string{"a": "b"}
 
@@ -1042,9 +1031,8 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("uses the named operation if operation name is provided", func() {
-		document, err := parser.Parse(token.NewSource(
+		document := parser.MustParse(token.NewSource(
 			`query Example { first: a } query OtherExample { second: a }`))
-		Expect(err).ShouldNot(HaveOccurred())
 
 		data := map[string]string{"a": "b"}
 
@@ -1072,8 +1060,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("provides error if no operation is provided", func() {
-		document, err := parser.Parse(token.NewSource(`fragment Example on Type { a }`))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource(`fragment Example on Type { a }`))
 
 		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
 			Name: "Type",
@@ -1103,9 +1090,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		)
 
 		BeforeEach(func() {
-			var err error
-			document, err = parser.Parse(token.NewSource(`query Example { a } query OtherExample { a }`))
-			Expect(err).ShouldNot(HaveOccurred())
+			document = parser.MustParse(token.NewSource(`query Example { a } query OtherExample { a }`))
 
 			queryType, err := graphql.NewObject(&graphql.ObjectConfig{
 				Name: "Type",
@@ -1153,11 +1138,8 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		)
 
 		BeforeEach(func() {
-			var err error
-
-			document, err = parser.Parse(token.NewSource(
+			document = parser.MustParse(token.NewSource(
 				`query Q { a } mutation M { c } subscription S { a }`))
-			Expect(err).ShouldNot(HaveOccurred())
 
 			queryType, err := graphql.NewObject(&graphql.ObjectConfig{
 				Name: "Q",
@@ -1243,8 +1225,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		document, err := parser.Parse(token.NewSource("{ a, b, c, d, e }"))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource("{ a, b, c, d, e }"))
 
 		result := execute(
 			schema,
@@ -1268,7 +1249,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("avoids recursion", func() {
-		document, err := parser.Parse(token.NewSource(`
+		document := parser.MustParse(token.NewSource(`
       {
         a
         ...Frag
@@ -1280,7 +1261,6 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
         ...Frag
       }
     `))
-		Expect(err).ShouldNot(HaveOccurred())
 
 		data := map[string]string{"a": "b"}
 
@@ -1307,8 +1287,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("does not include illegal fields in output", func() {
-		document, err := parser.Parse(token.NewSource(`{ thisIsIllegalDoNotIncludeMe }`))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource(`{ thisIsIllegalDoNotIncludeMe }`))
 
 		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
 			Name: "Q",
@@ -1340,8 +1319,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("does not include arguments that were not set", func() {
-		document, err := parser.Parse(token.NewSource(`{ field(a: true, c: false, e: 0) }`))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource(`{ field(a: true, c: false, e: 0) }`))
 
 		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
 			Name: "Type",
@@ -1395,8 +1373,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	})
 
 	It("uses a custom field resolver", func() {
-		document, err := parser.Parse(token.NewSource(`{ foo }`))
-		Expect(err).ShouldNot(HaveOccurred())
+		document := parser.MustParse(token.NewSource(`{ foo }`))
 
 		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
 			Name: "Query",
@@ -1444,8 +1421,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			})
 			Expect(err).ShouldNot(HaveOccurred())
 
-			document, err := parser.Parse(token.NewSource(`{ foo }`))
-			Expect(err).ShouldNot(HaveOccurred())
+			document := parser.MustParse(token.NewSource(`{ foo }`))
 
 			executeWithRootValue = func(rootValue interface{}) <-chan executor.ExecutionResult {
 				return execute(schema, document, executor.RootValue(rootValue))

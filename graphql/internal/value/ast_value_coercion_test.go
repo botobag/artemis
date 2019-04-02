@@ -36,9 +36,7 @@ type vars map[string]interface{}
 
 func valueFromASTWithVars(variables vars, t graphql.Type, valueText string) (interface{}, error) {
 	// Parse value.
-	astValue, err := parser.ParseValue(token.NewSource(valueText))
-	Expect(err).ShouldNot(HaveOccurred())
-
+	astValue := parser.MustParseValue(token.NewSource(valueText))
 	return value.CoerceFromAST(astValue, t, graphql.NewVariableValues(variables))
 }
 

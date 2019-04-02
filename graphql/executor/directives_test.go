@@ -61,9 +61,7 @@ var _ = Describe("Execute: handles directives", func() {
 		}
 
 		executeTestQuery = func(query string) <-chan executor.ExecutionResult {
-			document, err := parser.Parse(token.NewSource(query))
-			Expect(err).ShouldNot(HaveOccurred())
-
+			document := parser.MustParse(token.NewSource(query))
 			return execute(schema, document, executor.RootValue(rootValue))
 		}
 	})
