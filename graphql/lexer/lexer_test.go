@@ -31,16 +31,11 @@ import (
 )
 
 func lexOne(str string) (*token.Token, error) {
-	lexer := lexer.New(token.NewSource(&token.SourceConfig{
-		Body: token.SourceBody(str),
-	}))
-	return lexer.Advance()
+	return lexer.New(token.NewSource(str)).Advance()
 }
 
 func lexSecond(str string) (*token.Token, error) {
-	lexer := lexer.New(token.NewSource(&token.SourceConfig{
-		Body: token.SourceBody(str),
-	}))
+	lexer := lexer.New(token.NewSource(str))
 	_, err := lexer.Advance()
 	Expect(err).ShouldNot(HaveOccurred())
 	return lexer.Advance()
@@ -525,9 +520,7 @@ var _ = Describe("Lexer", func() {
 	})
 
 	It("lex reports useful information for dashes in names", func() {
-		lexer := lexer.New(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody("a-b"),
-		}))
+		lexer := lexer.New(token.NewSource("a-b"))
 
 		Expect(lexer.Advance()).Should(MatchToken(&token.Token{
 			Kind:     token.KindName,
@@ -546,12 +539,10 @@ var _ = Describe("Lexer", func() {
 	})
 
 	It("produces double linked list of tokens, including comments", func() {
-		lexer := lexer.New(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody(`{
+		lexer := lexer.New(token.NewSource(`{
       #comment
       field
-    }`),
-		}))
+    }`))
 
 		var (
 			endToken *token.Token
@@ -688,14 +679,11 @@ var _ = Describe("Lexer", func() {
 	})
 
 	It("lexes tokens with matching source", func() {
-		source := token.NewSource(&token.SourceConfig{
-			Name: "Source Test",
-			Body: token.SourceBody(`{
+		source := token.NewSource(`{
       field
       123
       123.45
-    }`),
-		})
+    }`, token.SourceName("Source Test"))
 		lexer := lexer.New(source)
 
 		tokens := []*token.Token{

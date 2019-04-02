@@ -62,12 +62,11 @@ func verifyLocationInfo(test *SourceTest) {
 	sourceBody := test.source
 	Expect(uint(len(sourceBody))).Should(Equal(test.size), test.name)
 
-	source := token.NewSource(&token.SourceConfig{
-		Body:         token.SourceBody(sourceBody),
-		Name:         test.name,
-		LineOffset:   test.lineOffset,
-		ColumnOffset: test.columnOffset,
-	})
+	source := token.NewSourceFromBytes(
+		sourceBody,
+		token.SourceName(test.name),
+		token.SourceLineOffset(test.lineOffset),
+		token.SourceColumnOffset(test.columnOffset))
 	Expect(source).ShouldNot(BeNil(), test.name)
 
 	for pos := uint(0); pos < test.size; pos++ {
@@ -85,14 +84,13 @@ func verifyLocationInfo(test *SourceTest) {
 
 var _ = Describe("Source", func() {
 	It("accepts nil Body", func() {
-		Expect(token.NewSource(&token.SourceConfig{})).ShouldNot(BeNil())
+		Expect(token.NewSourceFromBytes(nil)).ShouldNot(BeNil())
+		Expect(token.NewSource("")).ShouldNot(BeNil())
 	})
 
 	It("converts offset into SourceLocation", func() {
-		body := token.SourceBody([]byte("hello"))
-		source := token.NewSource(&token.SourceConfig{
-			Body: body,
-		})
+		body := "hello"
+		source := token.NewSource(body)
 		Expect(source).ShouldNot(BeNil())
 
 		// Valid offsets are converted to an unique offset.
@@ -183,10 +181,7 @@ var _ = Describe("Source", func() {
 		})
 
 		It("accepts invalid SourceLoction", func() {
-			source := token.NewSource(&token.SourceConfig{
-				Name: "test",
-				Body: token.SourceBody([]byte("test source")),
-			})
+			source := token.NewSource("test source", token.SourceName("test"))
 			Expect(source.LocationInfoOf(token.NoSourceLocation)).Should(Equal(token.SourceLocationInfo{
 				Name: "test",
 			}))

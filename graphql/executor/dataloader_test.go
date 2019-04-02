@@ -294,14 +294,12 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 	})
 
 	It("executes a simple query with single load", func() {
-		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte(`{
+		document, err := parser.Parse(token.NewSource(`{
 				character(id: "1000") {
 					id
 					name
 				}
-			}`)),
-		}))
+			}`))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
@@ -319,8 +317,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 	})
 
 	It("executes a query with multiple and a nested loads", func() {
-		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte(`{
+		document, err := parser.Parse(token.NewSource(`{
 				character(id: "1000") {
 					id
 					name
@@ -329,8 +326,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 						name
 					}
 				}
-			}`)),
-		}))
+			}`))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
@@ -372,8 +368,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 	})
 
 	It("executes a query with loads nested in multiple levels", func() {
-		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte(`{
+		document, err := parser.Parse(token.NewSource(`{
 				character(id: "1000") {
 					id
 					name
@@ -386,8 +381,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 						}
 					}
 				}
-			}`)),
-		}))
+			}`))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{

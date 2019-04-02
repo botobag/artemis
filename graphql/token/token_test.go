@@ -28,9 +28,7 @@ var _ = Describe("Token", func() {
 		var source *token.Source
 
 		BeforeEach(func() {
-			source = token.NewSource(&token.SourceConfig{
-				Name: "Test Magic SOF Token Source",
-			})
+			source = token.NewSourceFromBytes(nil, token.SourceName("Test Magic SOF Token Source"))
 		})
 
 		It("can finds its Source", func() {

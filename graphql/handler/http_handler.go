@@ -229,9 +229,9 @@ func (builder DefaultRequestBuilder) Build(r *http.Request, h HTTPHandler) (*Req
 	operation, ok := cache.Get(parsedReq.Query)
 	if !ok {
 		// Parse query.
-		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte(parsedReq.Query)),
-		}), builder.Config.QueryParserOptions...)
+		document, err := parser.Parse(
+			token.NewSource(parsedReq.Query),
+			builder.Config.QueryParserOptions...)
 
 		if err != nil {
 			return nil, &ErrParseQuery{

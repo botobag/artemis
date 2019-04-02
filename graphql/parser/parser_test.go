@@ -36,21 +36,15 @@ import (
 )
 
 func parse(s string) (ast.Document, error) {
-	return parser.Parse(token.NewSource(&token.SourceConfig{
-		Body: token.SourceBody([]byte(s)),
-	}))
+	return parser.Parse(token.NewSource(s))
 }
 
 func parseValue(s string) (ast.Value, error) {
-	return parser.ParseValue(token.NewSource(&token.SourceConfig{
-		Body: token.SourceBody([]byte(s)),
-	}))
+	return parser.ParseValue(token.NewSource(s))
 }
 
 func parseType(s string) (ast.Type, error) {
-	return parser.ParseType(token.NewSource(&token.SourceConfig{
-		Body: token.SourceBody([]byte(s)),
-	}))
+	return parser.ParseType(token.NewSource(s))
 }
 
 func expectSyntaxError(text string, message string, location graphql.ErrorLocation) {
@@ -234,9 +228,7 @@ var _ = Describe("Parser", func() {
 		kitchenSink, err := ioutil.ReadFile("./kitchen-sink.graphql")
 		Expect(err).ShouldNot(HaveOccurred())
 
-		_, err = parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody(kitchenSink),
-		}))
+		_, err = parser.Parse(token.NewSourceFromBytes(kitchenSink))
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
@@ -279,9 +271,7 @@ var _ = Describe("Parser", func() {
 				FragmentName: fragmentName,
 			})).Should(Succeed())
 
-			_, err = parser.Parse(token.NewSource(&token.SourceConfig{
-				Body: token.SourceBody(buf.Bytes()),
-			}))
+			_, err = parser.Parse(token.NewSourceFromBytes(buf.Bytes()))
 			Expect(err).ShouldNot(HaveOccurred())
 		}
 	})
@@ -456,16 +446,12 @@ var _ = Describe("Parser", func() {
 			Column: 11,
 		})
 
-		_, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte(document)),
-		}), parser.EnableFragmentVariables())
+		_, err := parser.Parse(token.NewSource(document), parser.EnableFragmentVariables())
 		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	It("contains location information", func() {
-		source := token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte("{ id }")),
-		})
+		source := token.NewSource("{ id }")
 		result, err := parser.Parse(source)
 		Expect(err).ShouldNot(HaveOccurred())
 
@@ -1089,9 +1075,7 @@ var _ = Describe("Parser", func() {
 		}
 		query.WriteString("}")
 
-		source := token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody(query.Bytes()),
-		})
+		source := token.NewSourceFromBytes(query.Bytes())
 
 		b.Time("parse time", func() {
 			_, err := parser.Parse(source)

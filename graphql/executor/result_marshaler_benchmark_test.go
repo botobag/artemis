@@ -107,8 +107,7 @@ func queryStarWarsCharacterFriends(b *testing.B) *executor.ExecutionResult {
 		}),
 	})
 
-	document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-		Body: token.SourceBody([]byte(`{
+	document, err := parser.Parse(token.NewSource(`{
 				character(id: "1000") {
 					id
 					name
@@ -121,8 +120,7 @@ func queryStarWarsCharacterFriends(b *testing.B) *executor.ExecutionResult {
 						}
 					}
 				}
-			}`)),
-	}))
+			}`))
 	if err != nil {
 		b.Fatal(err)
 	}

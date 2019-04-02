@@ -29,9 +29,7 @@ import (
 )
 
 func parse(s string, options ...parser.ParseOption) ast.Node {
-	ast, err := parser.Parse(token.NewSource(&token.SourceConfig{
-		Body: token.SourceBody(s),
-	}), options...)
+	ast, err := parser.Parse(token.NewSource(s), options...)
 	Expect(err).ShouldNot(HaveOccurred())
 	return ast
 }

@@ -1504,9 +1504,7 @@ var _ = Describe("Introspection", func() {
 		query := introspection.Query()
 		calledForFields := map[string]bool{}
 
-		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte(query)),
-		}))
+		document, err := parser.Parse(token.NewSource(query))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		operation, errs := executor.Prepare(schema, document, executor.DefaultFieldResolver(

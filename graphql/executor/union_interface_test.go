@@ -159,9 +159,7 @@ var _ = DescribeExecute("Execute: Union and intersection types", func(runner con
 	}
 
 	execute := func(schema graphql.Schema, query string, rootValue interface{}, appContext interface{}) <-chan executor.ExecutionResult {
-		document, err := parser.Parse(token.NewSource(&token.SourceConfig{
-			Body: token.SourceBody([]byte(query)),
-		}))
+		document, err := parser.Parse(token.NewSource(query))
 		Expect(err).ShouldNot(HaveOccurred())
 
 		return execute(

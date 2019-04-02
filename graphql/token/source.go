@@ -18,6 +18,8 @@ package token
 
 import (
 	"unicode/utf8"
+
+	"github.com/botobag/artemis/internal/unsafe"
 )
 
 // SourceBody contains contents of a GraphQL document in a byte sequence.
@@ -63,54 +65,87 @@ type SourceLocationInfo struct {
 	Column uint
 }
 
-// SourceConfig specifies configuration of a Source.
-type SourceConfig struct {
-	Body SourceBody
-
-	// `Name`, `LineOffset` and `ColumnOffset` are optional. They are useful for clients who store
-	// GraphQL documents in source files. For example, if the GraphQL input starts at line 40 in a
-	// file named Foo.graphql, it might be useful for `Name` to be "Foo.graphql" with location
-	// information `LineOffset: 40` and `ColumnOffset: 0`. `LineOffset` and `ColumnOffset` are both
-	// 0-indexed and are both 0 if they're not provided (which also means no offset).
-	Name         string
-	LineOffset   uint
-	ColumnOffset uint
-}
-
 // Source represent a GraphQL source text.
+//
+// It can be configure with optional name, line offset and column offset (via SourceName,
+// SourceLineOffset, and SourceColumnOffset, respectively) on creation. These properties are useful
+// for clients who store GraphQL documents in source files. For example, if the GraphQL input starts
+// at line 40 in a file named Foo.graphql, it might be useful to set name to be "Foo.graphql" with
+// line and column offset set to 40 and 0, respecitievly. Note that the offsets are both 0-indexed
+// and are both 0 if they're not provided (which also means no offset).
 type Source struct {
-	config SourceConfig
+	body         SourceBody
+	name         string
+	lineOffset   uint
+	columnOffset uint
 }
 
-// NewSource initializes a Source instance from given config.
-func NewSource(config *SourceConfig) *Source {
+// SourceOption configures a Source instance.
+type SourceOption func(*Source)
+
+// SourceName specifies name of a Source to be shown in printing a source location.
+func SourceName(name string) SourceOption {
+	return func(source *Source) {
+		source.name = name
+	}
+}
+
+// SourceLineOffset specifies line offset to be added to a source location. See comments for Source
+// for details.
+func SourceLineOffset(offset uint) SourceOption {
+	return func(source *Source) {
+		source.lineOffset = offset
+	}
+}
+
+// SourceColumnOffset specifies column offset to be added to a source location. See comments for
+// Source for details.
+func SourceColumnOffset(offset uint) SourceOption {
+	return func(source *Source) {
+		source.columnOffset = offset
+	}
+}
+
+// NewSource initializes a Source instance from given string and options.
+func NewSource(s string, opts ...SourceOption) *Source {
+	// Take internal buffer that backed the string. This avoids copy. This should be considered safe
+	// in our use case since SourceBody is read-only.
+	return NewSourceFromBytes(unsafe.Bytes(s), opts...)
+}
+
+// NewSourceFromBytes initializes a Source instance from given byte slice and options.
+func NewSourceFromBytes(b []byte, opts ...SourceOption) *Source {
 	source := &Source{
-		config: *config,
+		body: SourceBody(b),
+		name: "GraphQL request",
 	}
-	if len(config.Name) == 0 {
-		source.config.Name = "GraphQL request"
+
+	// Apply options.
+	for _, opt := range opts {
+		opt(source)
 	}
+
 	return source
 }
 
 // Body returns source.config.Body.
 func (source *Source) Body() SourceBody {
-	return source.config.Body
+	return source.body
 }
 
 // Name returns source.config.Name.
 func (source *Source) Name() string {
-	return source.config.Name
+	return source.name
 }
 
 // LineOffset returns source.config.LineOffset.
 func (source *Source) LineOffset() uint {
-	return source.config.LineOffset
+	return source.lineOffset
 }
 
 // ColumnOffset returns source.config.ColumnOffset.
 func (source *Source) ColumnOffset() uint {
-	return source.config.ColumnOffset
+	return source.columnOffset
 }
 
 // LocationFromPos returns a SourceLocation that represent the location for given position in the
