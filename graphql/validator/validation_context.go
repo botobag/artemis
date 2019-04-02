@@ -94,22 +94,35 @@ func (info *FragmentInfo) RecursivelyMarkUsed(ctx *ValidationContext) {
 		return
 	}
 
-	stack := []*FragmentInfo{info}
-	for len(stack) > 0 {
-		var fragment *FragmentInfo
-		fragment, stack = stack[len(stack)-1], stack[:len(stack)-1]
+	info.used = true
+	stack := []ast.SelectionSet{info.def.SelectionSet}
 
-		// Mark used bit.
-		fragment.used = true
+	for len(stack) > 0 {
+		var selectionSet ast.SelectionSet
+		selectionSet, stack = stack[len(stack)-1], stack[:len(stack)-1]
 
 		// Scan selection set and check any fragment spreads.
-		for _, selection := range fragment.def.SelectionSet {
-			if fragmentSpread, ok := selection.(*ast.FragmentSpread); ok {
+		for _, selection := range selectionSet {
+			switch selection := selection.(type) {
+			case *ast.Field:
+				if len(selection.SelectionSet) > 0 {
+					stack = append(stack, selection.SelectionSet)
+				}
+
+			case *ast.InlineFragment:
+				if len(selection.SelectionSet) > 0 {
+					stack = append(stack, selection.SelectionSet)
+				}
+
+			case *ast.FragmentSpread:
 				// Look up ctx to find fragment expanded by the fragment spread.
-				f := ctx.FragmentInfo(fragmentSpread.Name.Value())
-				if f != nil && !f.used {
-					// Put f to the stack.
-					stack = append(stack, f)
+				fragment := ctx.FragmentInfo(selection.Name.Value())
+				if fragment != nil && !fragment.used {
+					// Mark fragment to be used.
+					fragment.used = true
+
+					// Recursively scan the selection set expanded by the fragment.
+					stack = append(stack, fragment.def.SelectionSet)
 				}
 			}
 		}
