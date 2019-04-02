@@ -195,6 +195,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 		schema            graphql.Schema
 		runner            concurrent.Executor
 		dataloaderManager *StarWarsDataLoaderManager
+		execute           ExecuteFunc
 	)
 
 	BeforeEach(func() {
@@ -279,6 +280,11 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 		Expect(err).ShouldNot(HaveOccurred())
 
 		dataloaderManager = NewStarWarsDataLoaderManager()
+
+		execute = wrapExecute(
+			executor.Runner(runner),
+			executor.DataLoaderManager(dataloaderManager),
+		)
 	})
 
 	AfterEach(func() {
@@ -298,15 +304,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
-			executor.DataLoaderManager(dataloaderManager),
-		)
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
       "data": {
         "character": {
           "id": "1000",
@@ -335,15 +333,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
-			executor.DataLoaderManager(dataloaderManager),
-		)
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
       "data": {
         "character": {
           "id": "1000",
@@ -400,15 +390,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
-			executor.DataLoaderManager(dataloaderManager),
-		)
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
       "data": {
         "character": {
           "id": "1000",

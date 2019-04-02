@@ -66,10 +66,7 @@ var _ = Describe("Execute: handles directives", func() {
 			}))
 			Expect(err).ShouldNot(HaveOccurred())
 
-			operation, errs := executor.Prepare(schema, document)
-			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-			return operation.Execute(context.Background(), executor.RootValue(rootValue))
+			return execute(schema, document, executor.RootValue(rootValue))
 		}
 	})
 

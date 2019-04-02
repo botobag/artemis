@@ -87,6 +87,8 @@ func (iter *SizedTestIterable) Size() int {
 
 // graphql-js/src/execution/__tests__/executor-test.js
 var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner concurrent.Executor) {
+	execute := wrapExecute(executor.Runner(runner))
+
 	// ast.Document is not a pointer and can never be nil.
 	// It("throws if no document is provided", func() {
 	// })
@@ -116,14 +118,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
-			executor.RootValue("rootValue"),
-		)
+		result := execute(schema, document, executor.RootValue("rootValue"))
 		Eventually(result).Should(MatchResultInJSON(`{
       "data": { "a": "rootValue" }
     }`))
@@ -312,17 +307,13 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
+		result := execute(
+			schema,
+			document,
 			executor.RootValue(data),
 			executor.VariableValues(map[string]interface{}{
 				"size": 100,
-			}),
-		)
+			}))
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"a": "Apple",
@@ -416,11 +407,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"a": "Apple",
 				"b": "Banana",
@@ -464,20 +451,16 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
 		rootValue := map[string]interface{}{
 			"root": "val",
 		}
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
+		result := execute(
+			schema,
+			document,
 			executor.RootValue(rootValue),
 			executor.VariableValues(map[string]interface{}{
 				"var": "abc",
-			}),
-		)
+			}))
 		Eventually(result).Should(Receive(MatchFields(IgnoreExtras, Fields{
 			"Errors": Equal(graphql.NoErrors()),
 		})))
@@ -529,14 +512,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
-			executor.RootValue(data),
-		)
+		result := execute(schema, document, executor.RootValue(data))
 		Eventually(result).Should(Receive(MatchFields(IgnoreExtras, Fields{
 			"Errors": Equal(graphql.NoErrors()),
 		})))
@@ -582,11 +558,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
-		Eventually(result).Should(Receive(MatchFields(IgnoreExtras, Fields{
+		Eventually(execute(schema, document)).Should(Receive(MatchFields(IgnoreExtras, Fields{
 			"Errors": Equal(graphql.NoErrors()),
 		})))
 
@@ -721,14 +693,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
-			executor.RootValue(data),
-		)
+		result := execute(schema, document, executor.RootValue(data))
 		Eventually(result).Should(MatchResultInJSON(`{
 			"data": {
 				"sync": "sync",
@@ -940,11 +905,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
     `))}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 				"data": { "foods": null },
 				"errors": [
 					{
@@ -1017,11 +978,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
     `))}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"nullableA": {
 					"aliasedA": null
@@ -1071,14 +1028,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
-			executor.RootValue(data),
-		)
+		result := execute(schema, document, executor.RootValue(data))
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 	})
 
@@ -1105,14 +1055,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
-			executor.RootValue(data),
-		)
+		result := execute(schema, document, executor.RootValue(data))
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 	})
 
@@ -1140,14 +1083,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document, executor.OperationName("OtherExample"))
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
-			executor.RootValue(data),
-		)
+		result := execute(
+			schema,
+			document,
+			executor.OperationName("OtherExample"),
+			executor.RootValue(data))
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"second":"b"}}`))
 	})
 
@@ -1282,38 +1222,29 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 
 		It("uses the query schema for queries", func() {
-			operation, errs := executor.Prepare(schema, document, executor.OperationName("Q"))
-			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-			result := operation.Execute(
-				context.Background(),
-				executor.Runner(runner),
-				executor.RootValue(rootValue),
-			)
+			result := execute(
+				schema,
+				document,
+				executor.OperationName("Q"),
+				executor.RootValue(rootValue))
 			Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 		})
 
 		It("uses the mutation schema for mutations", func() {
-			operation, errs := executor.Prepare(schema, document, executor.OperationName("M"))
-			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-			result := operation.Execute(
-				context.Background(),
-				executor.Runner(runner),
-				executor.RootValue(rootValue),
-			)
+			result := execute(
+				schema,
+				document,
+				executor.OperationName("M"),
+				executor.RootValue(rootValue))
 			Eventually(result).Should(MatchResultInJSON(`{"data":{"c":"d"}}`))
 		})
 
 		It("uses the subscription schema for subscriptions", func() {
-			operation, errs := executor.Prepare(schema, document, executor.OperationName("S"))
-			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-			result := operation.Execute(
-				context.Background(),
-				executor.Runner(runner),
-				executor.RootValue(rootValue),
-			)
+			result := execute(
+				schema,
+				document,
+				executor.OperationName("S"),
+				executor.RootValue(rootValue))
 			Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 		})
 	})
@@ -1341,20 +1272,16 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
+		result := execute(
+			schema,
+			document,
 			executor.RootValue(map[string]interface{}{
 				"a": "a",
 				"b": &ReadyOnNextPollFuture{data: "b"},
 				"c": "c",
 				"d": &ReadyOnNextPollFuture{data: "d"},
 				"e": "e",
-			}),
-		)
+			}))
 		Eventually(result).Should(MatchResultInJSON(`{
 				"data": {
 					"a": "a",
@@ -1399,14 +1326,10 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(
-			context.Background(),
-			executor.Runner(runner),
-			executor.RootValue(data),
-		)
+		result := execute(
+			schema,
+			document,
+			executor.RootValue(data))
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 	})
 
@@ -1442,11 +1365,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
-		Eventually(result).Should(MatchResultInJSON(`{"data":{}}`))
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{"data":{}}`))
 	})
 
 	It("does not include arguments that were not set", func() {
@@ -1491,11 +1410,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"field": "{\"a\":true,\"c\":false,\"e\":0}"
 			}
@@ -1536,17 +1451,14 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			return info.Field().Name(), nil
 		})
 
-		operation, errs := executor.Prepare(schema, document, executor.DefaultFieldResolver(fieldResolver))
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
+		result := execute(schema, document, executor.DefaultFieldResolver(fieldResolver))
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"foo":"foo"}}`))
 	})
 
 	Describe("Iterable: custom iterator to enumerate values for list field", func() {
 		var (
-			operation *executor.PreparedOperation
-			values    []interface{}
+			executeWithRootValue func(rootValue interface{}) <-chan executor.ExecutionResult
+			values               []interface{}
 		)
 
 		BeforeEach(func() {
@@ -1570,9 +1482,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			}))
 			Expect(err).ShouldNot(HaveOccurred())
 
-			var errs graphql.Errors
-			operation, errs = executor.Prepare(schema, document)
-			Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
+			executeWithRootValue = func(rootValue interface{}) <-chan executor.ExecutionResult {
+				return execute(schema, document, executor.RootValue(rootValue))
+			}
 
 			values = make([]interface{}, 100)
 			for i := 0; i < len(values); i++ {
@@ -1586,32 +1498,21 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 
 			expectedJSON := `{"data":{"foo":` + string(valuesJSON) + `}}`
 
-			result := operation.Execute(
-				context.Background(),
-				executor.Runner(runner),
-				executor.RootValue(&TestIterable{values}),
-			)
-			Eventually(result).Should(MatchResultInJSON(expectedJSON))
+			Eventually(
+				executeWithRootValue(&TestIterable{values}),
+			).Should(MatchResultInJSON(expectedJSON))
 
 			// Also test iterable with size hint.
-			result = operation.Execute(
-				context.Background(),
-				executor.Runner(runner),
-				executor.RootValue(&SizedTestIterable{TestIterable{values}}),
-			)
-			Eventually(result).Should(MatchResultInJSON(expectedJSON))
+			Eventually(
+				executeWithRootValue(&SizedTestIterable{TestIterable{values}}),
+			).Should(MatchResultInJSON(expectedJSON))
 		})
 
 		It("handles error during iteration", func() {
 			// Set an error value in the middle of values.
 			values[len(values)/2] = errors.New("iterator error")
 
-			result := operation.Execute(
-				context.Background(),
-				executor.Runner(runner),
-				executor.RootValue(&TestIterable{values}),
-			)
-			Eventually(result).Should(MatchResultInJSON(`{
+			Eventually(executeWithRootValue(&TestIterable{values})).Should(MatchResultInJSON(`{
 				"errors": [
 					{
 						"message": "Error occurred while enumerates values in the list field Query.foo.",

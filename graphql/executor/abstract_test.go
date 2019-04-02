@@ -45,6 +45,8 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		Name string
 	}
 
+	execute := wrapExecute(executor.Runner(runner))
+
 	It("resolveType on Interface yields useful error", func() {
 		petType := graphql.InterfaceConfig{
 			Name: "Pet",
@@ -138,11 +140,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
     }`))}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"pets": [
 					{
@@ -257,11 +255,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
     }`))}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"pets": [
 					{
@@ -332,11 +326,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"foo": null
 			},
@@ -384,11 +374,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"foo": null
 			},
@@ -431,11 +417,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background(), executor.Runner(runner))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"foo": null
 			},
@@ -502,11 +484,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background())
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"foo": {
 					"bar": "dummy"
@@ -570,11 +548,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		}))
 		Expect(err).ShouldNot(HaveOccurred())
 
-		operation, errs := executor.Prepare(schema, document)
-		Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
-
-		result := operation.Execute(context.Background())
-		Eventually(result).Should(MatchResultInJSON(`{
+		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"foo": {
 					"bar": "dummy"
