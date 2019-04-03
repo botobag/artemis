@@ -35,17 +35,15 @@ var _ = Describe("InputObject", func() {
 			},
 		}
 
-		testInputObject1, err := graphql.NewInputObject(&graphql.InputObjectConfig{
+		testInputObject1 := graphql.MustNewInputObject(&graphql.InputObjectConfig{
 			Name:   "Test1",
 			Fields: fields,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
-		testInputObject2, err := graphql.NewInputObject(&graphql.InputObjectConfig{
+		testInputObject2 := graphql.MustNewInputObject(&graphql.InputObjectConfig{
 			Name:   "Test2",
 			Fields: fields,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Expect(testInputObject1.Fields()).Should(Equal(testInputObject2.Fields()))
 		Expect(fields).Should(Equal(graphql.InputFields{
@@ -59,17 +57,13 @@ var _ = Describe("InputObject", func() {
 	})
 
 	It("accepts creating type without fields", func() {
-		inputObjectType, err := graphql.NewInputObject(&graphql.InputObjectConfig{
+		Expect(graphql.MustNewInputObject(&graphql.InputObjectConfig{
 			Name: "InputObjectWithoutFields1",
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(inputObjectType.Fields()).Should(BeEmpty())
+		}).Fields()).Should(BeEmpty())
 
-		inputObjectType, err = graphql.NewInputObject(&graphql.InputObjectConfig{
+		Expect(graphql.MustNewInputObject(&graphql.InputObjectConfig{
 			Name: "InputObjectWithoutFields2",
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(inputObjectType.Fields()).Should(BeEmpty())
+		}).Fields()).Should(BeEmpty())
 	})
 
 	It("rejects creating type without a name", func() {
@@ -83,7 +77,7 @@ var _ = Describe("InputObject", func() {
 
 	Describe("having fields", func() {
 		It("sets default value to nil", func() {
-			object, err := graphql.NewInputObject(&graphql.InputObjectConfig{
+			object := graphql.MustNewInputObject(&graphql.InputObjectConfig{
 				Name: "Test",
 				Fields: graphql.InputFields{
 					"field": graphql.InputFieldDefinition{
@@ -92,7 +86,6 @@ var _ = Describe("InputObject", func() {
 					},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(len(object.Fields())).Should(Equal(1))
 			field := object.Fields()["field"]
@@ -104,7 +97,7 @@ var _ = Describe("InputObject", func() {
 		})
 
 		It("defines without default value", func() {
-			object, err := graphql.NewInputObject(&graphql.InputObjectConfig{
+			object := graphql.MustNewInputObject(&graphql.InputObjectConfig{
 				Name: "Test",
 				Fields: graphql.InputFields{
 					"field": graphql.InputFieldDefinition{
@@ -112,7 +105,6 @@ var _ = Describe("InputObject", func() {
 					},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(len(object.Fields())).Should(Equal(1))
 			field := object.Fields()["field"]

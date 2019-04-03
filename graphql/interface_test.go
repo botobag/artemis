@@ -36,16 +36,12 @@ var _ = Describe("Interface", func() {
 	})
 
 	It("accepts creating type without fields", func() {
-		interfaceType, err := graphql.NewInterface(&graphql.InterfaceConfig{
+		Expect(graphql.MustNewInterface(&graphql.InterfaceConfig{
 			Name: "InterfaceWithoutFields1",
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(interfaceType.Fields()).Should(BeEmpty())
+		}).Fields()).Should(BeEmpty())
 
-		interfaceType, err = graphql.NewInterface(&graphql.InterfaceConfig{
+		Expect(graphql.MustNewInterface(&graphql.InterfaceConfig{
 			Name: "InterfaceWithoutFields2",
-		})
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(interfaceType.Fields()).Should(BeEmpty())
+		}).Fields()).Should(BeEmpty())
 	})
 })

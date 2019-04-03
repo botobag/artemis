@@ -135,12 +135,11 @@ var _ = Describe("ScalarAlias", func() {
 	})
 
 	It("accepts creating type without specifying coercers", func() {
-		_, err := graphql.NewScalarAlias(&graphql.ScalarAliasConfig{
+		Expect(graphql.MustNewScalarAlias(&graphql.ScalarAliasConfig{
 			AliasFor:      graphql.Int(),
 			ResultCoercer: nil,
 			InputCoercer:  nil,
-		})
-		Expect(err).ShouldNot(HaveOccurred())
+		})).ShouldNot(BeNil())
 	})
 
 	Describe("Type System: ScalarAlias Values", func() {
@@ -214,7 +213,7 @@ var _ = Describe("ScalarAlias", func() {
 				},
 			}
 
-			queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+			queryType := graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "Query",
 				Fields: graphql.Fields{
 					"user": {
@@ -257,12 +256,10 @@ var _ = Describe("ScalarAlias", func() {
 					},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			Schema = graphql.MustNewSchema(&graphql.SchemaConfig{
 				Query: queryType,
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 		})
 
 		It("represents value class as scalar type", func() {

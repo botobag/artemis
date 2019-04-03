@@ -25,7 +25,7 @@ import (
 
 var _ = Describe("Directive", func() {
 	It("accepts a directive with locations", func() {
-		directive, err := graphql.NewDirective(&graphql.DirectiveConfig{
+		directive := graphql.MustNewDirective(&graphql.DirectiveConfig{
 			Name: "DirectiveWithLocation",
 			Locations: []graphql.DirectiveLocation{
 				graphql.DirectiveLocationField,
@@ -33,7 +33,6 @@ var _ = Describe("Directive", func() {
 				graphql.DirectiveLocationInlineFragment,
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Expect(directive.Name()).Should(Equal("DirectiveWithLocation"))
 		Expect(directive.Description()).Should(Equal(""))
@@ -46,7 +45,7 @@ var _ = Describe("Directive", func() {
 	})
 
 	It("accepts a directive with arguments", func() {
-		directive, err := graphql.NewDirective(&graphql.DirectiveConfig{
+		directive := graphql.MustNewDirective(&graphql.DirectiveConfig{
 			Name:        "DirectiveWithArguments",
 			Description: "Test directive with arguments",
 			Args: graphql.ArgumentConfigMap{
@@ -57,7 +56,6 @@ var _ = Describe("Directive", func() {
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Expect(directive.Name()).Should(Equal("DirectiveWithArguments"))
 		Expect(directive.Description()).Should(Equal("Test directive with arguments"))
@@ -73,10 +71,9 @@ var _ = Describe("Directive", func() {
 	})
 
 	It("accepts a directive without locations and arguments", func() {
-		directive, err := graphql.NewDirective(&graphql.DirectiveConfig{
+		directive := graphql.MustNewDirective(&graphql.DirectiveConfig{
 			Name: "SimpleDirective",
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(directive.Name()).Should(Equal("SimpleDirective"))
 		Expect(directive.Description()).Should(Equal(""))
 		Expect(directive.Locations()).Should(BeEmpty())

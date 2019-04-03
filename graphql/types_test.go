@@ -35,40 +35,33 @@ var _ = Describe("Type", func() {
 	)
 
 	BeforeEach(func() {
-		var err error
-		ScalarType, err = graphql.NewScalar(&graphql.ScalarConfig{
+		ScalarType = graphql.MustNewScalar(&graphql.ScalarConfig{
 			Name: "Scalar",
 			ResultCoercer: graphql.CoerceScalarResultFunc(
 				func(value interface{}) (interface{}, error) {
 					return nil, nil
 				}),
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
-		EnumType, err = graphql.NewEnum(&graphql.EnumConfig{
+		EnumType = graphql.MustNewEnum(&graphql.EnumConfig{
 			Name: "Enum",
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
-		InterfaceType, err = graphql.NewInterface(&graphql.InterfaceConfig{
+		InterfaceType = graphql.MustNewInterface(&graphql.InterfaceConfig{
 			Name: "Interface",
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
-		UnionType, err = graphql.NewUnion(&graphql.UnionConfig{
+		UnionType = graphql.MustNewUnion(&graphql.UnionConfig{
 			Name: "UnionType",
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
-		InputObjectType, err = graphql.NewInputObject(&graphql.InputObjectConfig{
+		InputObjectType = graphql.MustNewInputObject(&graphql.InputObjectConfig{
 			Name: "InputObject",
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
-		ObjectType, err = graphql.NewObject(&graphql.ObjectConfig{
+		ObjectType = graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "Object",
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	// graphql-js/src/type/__tests__/predicate-test.js@d48e481
@@ -386,43 +379,22 @@ var _ = Describe("Type", func() {
 		})
 
 		It("unwraps wrapper types", func() {
-			objectListType, err := graphql.NewListOfType(ObjectType)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(graphql.NamedTypeOf(objectListType)).Should(Equal(ObjectType))
-
-			nonNullObjectType, err := graphql.NewNonNullOfType(ObjectType)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(graphql.NamedTypeOf(nonNullObjectType)).Should(Equal(ObjectType))
+			Expect(graphql.NamedTypeOf(graphql.MustNewListOfType(ObjectType))).Should(Equal(ObjectType))
+			Expect(graphql.NamedTypeOf(graphql.MustNewNonNullOfType(ObjectType))).Should(Equal(ObjectType))
 		})
 
 		It("unwraps deeply wrapper types", func() {
-			var (
-				t   graphql.Type
-				err error
-			)
-
-			t, err = graphql.NewNonNullOfType(ObjectType)
-			Expect(err).ShouldNot(HaveOccurred())
-
-			t, err = graphql.NewListOfType(t)
-			Expect(err).ShouldNot(HaveOccurred())
-
-			t, err = graphql.NewListOfType(t)
-			Expect(err).ShouldNot(HaveOccurred())
-
-			Expect(graphql.NamedTypeOf(t)).Should(Equal(ObjectType))
+			Expect(graphql.NamedTypeOf(
+				graphql.MustNewListOfType(
+					graphql.MustNewListOfType(ObjectType)),
+			)).Should(Equal(ObjectType))
 		})
 	})
 
 	Describe("WrappingType", func() {
 		It("has an unwrapped type", func() {
-			objectListType, err := graphql.NewListOfType(ObjectType)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(objectListType.UnwrappedType()).Should(Equal(ObjectType))
-
-			nonNullObjectType, err := graphql.NewNonNullOfType(ObjectType)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(nonNullObjectType.UnwrappedType()).Should(Equal(ObjectType))
+			Expect(graphql.MustNewListOfType(ObjectType).UnwrappedType()).Should(Equal(ObjectType))
+			Expect(graphql.MustNewNonNullOfType(ObjectType).UnwrappedType()).Should(Equal(ObjectType))
 		})
 	})
 

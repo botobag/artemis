@@ -27,16 +27,14 @@ var _ = Describe("Object", func() {
 	var InterfaceType graphql.Interface
 
 	BeforeEach(func() {
-		var err error
-		InterfaceType, err = graphql.NewInterface(&graphql.InterfaceConfig{
+		InterfaceType = graphql.MustNewInterface(&graphql.InterfaceConfig{
 			Name: "Interface",
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	// graphql-js/src/type/__tests__/definition-test.js
 	It("defines an object type with deprecated field", func() {
-		TypeWithDeprecatedField, err := graphql.NewObject(&graphql.ObjectConfig{
+		TypeWithDeprecatedField := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "foo",
 			Fields: graphql.Fields{
 				"bar": graphql.FieldConfig{
@@ -47,7 +45,6 @@ var _ = Describe("Object", func() {
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		bar := TypeWithDeprecatedField.Fields()["bar"]
 		Expect(bar).ShouldNot(BeNil())
@@ -61,7 +58,7 @@ var _ = Describe("Object", func() {
 
 	Describe("interfaces must be array", func() {
 		It("accepts an Object type with array interfaces", func() {
-			objType, err := graphql.NewObject(&graphql.ObjectConfig{
+			objType := graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "SomeObject",
 				Interfaces: []graphql.InterfaceTypeDefinition{
 					graphql.I(InterfaceType),
@@ -72,23 +69,20 @@ var _ = Describe("Object", func() {
 					},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(objType.Interfaces()).Should(Equal([]graphql.Interface{InterfaceType}))
 		})
 
 		It("accepts empty interfaces", func() {
-			objType, err := graphql.NewObject(&graphql.ObjectConfig{
+			objType := graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "SomeObjectWithoutInterfaces",
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 			Expect(objType.Interfaces()).Should(BeEmpty())
 
-			objType, err = graphql.NewObject(&graphql.ObjectConfig{
+			objType = graphql.MustNewObject(&graphql.ObjectConfig{
 				Name:       "SomeObjectWithEmptyInterfacesSet",
 				Interfaces: []graphql.InterfaceTypeDefinition{},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 			Expect(objType.Interfaces()).Should(BeEmpty())
 		})
 	})
@@ -108,17 +102,15 @@ var _ = Describe("Object", func() {
 			},
 		}
 
-		testObject1, err := graphql.NewObject(&graphql.ObjectConfig{
+		testObject1 := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name:   "Test1",
 			Fields: fields,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
-		testObject2, err := graphql.NewObject(&graphql.ObjectConfig{
+		testObject2 := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name:   "Test2",
 			Fields: fields,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Expect(testObject1.Fields()).Should(Equal(testObject2.Fields()))
 		Expect(fields).Should(Equal(graphql.Fields{
@@ -148,22 +140,20 @@ var _ = Describe("Object", func() {
 	})
 
 	It("accepts creating type without fields", func() {
-		objectType, err := graphql.NewObject(&graphql.ObjectConfig{
+		objectType := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "ObjectWithoutFields1",
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(objectType.Fields()).Should(BeEmpty())
 
-		objectType, err = graphql.NewObject(&graphql.ObjectConfig{
+		objectType = graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "ObjectWithoutFields2",
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(objectType.Fields()).Should(BeEmpty())
 	})
 
 	Describe("having fields", func() {
 		It("defines argument with nil default value", func() {
-			object, err := graphql.NewObject(&graphql.ObjectConfig{
+			object := graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "Test",
 				Fields: graphql.Fields{
 					"field": graphql.FieldConfig{
@@ -177,7 +167,6 @@ var _ = Describe("Object", func() {
 					},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(len(object.Fields())).Should(Equal(1))
 			field := object.Fields()["field"]
@@ -195,7 +184,7 @@ var _ = Describe("Object", func() {
 		})
 
 		It("defines argument without default value", func() {
-			object, err := graphql.NewObject(&graphql.ObjectConfig{
+			object := graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "Test",
 				Fields: graphql.Fields{
 					"field": graphql.FieldConfig{
@@ -208,7 +197,6 @@ var _ = Describe("Object", func() {
 					},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(len(object.Fields())).Should(Equal(1))
 			field := object.Fields()["field"]

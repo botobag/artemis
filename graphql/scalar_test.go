@@ -42,13 +42,12 @@ var _ = Describe("Scalar", func() {
 	// graphql-js/src/type/__tests__/definition-test.js
 	Describe("Type System: Scalar types must be serializable", func() {
 		It("accepts a Scalar type defining serialize", func() {
-			scalar, err := graphql.NewScalar(&graphql.ScalarConfig{
+			scalar := graphql.MustNewScalar(&graphql.ScalarConfig{
 				Name: "SomeScalar",
 				ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
 					return nil, nil
 				}),
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(schemaWithFieldType(scalar)).ShouldNot(BeNil())
 		})
@@ -64,7 +63,7 @@ var _ = Describe("Scalar", func() {
 		})
 
 		It("accepts a Scalar type defining input parser", func() {
-			scalar, err := graphql.NewScalar(&graphql.ScalarConfig{
+			scalar := graphql.MustNewScalar(&graphql.ScalarConfig{
 				Name: "SomeScalar",
 				ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
 					return nil, nil
@@ -78,7 +77,6 @@ var _ = Describe("Scalar", func() {
 					},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(schemaWithFieldType(scalar)).ShouldNot(BeNil())
 		})

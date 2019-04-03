@@ -30,7 +30,7 @@ var _ = Describe("Enum", func() {
 
 	// graphql-js/src/type/__tests__/definition-test.js
 	It("defines an enum type with deprecated value", func() {
-		enumTypeWithDeprecatedValue, err := graphql.NewEnum(&graphql.EnumConfig{
+		enumTypeWithDeprecatedValue := graphql.MustNewEnum(&graphql.EnumConfig{
 			Name: "EnumWithDeprecatedValue",
 			Values: graphql.EnumValueDefinitionMap{
 				"foo": graphql.EnumValueDefinition{
@@ -41,7 +41,6 @@ var _ = Describe("Enum", func() {
 			},
 		})
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(enumTypeWithDeprecatedValue).ShouldNot(BeNil())
 
 		enumValues := enumTypeWithDeprecatedValue.Values()
@@ -56,7 +55,7 @@ var _ = Describe("Enum", func() {
 	})
 
 	It("defines an enum type with a value of `null`", func() {
-		enumTypeWithNullishValue, err := graphql.NewEnum(&graphql.EnumConfig{
+		enumTypeWithNullishValue := graphql.MustNewEnum(&graphql.EnumConfig{
 			Name: "EnumTypeWithNullishValue",
 			Values: graphql.EnumValueDefinitionMap{
 				"NULL": graphql.EnumValueDefinition{
@@ -65,7 +64,6 @@ var _ = Describe("Enum", func() {
 			},
 		})
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(enumTypeWithNullishValue).ShouldNot(BeNil())
 
 		enumValues := enumTypeWithNullishValue.Values()
@@ -99,9 +97,7 @@ var _ = Describe("Enum", func() {
 		}{someRandomValue: 123}
 
 		BeforeEach(func() {
-			var err error
-
-			colorType, err = graphql.NewEnum(&graphql.EnumConfig{
+			colorType = graphql.MustNewEnum(&graphql.EnumConfig{
 				Name: "Color",
 				Values: graphql.EnumValueDefinitionMap{
 					"RED": graphql.EnumValueDefinition{
@@ -116,9 +112,8 @@ var _ = Describe("Enum", func() {
 				},
 				ResultCoercerFactory: graphql.DefaultEnumResultCoercerFactory(graphql.DefaultEnumResultCoercerLookupByValue),
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
-			complexEnum, err = graphql.NewEnum(&graphql.EnumConfig{
+			complexEnum = graphql.MustNewEnum(&graphql.EnumConfig{
 				Name: "Complex",
 				Values: graphql.EnumValueDefinitionMap{
 					"ONE": {
@@ -130,9 +125,8 @@ var _ = Describe("Enum", func() {
 				},
 				ResultCoercerFactory: graphql.DefaultEnumResultCoercerFactory(graphql.DefaultEnumResultCoercerLookupByValue),
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
-			queryType, err = graphql.NewObject(&graphql.ObjectConfig{
+			queryType = graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "Query",
 				Fields: graphql.Fields{
 					"colorEnum": {
@@ -224,9 +218,8 @@ var _ = Describe("Enum", func() {
 					},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
-			mutationType, err = graphql.NewObject(&graphql.ObjectConfig{
+			mutationType = graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "Mutation",
 				Fields: graphql.Fields{
 					"favoriteEnum": {
@@ -246,9 +239,8 @@ var _ = Describe("Enum", func() {
 					},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
-			subscriptionType, err = graphql.NewObject(&graphql.ObjectConfig{
+			subscriptionType = graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "Subscription",
 				Fields: graphql.Fields{
 					"subscribeToEnum": {
@@ -268,7 +260,6 @@ var _ = Describe("Enum", func() {
 					},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			schema = graphql.MustNewSchema(&graphql.SchemaConfig{
 				Query:        queryType,
@@ -607,11 +598,9 @@ var _ = Describe("Enum", func() {
 			)
 
 			BeforeEach(func() {
-				var err error
-
 				// Same as the colorType created in the upper context but with
 				// DefaultEnumResultCoercerLookupByValueDeref strategy.
-				colorType, err = graphql.NewEnum(&graphql.EnumConfig{
+				colorType = graphql.MustNewEnum(&graphql.EnumConfig{
 					Name: "Color",
 					Values: graphql.EnumValueDefinitionMap{
 						"RED": graphql.EnumValueDefinition{
@@ -626,9 +615,8 @@ var _ = Describe("Enum", func() {
 					},
 					ResultCoercerFactory: graphql.DefaultEnumResultCoercerFactory(graphql.DefaultEnumResultCoercerLookupByValueDeref),
 				})
-				Expect(err).ShouldNot(HaveOccurred())
 
-				queryType, err = graphql.NewObject(&graphql.ObjectConfig{
+				queryType = graphql.MustNewObject(&graphql.ObjectConfig{
 					Name: "Query",
 					Fields: graphql.Fields{
 						"query": {
@@ -668,7 +656,6 @@ var _ = Describe("Enum", func() {
 						},
 					},
 				})
-				Expect(err).ShouldNot(HaveOccurred())
 
 				schema = graphql.MustNewSchema(&graphql.SchemaConfig{
 					Query: queryType,

@@ -26,10 +26,7 @@ import (
 var _ = Describe("NonNull", func() {
 	// graphql-js/src/type/__tests__/definition-test.js
 	It("prohibits nesting NonNull inside NonNull", func() {
-		nonNullType, err := graphql.NewNonNullOfType(graphql.Int())
-		Expect(err).ShouldNot(HaveOccurred())
-
-		_, err = graphql.NewNonNullOfType(nonNullType)
+		_, err := graphql.NewNonNullOfType(graphql.MustNewNonNullOfType(graphql.Int()))
 		Expect(err).Should(MatchError("Expected a nullable type for NonNull but got an Int!."))
 	})
 
@@ -54,14 +51,10 @@ var _ = Describe("NonNull", func() {
 		})
 
 		It("accepts nullable TypeDefinition", func() {
-			intTypeDef := graphql.T(graphql.Int())
-			nonNullType, err := graphql.NewNonNullOf(intTypeDef)
-			Expect(err).ShouldNot(HaveOccurred())
+			nonNullType := graphql.MustNewNonNullOf(graphql.T(graphql.Int()))
 			Expect(nonNullType.InnerType()).Should(Equal(graphql.Int()))
 
-			nonNullType1 := graphql.MustNewNonNullOf(intTypeDef)
-			Expect(nonNullType1).ShouldNot(BeNil())
-			Expect(nonNullType).Should(Equal(nonNullType1))
+			Expect(graphql.MustNewNonNullOf(graphql.T(graphql.Int()))).Should(Equal(nonNullType))
 		})
 
 		It("reject non-nullable TypeDefinition", func() {

@@ -100,7 +100,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 			}
 		})
 
-		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+		queryType := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
 				"pets": {
@@ -115,7 +115,6 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
@@ -215,7 +214,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 			},
 		}
 
-		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+		queryType := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
 				"pets": {
@@ -230,7 +229,6 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
@@ -296,7 +294,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 			},
 		}
 
-		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+		queryType := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
 				"foo": {
@@ -307,7 +305,6 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
@@ -341,7 +338,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 			/* TypeResolver: nil, */
 		}
 
-		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+		queryType := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
 				"foo": {
@@ -352,7 +349,6 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
@@ -380,7 +376,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 			/* TypeResolver: nil, */
 		}
 
-		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+		queryType := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
 				"foo": {
@@ -391,7 +387,6 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
@@ -442,7 +437,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 			return graphql.NewObject(fooObject)
 		})
 
-		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+		queryType := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
 				"foo": {
@@ -453,7 +448,6 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
@@ -494,7 +488,7 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 			}),
 		}
 
-		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+		queryType := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
 				"foo": {
@@ -505,7 +499,6 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,

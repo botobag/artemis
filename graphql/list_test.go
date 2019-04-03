@@ -26,8 +26,7 @@ import (
 var _ = Describe("List", func() {
 	It("defines list with TypeDefinition", func() {
 		// Create [Int].
-		listType, err := graphql.NewListOf(graphql.T(graphql.Int()))
-		Expect(err).ShouldNot(HaveOccurred())
+		listType := graphql.MustNewListOf(graphql.T(graphql.Int()))
 		Expect(listType.ElementType()).Should(Equal(graphql.Int()))
 		Expect(func() {
 			graphql.MustNewListOf(graphql.T(graphql.Int()))
@@ -35,8 +34,7 @@ var _ = Describe("List", func() {
 
 		// Create [[Int]].
 		listTypeDef := graphql.ListOfType(graphql.Int())
-		listOfListType, err := graphql.NewListOf(listTypeDef)
-		Expect(err).ShouldNot(HaveOccurred())
+		listOfListType := graphql.MustNewListOf(listTypeDef)
 		Expect(listOfListType.ElementType()).Should(Equal(listType))
 	})
 
