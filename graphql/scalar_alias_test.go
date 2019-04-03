@@ -259,7 +259,7 @@ var _ = Describe("ScalarAlias", func() {
 			})
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Schema, err = graphql.NewSchema(&graphql.SchemaConfig{
+			Schema = graphql.MustNewSchema(&graphql.SchemaConfig{
 				Query: queryType,
 			})
 			Expect(err).ShouldNot(HaveOccurred())

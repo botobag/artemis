@@ -270,12 +270,11 @@ var _ = Describe("Enum", func() {
 			})
 			Expect(err).ShouldNot(HaveOccurred())
 
-			schema, err = graphql.NewSchema(&graphql.SchemaConfig{
+			schema = graphql.MustNewSchema(&graphql.SchemaConfig{
 				Query:        queryType,
 				Mutation:     mutationType,
 				Subscription: subscriptionType,
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 		})
 
 		It("accepts enum literals as input", func() {
@@ -671,10 +670,9 @@ var _ = Describe("Enum", func() {
 				})
 				Expect(err).ShouldNot(HaveOccurred())
 
-				schema, err = graphql.NewSchema(&graphql.SchemaConfig{
+				schema = graphql.MustNewSchema(&graphql.SchemaConfig{
 					Query: queryType,
 				})
-				Expect(err).ShouldNot(HaveOccurred())
 			})
 
 			It("resolves enum value with dereferenced value from result pointer", func() {

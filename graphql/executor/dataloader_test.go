@@ -253,7 +253,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 
 		characterType.Fields = characterFields
 
-		schema, err = graphql.NewSchema(&graphql.SchemaConfig{
+		schema = graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "Query",
 				Fields: graphql.Fields{
@@ -272,7 +272,6 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 				},
 			}),
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		runner, err = concurrent.NewWorkerPoolExecutor(concurrent.WorkerPoolExecutorConfig{
 			MaxPoolSize: uint32(runtime.GOMAXPROCS(-1)),

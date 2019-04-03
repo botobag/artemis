@@ -33,7 +33,7 @@ var _ = Describe("Execute: handles directives", func() {
 	var executeTestQuery func(query string) <-chan executor.ExecutionResult
 
 	BeforeEach(func() {
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "TestType",
 				Fields: graphql.Fields{
@@ -46,7 +46,6 @@ var _ = Describe("Execute: handles directives", func() {
 				},
 			}),
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		rootValue := struct {
 			A func(ctx context.Context) (interface{}, error)

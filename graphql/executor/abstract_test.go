@@ -117,14 +117,13 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 			Types: []graphql.Type{
 				graphql.MustNewObject(&dogType),
 				graphql.MustNewObject(&catType),
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		document := parser.MustParse(token.NewSource(`{
       pets {
@@ -233,10 +232,9 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		document := parser.MustParse(token.NewSource(`{
       pets {
@@ -311,11 +309,10 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 			Types: []graphql.Type{graphql.MustNewObject(fooObject)},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		document := parser.MustParse(token.NewSource("{ foo { bar } }"))
 
@@ -357,10 +354,9 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		document := parser.MustParse(token.NewSource("{ foo { bar } }"))
 
@@ -397,10 +393,9 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		document := parser.MustParse(token.NewSource("{ foo }"))
 
@@ -460,11 +455,10 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 			Types: []graphql.Type{graphql.MustNewObject(fooObject)},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		document := parser.MustParse(token.NewSource("{ foo { bar } }"))
 
@@ -513,11 +507,10 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 			Types: []graphql.Type{graphql.MustNewObject(fooObject)},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		query := `{
 			foo {

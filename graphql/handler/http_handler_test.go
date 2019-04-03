@@ -43,7 +43,7 @@ var _ = Describe("HTTP Handler", func() {
 	})
 
 	It("handles basic query", func() {
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "Query",
 				Fields: graphql.Fields{
@@ -56,7 +56,6 @@ var _ = Describe("HTTP Handler", func() {
 				},
 			}),
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		handler, err := handler.New(schema)
 		Expect(err).ShouldNot(HaveOccurred())

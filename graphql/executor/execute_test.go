@@ -100,7 +100,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	It("accepts positional arguments", func() {
 		document := parser.MustParse(token.NewSource("{ a }"))
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: graphql.MustNewObject(&graphql.ObjectConfig{
 				Name: "Type",
 				Fields: graphql.Fields{
@@ -113,7 +113,6 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 				},
 			}),
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		result := execute(schema, document, executor.RootValue("rootValue"))
 		Eventually(result).Should(MatchResultInJSON(`{
@@ -296,10 +295,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		dataType, err := graphql.NewObject(dataTypeDef)
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: dataType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		result := execute(
 			schema,
@@ -390,13 +388,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			},
 		}
 
-		queryType, err := graphql.NewObject(typeDef)
-		Expect(err).ShouldNot(HaveOccurred())
+		queryType := graphql.MustNewObject(typeDef)
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
@@ -434,10 +430,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		rootValue := map[string]interface{}{
 			"root": "val",
@@ -478,7 +473,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 
 		var resolvedRootValue interface{}
 
-		queryType, err := graphql.NewObject(&graphql.ObjectConfig{
+		queryType := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "Type",
 			Fields: graphql.Fields{
 				"a": {
@@ -490,12 +485,10 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		result := execute(schema, document, executor.RootValue(data))
 		Eventually(result).Should(Receive(MatchFields(IgnoreExtras, Fields{
@@ -536,10 +529,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Eventually(execute(schema, document)).Should(Receive(MatchFields(IgnoreExtras, Fields{
 			"Errors": Equal(graphql.NoErrors()),
@@ -669,10 +661,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		result := execute(schema, document, executor.RootValue(data))
 		Eventually(result).Should(MatchResultInJSON(`{
@@ -871,10 +862,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		document := parser.MustParse(token.NewSource(`
       query {
@@ -936,10 +926,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		document := parser.MustParse(token.NewSource(`
       query {
@@ -997,10 +986,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		result := execute(schema, document, executor.RootValue(data))
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
@@ -1021,10 +1009,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		result := execute(schema, document, executor.RootValue(data))
 		Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
@@ -1046,10 +1033,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		result := execute(
 			schema,
@@ -1072,10 +1058,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		_, errs := executor.Prepare(schema, document, executor.WithoutValidation())
 		Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
@@ -1102,10 +1087,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			})
 			Expect(err).ShouldNot(HaveOccurred())
 
-			schema, err = graphql.NewSchema(&graphql.SchemaConfig{
+			schema = graphql.MustNewSchema(&graphql.SchemaConfig{
 				Query: queryType,
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 		})
 
 		It("errors if no operation name is provided", func() {
@@ -1171,12 +1155,11 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 			})
 			Expect(err).ShouldNot(HaveOccurred())
 
-			schema, err = graphql.NewSchema(&graphql.SchemaConfig{
+			schema = graphql.MustNewSchema(&graphql.SchemaConfig{
 				Query:        queryType,
 				Mutation:     mutationType,
 				Subscription: subscriptionType,
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 		})
 
 		It("uses the query schema for queries", func() {
@@ -1220,10 +1203,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		document := parser.MustParse(token.NewSource("{ a, b, c, d, e }"))
 
@@ -1274,10 +1256,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		result := execute(
 			schema,
@@ -1309,11 +1290,10 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query:    queryType,
 			Mutation: mutationType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{"data":{}}`))
 	})
@@ -1352,10 +1332,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
@@ -1385,10 +1364,9 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 
-		schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 			Query: queryType,
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		// For the purposes of test, just return the name of the field!
 		fieldResolver := graphql.FieldResolverFunc(func(ctx context.Context, source interface{}, info graphql.ResolveInfo) (interface{}, error) {
@@ -1406,7 +1384,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 		)
 
 		BeforeEach(func() {
-			schema, err := graphql.NewSchema(&graphql.SchemaConfig{
+			schema := graphql.MustNewSchema(&graphql.SchemaConfig{
 				Query: graphql.MustNewObject(&graphql.ObjectConfig{
 					Name: "Query",
 					Fields: graphql.Fields{
@@ -1419,7 +1397,6 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 					},
 				}),
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 
 			document := parser.MustParse(token.NewSource(`{ foo }`))
 

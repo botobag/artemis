@@ -24,19 +24,16 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func schemaWithFieldType(ttype graphql.Type) (interface{}, error) {
-	queryType, err := graphql.NewObject(&graphql.ObjectConfig{
-		Name: "Query",
-		Fields: graphql.Fields{
-			"field": {
-				Type: graphql.T(ttype),
+func schemaWithFieldType(ttype graphql.Type) graphql.Schema {
+	return graphql.MustNewSchema(&graphql.SchemaConfig{
+		Query: graphql.MustNewObject(&graphql.ObjectConfig{
+			Name: "Query",
+			Fields: graphql.Fields{
+				"field": {
+					Type: graphql.T(ttype),
+				},
 			},
-		},
-	})
-	Expect(err).ShouldNot(HaveOccurred())
-
-	return graphql.NewSchema(&graphql.SchemaConfig{
-		Query: queryType,
+		}),
 	})
 }
 
@@ -53,8 +50,7 @@ var _ = Describe("Scalar", func() {
 			})
 			Expect(err).ShouldNot(HaveOccurred())
 
-			_, err = schemaWithFieldType(scalar)
-			Expect(err).ShouldNot(HaveOccurred())
+			Expect(schemaWithFieldType(scalar)).ShouldNot(BeNil())
 		})
 
 		It("rejects a Scalar type not defining serializer for result", func() {
@@ -84,8 +80,7 @@ var _ = Describe("Scalar", func() {
 			})
 			Expect(err).ShouldNot(HaveOccurred())
 
-			_, err = schemaWithFieldType(scalar)
-			Expect(err).ShouldNot(HaveOccurred())
+			Expect(schemaWithFieldType(scalar)).ShouldNot(BeNil())
 		})
 	})
 

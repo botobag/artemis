@@ -26,7 +26,7 @@ import (
 	"github.com/botobag/artemis/graphql/token"
 )
 
-var helloWorldSchema, _ = graphql.NewSchema(&graphql.SchemaConfig{
+var helloWorldSchema = graphql.MustNewSchema(&graphql.SchemaConfig{
 	Query: graphql.MustNewObject(&graphql.ObjectConfig{
 		Name: "Query",
 		Fields: graphql.Fields{
