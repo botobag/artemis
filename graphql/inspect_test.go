@@ -298,7 +298,7 @@ var _ = Describe("Inspect", func() {
 		// Scalar
 		scalarType := graphql.MustNewScalar(&graphql.ScalarConfig{
 			Name: "Scalar",
-			ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
+			ResultCoercer: graphql.ScalarResultCoercerFunc(func(value interface{}) (interface{}, error) {
 				return nil, nil
 			}),
 		})

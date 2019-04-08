@@ -433,7 +433,7 @@ var ComplicatedArgs = &graphql.ObjectConfig{
 
 var InvalidScalar = &graphql.ScalarConfig{
 	Name: "Invalid",
-	ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
+	ResultCoercer: graphql.ScalarResultCoercerFunc(func(value interface{}) (interface{}, error) {
 		return value, nil
 	}),
 	InputCoercer: graphql.ScalarInputCoercerFuncs{
@@ -448,7 +448,7 @@ var InvalidScalar = &graphql.ScalarConfig{
 
 var AnyScalar = &graphql.ScalarConfig{
 	Name: "Any",
-	ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
+	ResultCoercer: graphql.ScalarResultCoercerFunc(func(value interface{}) (interface{}, error) {
 		return value, nil
 	}),
 	InputCoercer: graphql.ScalarInputCoercerFuncs{

@@ -44,7 +44,7 @@ var _ = Describe("Scalar", func() {
 		It("accepts a Scalar type defining serialize", func() {
 			scalar := graphql.MustNewScalar(&graphql.ScalarConfig{
 				Name: "SomeScalar",
-				ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
+				ResultCoercer: graphql.ScalarResultCoercerFunc(func(value interface{}) (interface{}, error) {
 					return nil, nil
 				}),
 			})
@@ -65,7 +65,7 @@ var _ = Describe("Scalar", func() {
 		It("accepts a Scalar type defining input parser", func() {
 			scalar := graphql.MustNewScalar(&graphql.ScalarConfig{
 				Name: "SomeScalar",
-				ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
+				ResultCoercer: graphql.ScalarResultCoercerFunc(func(value interface{}) (interface{}, error) {
 					return nil, nil
 				}),
 				InputCoercer: graphql.ScalarInputCoercerFuncs{

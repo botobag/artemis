@@ -122,7 +122,7 @@ var _ = Describe("Type System: Schema", func() {
 		It("rejects a Schema which redefines a built-in type", func() {
 			FakeString := graphql.MustNewScalar(&graphql.ScalarConfig{
 				Name: "String",
-				ResultCoercer: graphql.CoerceScalarResultFunc(func(value interface{}) (interface{}, error) {
+				ResultCoercer: graphql.ScalarResultCoercerFunc(func(value interface{}) (interface{}, error) {
 					return nil, nil
 				}),
 			})

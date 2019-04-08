@@ -37,7 +37,7 @@ var _ = Describe("Type", func() {
 	BeforeEach(func() {
 		ScalarType = graphql.MustNewScalar(&graphql.ScalarConfig{
 			Name: "Scalar",
-			ResultCoercer: graphql.CoerceScalarResultFunc(
+			ResultCoercer: graphql.ScalarResultCoercerFunc(
 				func(value interface{}) (interface{}, error) {
 					return nil, nil
 				}),

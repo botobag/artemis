@@ -156,17 +156,17 @@ type ScalarResultCoercer interface {
 	CoerceResultValue(value interface{}) (interface{}, error)
 }
 
-// CoerceScalarResultFunc is an adapter to allow the use of ordinary functions as
+// ScalarResultCoercerFunc is an adapter to allow the use of ordinary functions as
 // ScalarResultCoercer.
-type CoerceScalarResultFunc func(value interface{}) (interface{}, error)
+type ScalarResultCoercerFunc func(value interface{}) (interface{}, error)
 
 // CoerceResultValue calls f(value).
-func (f CoerceScalarResultFunc) CoerceResultValue(value interface{}) (interface{}, error) {
+func (f ScalarResultCoercerFunc) CoerceResultValue(value interface{}) (interface{}, error) {
 	return f(value)
 }
 
-// CoerceScalarResultFunc implements ScalarResultCoercer.
-var _ ScalarResultCoercer = (CoerceScalarResultFunc)(nil)
+// ScalarResultCoercerFunc implements ScalarResultCoercer.
+var _ ScalarResultCoercer = (ScalarResultCoercerFunc)(nil)
 
 // ScalarInputCoercer coerces input values in the GraphQL requests into a value represented the
 // Scalar type. Please read "Input Coercion" in [0] to provide appropriate implementation.
