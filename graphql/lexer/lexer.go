@@ -470,7 +470,7 @@ func (lexer *Lexer) lexNumber() (*token.Token, error) {
 	return lexer.makeTokenWithValue(
 		tokenKind,
 		lexer.bytePos-startPos,
-		string(lexer.source.Body()[startPos:lexer.bytePos])), nil
+		lexer.source.Body().SubStr(startPos, lexer.bytePos)), nil
 }
 
 // lexString reads a string token from the source file.
@@ -582,7 +582,7 @@ func (lexer *Lexer) lexString() (*token.Token, error) {
 				lexer.source,
 				lexer.LocationWithPos(escapeSeqPos-1),
 				fmt.Sprintf("Invalid character escape sequence: \\u%s.",
-					string(lexer.source.Body()[escapeSeqPos:escapeSeqEnd])),
+					lexer.source.Body().SubStr(escapeSeqPos, escapeSeqEnd)),
 			)
 
 		default:
@@ -729,6 +729,6 @@ func (lexer *Lexer) lexName() *token.Token {
 	return lexer.makeTokenWithValue(
 		token.KindName,
 		lexer.bytePos-startPos,
-		string(lexer.source.Body()[startPos:lexer.bytePos]),
+		lexer.source.Body().SubStr(startPos, lexer.bytePos),
 	)
 }

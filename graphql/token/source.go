@@ -57,6 +57,11 @@ func (body SourceBody) Size() uint {
 	return uint(len(body))
 }
 
+// SubStr returns a string that comprises bytes between [start, end) in body.
+func (body SourceBody) SubStr(start uint, end uint) string {
+	return unsafe.String(body[start:end])
+}
+
 // SourceLocationInfo describes a source location for a SourceLocation with source name, line and
 // column number.
 type SourceLocationInfo struct {
