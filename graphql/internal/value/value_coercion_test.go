@@ -198,15 +198,13 @@ var _ = Describe("CoerceValue", func() {
 		var TestEnum graphql.Type
 
 		BeforeEach(func() {
-			var err error
-			TestEnum, err = graphql.NewEnum(&graphql.EnumConfig{
+			TestEnum = graphql.MustNewEnum(&graphql.EnumConfig{
 				Name: "TestEnum",
 				Values: graphql.EnumValueDefinitionMap{
 					"FOO": {Value: "InternalFoo"},
 					"BAR": {Value: 123456789},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 		})
 
 		It("returns no error for a known enum name", func() {
@@ -238,8 +236,7 @@ var _ = Describe("CoerceValue", func() {
 		var TestInputObject graphql.Type
 
 		BeforeEach(func() {
-			var err error
-			TestInputObject, err = graphql.NewInputObject(&graphql.InputObjectConfig{
+			TestInputObject = graphql.MustNewInputObject(&graphql.InputObjectConfig{
 				Name: "TestInputObject",
 				Fields: graphql.InputFields{
 					"foo": {
@@ -250,7 +247,6 @@ var _ = Describe("CoerceValue", func() {
 					},
 				},
 			})
-			Expect(err).ShouldNot(HaveOccurred())
 		})
 
 		It("returns no error for a valid input", func() {
@@ -320,9 +316,7 @@ var _ = Describe("CoerceValue", func() {
 		var TestList graphql.Type
 
 		BeforeEach(func() {
-			var err error
-			TestList, err = graphql.NewListOfType(graphql.Int())
-			Expect(err).ShouldNot(HaveOccurred())
+			TestList = graphql.MustNewListOfType(graphql.Int())
 		})
 
 		It("returns no error for a valid input", func() {
@@ -360,9 +354,7 @@ var _ = Describe("CoerceValue", func() {
 		var TestNestedList graphql.Type
 
 		BeforeEach(func() {
-			var err error
-			TestNestedList, err = graphql.NewListOf(graphql.ListOfType(graphql.Int()))
-			Expect(err).ShouldNot(HaveOccurred())
+			TestNestedList = graphql.MustNewListOf(graphql.ListOfType(graphql.Int()))
 		})
 
 		It("returns no error for a valid input", func() {
@@ -401,8 +393,7 @@ var _ = Describe("CoerceValue", func() {
 	})
 
 	It("rejects null values for non-null types", func() {
-		testNonNull, err := graphql.NewNonNullOfType(graphql.Int())
-		Expect(err).ShouldNot(HaveOccurred())
+		testNonNull := graphql.MustNewNonNullOfType(graphql.Int())
 
 		_, errs := value.CoerceValue(nil, testNonNull, nil)
 		Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(
@@ -411,7 +402,7 @@ var _ = Describe("CoerceValue", func() {
 	})
 
 	It("rejects non-input type", func() {
-		testObject, err := graphql.NewObject(&graphql.ObjectConfig{
+		testObject := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "TestObject",
 			Fields: graphql.Fields{
 				"int": {
@@ -419,7 +410,6 @@ var _ = Describe("CoerceValue", func() {
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 
 		_, errs := value.CoerceValue(map[string]interface{}{"int": 2}, testObject, nil)
 		Expect(errs).Should(testutil.ConsistOfGraphQLErrors(testutil.MatchGraphQLError(

@@ -100,7 +100,7 @@ var _ = Describe("CoerceFromAST", func() {
 	})
 
 	It("converts enum values according to input coercion rules", func() {
-		testEnum, err := graphql.NewEnum(&graphql.EnumConfig{
+		testEnum := graphql.MustNewEnum(&graphql.EnumConfig{
 			Name: "TestColor",
 			Values: graphql.EnumValueDefinitionMap{
 				"RED":   {Value: 1},
@@ -111,7 +111,6 @@ var _ = Describe("CoerceFromAST", func() {
 				"NAN": {Value: math.NaN()},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(valueFromAST(testEnum, "RED")).Should(Equal(1))
 		Expect(valueFromAST(testEnum, "BLUE")).Should(Equal(3))
 		Expect(valueFromAST(testEnum, "null")).Should(BeNil())
@@ -145,24 +144,17 @@ var _ = Describe("CoerceFromAST", func() {
 	)
 
 	BeforeEach(func() {
-		var err error
+		nonNullBool = graphql.MustNewNonNullOfType(graphql.Boolean())
 
-		nonNullBool, err = graphql.NewNonNullOfType(graphql.Boolean())
-		Expect(err).ShouldNot(HaveOccurred())
+		listOfBool = graphql.MustNewListOfType(graphql.Boolean())
 
-		listOfBool, err = graphql.NewListOfType(graphql.Boolean())
-		Expect(err).ShouldNot(HaveOccurred())
+		listOfNonNullBool = graphql.MustNewListOfType(nonNullBool)
 
-		listOfNonNullBool, err = graphql.NewListOfType(nonNullBool)
-		Expect(err).ShouldNot(HaveOccurred())
+		nonNullListOfBool = graphql.MustNewNonNullOfType(listOfBool)
 
-		nonNullListOfBool, err = graphql.NewNonNullOfType(listOfBool)
-		Expect(err).ShouldNot(HaveOccurred())
+		nonNullListOfNonNullBool = graphql.MustNewNonNullOfType(listOfNonNullBool)
 
-		nonNullListOfNonNullBool, err = graphql.NewNonNullOfType(listOfNonNullBool)
-		Expect(err).ShouldNot(HaveOccurred())
-
-		testInputObj, err = graphql.NewInputObject(&graphql.InputObjectConfig{
+		testInputObj = graphql.MustNewInputObject(&graphql.InputObjectConfig{
 			Name: "TestInput",
 			Fields: graphql.InputFields{
 				"int": {
@@ -177,7 +169,6 @@ var _ = Describe("CoerceFromAST", func() {
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	It("coerces to null unless non-null", func() {
@@ -314,7 +305,7 @@ var _ = Describe("CoerceFromAST", func() {
 	})
 
 	It("rejects non-input type", func() {
-		testObject, err := graphql.NewObject(&graphql.ObjectConfig{
+		testObject := graphql.MustNewObject(&graphql.ObjectConfig{
 			Name: "TestObject",
 			Fields: graphql.Fields{
 				"int": {
@@ -322,9 +313,7 @@ var _ = Describe("CoerceFromAST", func() {
 				},
 			},
 		})
-		Expect(err).ShouldNot(HaveOccurred())
-
-		_, err = valueFromAST(testObject, "{ int: 2 }")
+		_, err := valueFromAST(testObject, "{ int: 2 }")
 		Expect(err).Should(HaveOccurred())
 	})
 })
