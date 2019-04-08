@@ -26,6 +26,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/botobag/artemis/internal/unsafe"
 )
 
 // If the value doesn't contains value for the given key, return an empty string without error.
@@ -180,11 +182,11 @@ func ParseHTTPRequest(r *http.Request, options *ParseHTTPRequestOptions) (*HTTPR
 		case "application/graphql":
 			// The entire body is the query.
 			return &HTTPRequest{
-				Query: string(body),
+				Query: unsafe.String(body),
 			}, nil
 
 		case "application/x-www-form-urlencoded":
-			values, err := url.ParseQuery(string(body))
+			values, err := url.ParseQuery(unsafe.String(body))
 			if err != nil {
 				return nil, &HTTPRequestParseError{
 					Request: r,
