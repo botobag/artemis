@@ -94,7 +94,7 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	// })
 
 	It("throws if no schema is provided", func() {
-		// TODO: #71
+		// TODO: #192
 	})
 
 	It("accepts positional arguments", func() {
@@ -1343,7 +1343,26 @@ var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner co
 	// })
 
 	It("executes ignoring invalid non-executable definitions", func() {
-		// TODO: #71
+		// TODO: #17
+		// schema := graphql.MustNewSchema(&graphql.SchemaConfig{
+		// 	Query: graphql.MustNewObject(&graphql.ObjectConfig{
+		// 		Name: "Query",
+		// 		Fields: graphql.Fields{
+		// 			"foo": {
+		// 				Type: graphql.T(graphql.String()),
+		// 			},
+		// 		},
+		// 	}),
+		// })
+		//
+		// document := parser.MustParse(token.NewSource(`
+		//   { foo }
+		//
+		//   type Query { bar: String }
+		// `))
+		//
+		// result := execute(schema, document)
+		// Eventually(result).Should(MatchResultInJSON(`{"data":{"foo":null}}`))
 	})
 
 	It("uses a custom field resolver", func() {
