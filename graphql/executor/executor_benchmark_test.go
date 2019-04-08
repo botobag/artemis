@@ -42,15 +42,15 @@ var helloWorldSchema = graphql.MustNewSchema(&graphql.SchemaConfig{
 
 func BenchmarkSimpleHelloWorldQueryWithoutPreparedOperation(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		document, _ := parser.Parse(token.NewSource("{hello}"))
-		operation, _ := executor.Prepare(helloWorldSchema, document)
+		document := parser.MustParse(token.NewSource("{hello}"))
+		operation := executor.MustPrepare(helloWorldSchema, document)
 		operation.Execute(context.Background())
 	}
 }
 
 func BenchmarkSimpleHelloWorldQueryWithPreparedOperation(b *testing.B) {
-	document, _ := parser.Parse(token.NewSource("{hello}"))
-	operation, _ := executor.Prepare(helloWorldSchema, document)
+	document := parser.MustParse(token.NewSource("{hello}"))
+	operation := executor.MustPrepare(helloWorldSchema, document)
 
 	for i := 0; i < b.N; i++ {
 		operation.Execute(context.Background())

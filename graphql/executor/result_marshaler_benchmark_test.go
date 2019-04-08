@@ -122,10 +122,7 @@ func queryStarWarsCharacterFriends(b *testing.B) *executor.ExecutionResult {
 				}
 			}`))
 
-	operation, errs := executor.Prepare(schema, document)
-	if errs.HaveOccurred() {
-		b.Fatal(errs)
-	}
+	operation := executor.MustPrepare(schema, document)
 
 	result := <-operation.Execute(context.Background())
 

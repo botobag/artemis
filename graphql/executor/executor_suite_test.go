@@ -78,8 +78,7 @@ func execute(schema graphql.Schema, document ast.Document, opts ...interface{}) 
 		}
 	}
 
-	operation, errs := executor.Prepare(schema, document, prepareOpts...)
-	Expect(errs.HaveOccurred()).ShouldNot(BeTrue())
+	operation := executor.MustPrepare(schema, document, prepareOpts...)
 
 	return operation.Execute(context.Background(), executeOpts...)
 }

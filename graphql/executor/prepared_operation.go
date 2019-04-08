@@ -229,6 +229,15 @@ func Prepare(schema graphql.Schema, document ast.Document, opts ...PrepareOption
 	}, graphql.NoErrors()
 }
 
+// MustPrepare creates a PreparedOperation with Prepare and panics on error.
+func MustPrepare(schema graphql.Schema, document ast.Document, opts ...PrepareOption) *PreparedOperation {
+	operation, errs := Prepare(schema, document, opts...)
+	if errs.HaveOccurred() {
+		panic(errs)
+	}
+	return operation
+}
+
 // Schema returns the type system definition which the operation is based on.
 func (operation *PreparedOperation) Schema() graphql.Schema {
 	return operation.schema
