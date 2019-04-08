@@ -23,6 +23,7 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/botobag/artemis/internal/unsafe"
 	"github.com/botobag/artemis/internal/util"
 	"github.com/botobag/artemis/jsonwriter"
 )
@@ -58,7 +59,7 @@ func inspectTo(out io.Writer, v interface{}, seenValues []interface{}) error {
 
 	case Directive:
 		out.Write([]byte{'@'})
-		out.Write([]byte(v.Name()))
+		out.Write(unsafe.Bytes(v.Name()))
 		return nil
 
 	case ValueWithCustomInspect:
@@ -78,7 +79,7 @@ func inspectTo(out io.Writer, v interface{}, seenValues []interface{}) error {
 	case reflect.Func:
 		f := runtime.FuncForPC(value.Pointer())
 		out.Write([]byte{'[', 'f', 'u', 'n', 'c', 't', 'i', 'o', 'n', ' '})
-		out.Write([]byte(f.Name()))
+		out.Write(unsafe.Bytes(f.Name()))
 		out.Write([]byte{']'})
 
 	case reflect.Array, reflect.Slice:
@@ -172,7 +173,7 @@ func inspectTo(out io.Writer, v interface{}, seenValues []interface{}) error {
 			if len(typ.Name()) == 0 {
 				out.Write([]byte{'O', 'b', 'j', 'e', 'c', 't'})
 			} else {
-				out.Write([]byte(typ.Name()))
+				out.Write(unsafe.Bytes(typ.Name()))
 			}
 			out.Write([]byte{']'})
 			break
@@ -199,7 +200,7 @@ func inspectTo(out io.Writer, v interface{}, seenValues []interface{}) error {
 
 			field := typ.Field(i)
 			// Write field name.
-			out.Write([]byte(field.Name))
+			out.Write(unsafe.Bytes(field.Name))
 			out.Write([]byte{':', ' '})
 
 			// Write value.
@@ -239,7 +240,7 @@ func inspectTypeTo(out io.Writer, t Type) {
 	for {
 		switch ttype := t.(type) {
 		case TypeWithName:
-			out.Write([]byte(ttype.Name()))
+			out.Write(unsafe.Bytes(ttype.Name()))
 			// Reverse wrapTypes.
 			n := len(wrapTypes)
 			for i := 0; i < n/2; i++ {
