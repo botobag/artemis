@@ -120,7 +120,7 @@ type introspectionResultMatcher struct {
 
 func (matcher *introspectionResultMatcher) Match(actual interface{}) (success bool, err error) {
 	// Expect an executor.ExecutionResult.
-	result := actual.(executor.ExecutionResult)
+	result := actual.(*executor.ExecutionResult)
 
 	// Encode to JSON.
 	actualJSON, err := json.Marshal(result)
@@ -1512,8 +1512,9 @@ var _ = Describe("Introspection", func() {
 				return nil, nil
 			})))
 
-		var result executor.ExecutionResult
-		Eventually(operation.Execute(context.Background())).Should(Receive(&result))
+		result := operation.Execute(context.Background())
+		Expect(result).ShouldNot(BeNil())
+		Expect(result.Errors.HaveOccurred()).Should(BeFalse())
 
 		Expect(calledForFields).Should(BeEmpty())
 	})

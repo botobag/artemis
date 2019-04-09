@@ -88,10 +88,8 @@ func (presenter DefaultErrorPresenter) Write(w http.ResponseWriter, err error) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
 	case *ErrPrepare:
-		result := make(chan executor.ExecutionResult, 1)
-		result <- executor.ExecutionResult{
+		presenter.ResultPresenter.Write(w, err.Request, nil, &executor.ExecutionResult{
 			Errors: err.Errs,
-		}
-		presenter.ResultPresenter.Write(w, err.Request, nil, result)
+		})
 	}
 }

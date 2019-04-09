@@ -327,7 +327,7 @@ func doesTypeConditionSatisfy(
 
 // execute executes a field specified by node whose type is fieldType. The result is sent to the
 // given ResultNode.
-func execute(ctx *ExecutionContext) <-chan ExecutionResult {
+func execute(ctx *ExecutionContext) *ExecutionResult {
 	var (
 		operation = ctx.Operation()
 
@@ -336,19 +336,14 @@ func execute(ctx *ExecutionContext) <-chan ExecutionResult {
 			Parent:      nil,
 			Definitions: nil,
 		}
-
-		// Create channel to return the result.
-		resultChan = make(chan ExecutionResult, 1)
 	)
 
 	// Collect fields in the top-level selection set.
 	nodes, err := collectFields(ctx, rootNode, operation.RootType())
 	if err != nil {
-		resultChan <- ExecutionResult{
+		return &ExecutionResult{
 			Errors: graphql.ErrorsOf(err.(*graphql.Error)),
 		}
-
-		return resultChan
 	}
 
 	// Allocate result node.
@@ -367,13 +362,11 @@ func execute(ctx *ExecutionContext) <-chan ExecutionResult {
 		nodes,
 		ctx.RootValue())
 
-	// Send the result.
-	resultChan <- ExecutionResult{
+	// Return the result.
+	return &ExecutionResult{
 		Data:   result,
 		Errors: executor.errs,
 	}
-
-	return resultChan
 }
 
 // Dispatch tasks for evaluating an object value comprised of the fields specified in childNodes.

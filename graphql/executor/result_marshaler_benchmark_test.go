@@ -124,9 +124,7 @@ func queryStarWarsCharacterFriends(b *testing.B) *executor.ExecutionResult {
 
 	operation := executor.MustPrepare(schema, document)
 
-	result := <-operation.Execute(context.Background())
-
-	return &result
+	return operation.Execute(context.Background())
 }
 
 func BenchmarkMarshalStarWarsFriendsQueryResultToJSONWithGo(b *testing.B) {

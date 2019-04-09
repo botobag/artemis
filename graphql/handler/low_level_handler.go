@@ -152,13 +152,13 @@ func (next *RequestMiddlewareNext) Next(request *Request) {
 // NextError stops applying rest middlewares in the chain and sends an ExecutionResult that includes
 // given error.
 func (next *RequestMiddlewareNext) NextError(err *graphql.Error) {
-	next.NextResult(executor.ExecutionResult{
+	next.NextResult(&executor.ExecutionResult{
 		Errors: graphql.ErrorsOf(err),
 	})
 }
 
 // NextResult stops applying rest middlewares in the chain and sends the result.
-func (next *RequestMiddlewareNext) NextResult(result executor.ExecutionResult) {
+func (next *RequestMiddlewareNext) NextResult(result *executor.ExecutionResult) {
 	switch next.result.(type) {
 	case *Request:
 		panic("calling NextError or NextResult is not allowed on returning from Next")
@@ -167,7 +167,7 @@ func (next *RequestMiddlewareNext) NextResult(result executor.ExecutionResult) {
 		panic("calling NextError or NextResult multiple times is not allowed")
 
 	case nil:
-		next.result = &result
+		next.result = result
 
 	default:
 		panic(fmt.Errorf("unexpected result type: %T", next.result))
@@ -183,7 +183,7 @@ func (next *RequestMiddlewareNext) onReturn() bool {
 
 // Serve executes the operation with given context and parameters. The given request object must not
 // be nil.
-func (handler *LLHandler) Serve(request *Request) <-chan executor.ExecutionResult {
+func (handler *LLHandler) Serve(request *Request) *executor.ExecutionResult {
 	middlewares := handler.middlewares
 	if len(middlewares) > 0 {
 		next := RequestMiddlewareNext{
@@ -197,10 +197,7 @@ func (handler *LLHandler) Serve(request *Request) <-chan executor.ExecutionResul
 			request = result
 
 		case *executor.ExecutionResult:
-			// Make a channel to return the result set by middleware.
-			resultChan := make(chan executor.ExecutionResult, 1)
-			resultChan <- *result
-			return resultChan
+			return result
 
 		default:
 			panic(fmt.Errorf("unexpected result type: %T", next.result))

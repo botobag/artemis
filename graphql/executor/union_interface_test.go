@@ -99,7 +99,7 @@ type introspectionResultMatcher struct {
 
 func (matcher *introspectionResultMatcher) Match(actual interface{}) (success bool, err error) {
 	// Expect an executor.ExecutionResult.
-	result := actual.(executor.ExecutionResult)
+	result := actual.(*executor.ExecutionResult)
 
 	// Encode to JSON.
 	actualJSON, err := json.Marshal(result)
@@ -157,7 +157,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
 		Friends []interface{}
 	}
 
-	execute := func(schema graphql.Schema, query string, rootValue interface{}, appContext interface{}) <-chan executor.ExecutionResult {
+	execute := func(schema graphql.Schema, query string, rootValue interface{}, appContext interface{}) *executor.ExecutionResult {
 		return execute(
 			schema,
 			parser.MustParse(token.NewSource(query)),
@@ -312,7 +312,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
       }
     `
 
-		Eventually(execute(schema, query, nil, nil)).Should(Receive(MatchIntrospectionInJSON(`{
+		Expect(execute(schema, query, nil, nil)).Should(MatchIntrospectionInJSON(`{
       "data": {
         "Named": {
           "kind": "INTERFACE",
@@ -354,7 +354,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
           "inputFields": null
         }
       }
-    }`)))
+    }`))
 	})
 
 	It("executes using union types", func() {
@@ -372,7 +372,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
       }
     `
 
-		Eventually(execute(schema, query, john, nil)).Should(Receive(MatchIntrospectionInJSON(`{
+		Expect(execute(schema, query, john, nil)).Should(MatchIntrospectionInJSON(`{
       "data": {
         "__typename": "Person",
         "name": "John",
@@ -389,7 +389,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
           }
         ]
       }
-    }`)))
+    }`))
 	})
 
 	It("executes union types with inline fragments", func() {
@@ -412,7 +412,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
       }
     `
 
-		Eventually(execute(schema, query, john, nil)).Should(Receive(MatchIntrospectionInJSON(`{
+		Expect(execute(schema, query, john, nil)).Should(MatchIntrospectionInJSON(`{
       "data": {
         "__typename": "Person",
         "name": "John",
@@ -429,7 +429,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
           }
         ]
       }
-    }`)))
+    }`))
 	})
 
 	It("executes using interface types", func() {
@@ -446,7 +446,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
       }
     `
 
-		Eventually(execute(schema, query, john, nil)).Should(Receive(MatchIntrospectionInJSON(`{
+		Expect(execute(schema, query, john, nil)).Should(MatchIntrospectionInJSON(`{
       "data": {
         "__typename": "Person",
         "name": "John",
@@ -462,7 +462,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
           }
         ]
       }
-    }`)))
+    }`))
 	})
 
 	It("executes interface types with inline fragments", func() {
@@ -483,7 +483,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
       }
     `
 
-		Eventually(execute(schema, query, john, nil)).Should(Receive(MatchIntrospectionInJSON(`{
+		Expect(execute(schema, query, john, nil)).Should(MatchIntrospectionInJSON(`{
       "data": {
         "__typename": "Person",
         "name": "John",
@@ -499,7 +499,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
           }
         ]
       }
-    }`)))
+    }`))
 	})
 
 	It("allows fragment conditions to be abstract types", func() {
@@ -535,7 +535,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
       }
     `
 
-		Eventually(execute(schema, query, john, nil)).Should(Receive(MatchIntrospectionInJSON(`{
+		Expect(execute(schema, query, john, nil)).Should(MatchIntrospectionInJSON(`{
       "data": {
         "__typename": "Person",
         "name": "John",
@@ -563,7 +563,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
           }
         ]
       }
-    }`)))
+    }`))
 	})
 
 	It("gets execution info in resolver", func() {
@@ -621,7 +621,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
 
 		query := "{ name, friends { name } }"
 
-		Eventually(execute(schema2, query, john2, context)).Should(Receive(MatchIntrospectionInJSON(`{
+		Expect(execute(schema2, query, john2, context)).Should(MatchIntrospectionInJSON(`{
       "data": {
         "name": "John",
         "friends": [
@@ -630,7 +630,7 @@ var _ = Describe("Execute: Union and intersection types", func() {
           }
         ]
       }
-    }`)))
+    }`))
 
 		Expect(encounteredContext).Should(Equal(context))
 		Expect(encounteredSchema).Should(Equal(schema2))

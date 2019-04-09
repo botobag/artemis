@@ -112,7 +112,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 		})
 
 		result := execute(schema, document, executor.RootValue("rootValue"))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Expect(result).Should(MatchResultInJSON(`{
       "data": { "a": "rootValue" }
     }`))
 	})
@@ -300,7 +300,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 			executor.VariableValues(map[string]interface{}{
 				"size": 100,
 			}))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Expect(result).Should(MatchResultInJSON(`{
 			"data": {
 				"a": "Apple",
 				"b": "Banana",
@@ -388,7 +388,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 			Query: queryType,
 		})
 
-		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
+		Expect(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"a": "Apple",
 				"b": "Banana",
@@ -437,7 +437,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 			executor.VariableValues(map[string]interface{}{
 				"var": "abc",
 			}))
-		Eventually(result).Should(Receive(MatchFields(IgnoreExtras, Fields{
+		Expect(result).Should(PointTo(MatchFields(IgnoreExtras, Fields{
 			"Errors": Equal(graphql.NoErrors()),
 		})))
 
@@ -484,7 +484,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 		})
 
 		result := execute(schema, document, executor.RootValue(data))
-		Eventually(result).Should(Receive(MatchFields(IgnoreExtras, Fields{
+		Expect(result).Should(PointTo(MatchFields(IgnoreExtras, Fields{
 			"Errors": Equal(graphql.NoErrors()),
 		})))
 
@@ -525,7 +525,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 			Query: queryType,
 		})
 
-		Eventually(execute(schema, document)).Should(Receive(MatchFields(IgnoreExtras, Fields{
+		Expect(execute(schema, document)).Should(PointTo(MatchFields(IgnoreExtras, Fields{
 			"Errors": Equal(graphql.NoErrors()),
 		})))
 
@@ -657,7 +657,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 		})
 
 		result := execute(schema, document, executor.RootValue(data))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Expect(result).Should(MatchResultInJSON(`{
 			"data": {
 				"sync": "sync",
 				"syncError": null,
@@ -864,7 +864,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
       }
     `))
 
-		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
+		Expect(execute(schema, document)).Should(MatchResultInJSON(`{
 				"data": { "foods": null },
 				"errors": [
 					{
@@ -933,7 +933,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
       }
     `))
 
-		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
+		Expect(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"nullableA": {
 					"aliasedA": null
@@ -979,7 +979,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 		})
 
 		result := execute(schema, document, executor.RootValue(data))
-		Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
+		Expect(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 	})
 
 	It("uses the only operation if no operation name is provided", func() {
@@ -1001,7 +1001,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 		})
 
 		result := execute(schema, document, executor.RootValue(data))
-		Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
+		Expect(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 	})
 
 	It("uses the named operation if operation name is provided", func() {
@@ -1028,7 +1028,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 			document,
 			executor.OperationName("OtherExample"),
 			executor.RootValue(data))
-		Eventually(result).Should(MatchResultInJSON(`{"data":{"second":"b"}}`))
+		Expect(result).Should(MatchResultInJSON(`{"data":{"second":"b"}}`))
 	})
 
 	It("provides error if no operation is provided", func() {
@@ -1165,7 +1165,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 				document,
 				executor.OperationName("Q"),
 				executor.RootValue(rootValue))
-			Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
+			Expect(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 		})
 
 		It("uses the mutation schema for mutations", func() {
@@ -1174,7 +1174,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 				document,
 				executor.OperationName("M"),
 				executor.RootValue(rootValue))
-			Eventually(result).Should(MatchResultInJSON(`{"data":{"c":"d"}}`))
+			Expect(result).Should(MatchResultInJSON(`{"data":{"c":"d"}}`))
 		})
 
 		It("uses the subscription schema for subscriptions", func() {
@@ -1183,7 +1183,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 				document,
 				executor.OperationName("S"),
 				executor.RootValue(rootValue))
-			Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
+			Expect(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 		})
 	})
 
@@ -1215,7 +1215,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 				"d": &ReadyOnNextPollFuture{data: "d"},
 				"e": "e",
 			}))
-		Eventually(result).Should(MatchResultInJSON(`{
+		Expect(result).Should(MatchResultInJSON(`{
 				"data": {
 					"a": "a",
 					"b": "b",
@@ -1259,7 +1259,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 			schema,
 			document,
 			executor.RootValue(data))
-		Eventually(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
+		Expect(result).Should(MatchResultInJSON(`{"data":{"a":"b"}}`))
 	})
 
 	It("does not include illegal fields in output", func() {
@@ -1288,7 +1288,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 			Mutation: mutationType,
 		})
 
-		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{"data":{}}`))
+		Expect(execute(schema, document)).Should(MatchResultInJSON(`{"data":{}}`))
 	})
 
 	It("does not include arguments that were not set", func() {
@@ -1328,7 +1328,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 			Query: queryType,
 		})
 
-		Eventually(execute(schema, document)).Should(MatchResultInJSON(`{
+		Expect(execute(schema, document)).Should(MatchResultInJSON(`{
 			"data": {
 				"field": "{\"a\":true,\"c\":false,\"e\":0}"
 			}
@@ -1359,7 +1359,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 		// `))
 		//
 		// result := execute(schema, document)
-		// Eventually(result).Should(MatchResultInJSON(`{"data":{"foo":null}}`))
+		// Expect(result).Should(MatchResultInJSON(`{"data":{"foo":null}}`))
 	})
 
 	It("uses a custom field resolver", func() {
@@ -1384,12 +1384,12 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 		})
 
 		result := execute(schema, document, executor.DefaultFieldResolver(fieldResolver))
-		Eventually(result).Should(MatchResultInJSON(`{"data":{"foo":"foo"}}`))
+		Expect(result).Should(MatchResultInJSON(`{"data":{"foo":"foo"}}`))
 	})
 
 	Describe("Iterable: custom iterator to enumerate values for list field", func() {
 		var (
-			executeWithRootValue func(rootValue interface{}) <-chan executor.ExecutionResult
+			executeWithRootValue func(rootValue interface{}) *executor.ExecutionResult
 			values               []interface{}
 		)
 
@@ -1410,7 +1410,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 
 			document := parser.MustParse(token.NewSource(`{ foo }`))
 
-			executeWithRootValue = func(rootValue interface{}) <-chan executor.ExecutionResult {
+			executeWithRootValue = func(rootValue interface{}) *executor.ExecutionResult {
 				return execute(schema, document, executor.RootValue(rootValue))
 			}
 
@@ -1426,12 +1426,12 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 
 			expectedJSON := `{"data":{"foo":` + string(valuesJSON) + `}}`
 
-			Eventually(
+			Expect(
 				executeWithRootValue(&TestIterable{values}),
 			).Should(MatchResultInJSON(expectedJSON))
 
 			// Also test iterable with size hint.
-			Eventually(
+			Expect(
 				executeWithRootValue(&SizedTestIterable{TestIterable{values}}),
 			).Should(MatchResultInJSON(expectedJSON))
 		})
@@ -1440,7 +1440,7 @@ var _ = Describe("Execute: Handles basic execution tasks", func() {
 			// Set an error value in the middle of values.
 			values[len(values)/2] = errors.New("iterator error")
 
-			Eventually(executeWithRootValue(&TestIterable{values})).Should(MatchResultInJSON(`{
+			Expect(executeWithRootValue(&TestIterable{values})).Should(MatchResultInJSON(`{
 				"errors": [
 					{
 						"message": "Error occurred while enumerates values in the list field Query.foo.",

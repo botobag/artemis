@@ -278,7 +278,7 @@ type ResultPresenter interface {
 		w http.ResponseWriter,
 		httpRequest *http.Request,
 		graphqlRequest *Request,
-		result <-chan executor.ExecutionResult)
+		result *executor.ExecutionResult)
 }
 
 // DefaultResultPresenter implements a ResultPresenter used by HTTP handler to present an
@@ -289,14 +289,13 @@ func (DefaultResultPresenter) Write(
 	w http.ResponseWriter,
 	httpRequest *http.Request,
 	graphqlRequest *Request,
-	result <-chan executor.ExecutionResult) {
+	result *executor.ExecutionResult) {
 
 	// Serialize result to JSON encoding.
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusOK)
 
-	// Receive result.
-	r := <-result
-	r.MarshalJSONTo(w)
+	// Write the result.
+	result.MarshalJSONTo(w)
 }

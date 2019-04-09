@@ -37,22 +37,22 @@ func TestGraphQLExecutor(t *testing.T) {
 }
 
 func MatchResultInJSON(resultJSON string) types.GomegaMatcher {
-	stringify := func(result executor.ExecutionResult) []byte {
+	stringify := func(result *executor.ExecutionResult) []byte {
 		var buf bytes.Buffer
 		Expect(result.MarshalJSONTo(&buf)).Should(Succeed())
 		return buf.Bytes()
 	}
-	return Receive(WithTransform(stringify, MatchJSON(resultJSON)))
+	return WithTransform(stringify, MatchJSON(resultJSON))
 }
 
 // Prototype of "execute" function
-type ExecuteFunc func(schema graphql.Schema, document ast.Document, opts ...interface{}) <-chan executor.ExecutionResult
+type ExecuteFunc func(schema graphql.Schema, document ast.Document, opts ...interface{}) *executor.ExecutionResult
 
 // execute is a convenient function using in test that wraps executor.Prepare and
 // PreparedOperation.Execute. Note that validation is disabled which match the behavior in
 // graphql-js where "execute" only performs execution. Options passed in opts must each be either an
 // executor.PrepareOption or an executor.ExecuteOption, or it panics.
-func execute(schema graphql.Schema, document ast.Document, opts ...interface{}) <-chan executor.ExecutionResult {
+func execute(schema graphql.Schema, document ast.Document, opts ...interface{}) *executor.ExecutionResult {
 	// Packing options.
 	var (
 		prepareOpts = []executor.PrepareOption{
@@ -97,7 +97,7 @@ func execute(schema graphql.Schema, document ast.Document, opts ...interface{}) 
 //		})
 //	})
 func wrapExecute(moreOpts ...interface{}) ExecuteFunc {
-	return func(schema graphql.Schema, document ast.Document, opts ...interface{}) <-chan executor.ExecutionResult {
+	return func(schema graphql.Schema, document ast.Document, opts ...interface{}) *executor.ExecutionResult {
 		return execute(schema, document, append(opts, moreOpts...)...)
 	}
 }

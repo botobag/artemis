@@ -297,7 +297,7 @@ func VariableValues(variables map[string]interface{}) ExecuteOption {
 
 // Execute executes the given operation.  ctx specifies deadline and/or cancellation for
 // executor, etc..
-func (operation *PreparedOperation) Execute(c context.Context, opts ...ExecuteOption) <-chan ExecutionResult {
+func (operation *PreparedOperation) Execute(c context.Context, opts ...ExecuteOption) *ExecutionResult {
 	var options executeOptions
 
 	// Get options.
@@ -308,12 +308,10 @@ func (operation *PreparedOperation) Execute(c context.Context, opts ...ExecuteOp
 	// Initialize an ExecutionContext for executing operation.
 	ctx, errs := newExecutionContext(c, operation, &options)
 	if errs.HaveOccurred() {
-		// Create a channel to return the error.
-		result := make(chan ExecutionResult, 1)
-		result <- ExecutionResult{
+		// Return the error.
+		return &ExecutionResult{
 			Errors: errs,
 		}
-		return result
 	}
 
 	// Start the execution.

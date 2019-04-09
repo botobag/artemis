@@ -30,7 +30,7 @@ import (
 
 var _ = Describe("Execute: handles directives", func() {
 	// graphql-js/src/execution/__tests__/directives-test.js
-	var executeTestQuery func(query string) <-chan executor.ExecutionResult
+	var executeTestQuery func(query string) *executor.ExecutionResult
 
 	BeforeEach(func() {
 		schema := graphql.MustNewSchema(&graphql.SchemaConfig{
@@ -59,7 +59,7 @@ var _ = Describe("Execute: handles directives", func() {
 			},
 		}
 
-		executeTestQuery = func(query string) <-chan executor.ExecutionResult {
+		executeTestQuery = func(query string) *executor.ExecutionResult {
 			document := parser.MustParse(token.NewSource(query))
 			return execute(schema, document, executor.RootValue(rootValue))
 		}
