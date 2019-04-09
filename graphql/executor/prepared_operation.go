@@ -316,11 +316,8 @@ func (operation *PreparedOperation) Execute(c context.Context, opts ...ExecuteOp
 		return result
 	}
 
-	// Create executor.
-	e := newBlockingExecutor()
-
-	// Run the execution.
-	return e.Run(ctx)
+	// Create executor and start the execution.
+	return newExecutor().Run(ctx)
 }
 
 // RootType returns operation.rootType.

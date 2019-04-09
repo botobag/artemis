@@ -321,7 +321,7 @@ func doesTypeConditionSatisfy(
 	return false
 }
 
-func collectAndDispatchRootTasks(ctx *ExecutionContext, executor executor) (*ResultNode, error) {
+func collectAndDispatchRootTasks(ctx *ExecutionContext, executor *executor) (*ResultNode, error) {
 	rootType := ctx.Operation().RootType()
 	// Root node is a special node which behaves like a field with nil parent and definition.
 	rootNode := &ExecutionNode{
@@ -353,7 +353,7 @@ func collectAndDispatchRootTasks(ctx *ExecutionContext, executor executor) (*Res
 // Return the ResultNode that contains
 func dispatchTasksForObject(
 	ctx *ExecutionContext,
-	executor executor,
+	executor *executor,
 	result *ResultNode,
 	childNodes []*ExecutionNode,
 	value interface{}) {
@@ -398,7 +398,7 @@ var executeNodeTaskFreeList = sync.Pool{
 }
 
 func newExecuteNodeTask(
-	executor executor,
+	executor *executor,
 	ctx *ExecutionContext,
 	node *ExecutionNode,
 	result *ResultNode,
@@ -427,7 +427,7 @@ func newExecuteNodeTask(
 // 0, the task is put back to the free list automatically.
 type ExecuteNodeTask struct {
 	// Executor that runs this task
-	executor executor
+	executor *executor
 
 	// Context for execution
 	ctx *ExecutionContext
@@ -1056,7 +1056,7 @@ func (task *AsyncValueTask) wake() error {
 // taskCycle.
 func tryDispatchDataLoaders(
 	ctx *ExecutionContext,
-	executor executor,
+	executor *executor,
 	taskCycle DataLoaderCycle) (newCycle DataLoaderCycle) {
 
 	dataLoaderManager := ctx.DataLoaderManager()

@@ -49,37 +49,6 @@ type Task interface {
 //     cooperatively to avoid excessive data loader dispatch.
 type DataLoaderCycle uint64
 
-type executor interface {
-	// Dispatch dispatches and schedules Task for running with executor.
-	Dispatch(task Task)
-
-	// Run starts the runner and returns the channel that passing execution result.
-	Run(ctx *ExecutionContext) <-chan ExecutionResult
-
-	// Yield pauses the execution of the given task. It is used by tasks (e.g., AsyncValueTask) to
-	// notify that it is waiting for some resources to complete (i.e., wait for DataLoader to load
-	// data) and executor can continue processing other tasks. Resume will be called once the Task has
-	// made progress.
-	Yield(task Task)
-
-	// Resume resumes the execution of the given task paused by Yield. Typically, implementation
-	// should re-dispatches the task.
-	Resume(task Task)
-
-	// See comments for DataLoaderCycle type.
-	DataLoaderCycle() DataLoaderCycle
-
-	// See comments in tryDispatchDataLoaders.
-	IncDataLoaderCycle(expected DataLoaderCycle) bool
-
-	// AppendError adds an error to the error list of the given result node to indicate a failed field
-	// execution. It implements error handling described in "Errors and Non-Nullability" [0] which
-	// propagate the field error until a nullable field was encountered.
-	//
-	// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Errors-and-Non-Nullability
-	AppendError(err *graphql.Error, result *ResultNode)
-}
-
 func propagateExecutionError(result *ResultNode) {
 	// Impelement "Errors and Non-Nullability". Propagate the field error until a nullable field was
 	// encountered.
@@ -92,10 +61,6 @@ func propagateExecutionError(result *ResultNode) {
 	}
 }
 
-//===----------------------------------------------------------------------------------------====//
-// blockingExecutor
-//===----------------------------------------------------------------------------------------====//
-
 type yieldTaskState int
 
 const (
@@ -105,7 +70,7 @@ const (
 	yieldTaskStateResumed
 )
 
-type blockingExecutor struct {
+type executor struct {
 	// Errors that occurred during the execution
 	errs graphql.Errors
 
@@ -119,8 +84,8 @@ type blockingExecutor struct {
 	yieldTasks map[Task]yieldTaskState
 }
 
-func newBlockingExecutor() executor {
-	e := &blockingExecutor{
+func newExecutor() *executor {
+	e := &executor{
 		yieldTasks: map[Task]yieldTaskState{},
 	}
 	e.yieldCond = sync.Cond{
@@ -129,8 +94,8 @@ func newBlockingExecutor() executor {
 	return e
 }
 
-// Dispatch implements executor.
-func (e *blockingExecutor) Dispatch(task Task) {
+// Dispatch dispatches and schedules Task for running with executor.
+func (e *executor) Dispatch(task Task) {
 	// Run the specified task.
 	task.run()
 
@@ -185,8 +150,8 @@ func (e *blockingExecutor) Dispatch(task Task) {
 	mutex.Unlock()
 }
 
-// Run implements executor.
-func (e *blockingExecutor) Run(ctx *ExecutionContext) <-chan ExecutionResult {
+// Run starts the runner and returns the channel that passing execution result.
+func (e *executor) Run(ctx *ExecutionContext) <-chan ExecutionResult {
 	resultChan := make(chan ExecutionResult, 1)
 
 	// Start execution by dispatch root tasks.
@@ -205,8 +170,11 @@ func (e *blockingExecutor) Run(ctx *ExecutionContext) <-chan ExecutionResult {
 	return resultChan
 }
 
-// Yield implements executor.
-func (e *blockingExecutor) Yield(task Task) {
+// Yield pauses the execution of the given task. It is used by tasks (e.g., AsyncValueTask) to
+// notify that it is waiting for some resources to complete (i.e., wait for DataLoader to load data)
+// and executor can continue processing other tasks. Resume will be called once the Task has made
+// progress.
+func (e *executor) Yield(task Task) {
 	// Acquire e.yieldMutex to place the task into yieldTasks.
 	mutex := &e.yieldMutex
 	mutex.Lock()
@@ -217,8 +185,9 @@ func (e *blockingExecutor) Yield(task Task) {
 	mutex.Unlock()
 }
 
-// Resume implements executor.
-func (e *blockingExecutor) Resume(task Task) {
+// Resume resumes the execution of the given task paused by Yield. Typically, implementation should
+// re-dispatches the task.
+func (e *executor) Resume(task Task) {
 	mutex := &e.yieldMutex
 	mutex.Lock()
 	e.yieldTasks[task] = yieldTaskStateResumed
@@ -228,19 +197,25 @@ func (e *blockingExecutor) Resume(task Task) {
 	e.yieldCond.Signal()
 }
 
-// DataLoaderCycle implements executor.
-func (e *blockingExecutor) DataLoaderCycle() DataLoaderCycle {
+// DataLoaderCycle returns current data loader cycle counter. See comments for DataLoaderCycle type.
+func (e *executor) DataLoaderCycle() DataLoaderCycle {
 	return e.dataLoaderCycle
 }
 
-// IncDataLoaderCycle implements executor.
-func (e *blockingExecutor) IncDataLoaderCycle(expected DataLoaderCycle) bool {
+// IncDataLoaderCycle incremnts data loader cycle counter by one. See comments in
+// tryDispatchDataLoaders.
+func (e *executor) IncDataLoaderCycle(expected DataLoaderCycle) bool {
 	// Tasks are executed serially. Therefore it is safe to increment the counter directly.
 	e.dataLoaderCycle++
 	return true
 }
 
-func (e *blockingExecutor) AppendError(err *graphql.Error, result *ResultNode) {
+// AppendError adds an error to the error list of the given result node to indicate a failed field
+// execution. It implements error handling described in "Errors and Non-Nullability" [0] which
+// propagate the field error until a nullable field was encountered.
+//
+// [0]: https://graphql.github.io/graphql-spec/June2018/#sec-Errors-and-Non-Nullability
+func (e *executor) AppendError(err *graphql.Error, result *ResultNode) {
 	// Check parent result node to see whether the field is erroneous. If so, discard the error as per
 	// spec.
 	result = result.Parent
