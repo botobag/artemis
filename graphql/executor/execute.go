@@ -321,24 +321,45 @@ func doesTypeConditionSatisfy(
 	return false
 }
 
-func collectAndDispatchRootTasks(ctx *ExecutionContext, executor *executor) (*ResultNode, error) {
-	rootType := ctx.Operation().RootType()
-	// Root node is a special node which behaves like a field with nil parent and definition.
-	rootNode := &ExecutionNode{
-		Parent:      nil,
-		Definitions: nil,
-	}
+//===----------------------------------------------------------------------------------------====//
+// execute
+//===----------------------------------------------------------------------------------------====//
+
+// execute executes a field specified by node whose type is fieldType. The result is sent to the
+// given ResultNode.
+func execute(ctx *ExecutionContext) <-chan ExecutionResult {
+	var (
+		operation = ctx.Operation()
+
+		// Root node is a special node which behaves like a field with nil parent and definition.
+		rootNode = &ExecutionNode{
+			Parent:      nil,
+			Definitions: nil,
+		}
+
+		// Create channel to return the result.
+		resultChan = make(chan ExecutionResult, 1)
+	)
 
 	// Collect fields in the top-level selection set.
-	nodes, err := collectFields(ctx, rootNode, rootType)
+	nodes, err := collectFields(ctx, rootNode, operation.RootType())
 	if err != nil {
-		return nil, err
+		resultChan <- ExecutionResult{
+			Errors: graphql.ErrorsOf(err.(*graphql.Error)),
+		}
+
+		return resultChan
 	}
 
 	// Allocate result node.
 	result := &ResultNode{}
 
-	// Create tasks for executing root nodes.
+	// Create executor.
+	//
+	// TODO: Rename executor to executeState and move as part of ExecutionContext.
+	executor := newExecutor()
+
+	// Dispatch tasks for executing node.
 	dispatchTasksForObject(
 		ctx,
 		executor,
@@ -346,7 +367,13 @@ func collectAndDispatchRootTasks(ctx *ExecutionContext, executor *executor) (*Re
 		nodes,
 		ctx.RootValue())
 
-	return result, nil
+	// Send the result.
+	resultChan <- ExecutionResult{
+		Data:   result,
+		Errors: executor.errs,
+	}
+
+	return resultChan
 }
 
 // Dispatch tasks for evaluating an object value comprised of the fields specified in childNodes.
@@ -360,15 +387,15 @@ func dispatchTasksForObject(
 
 	numChildNodes := len(childNodes)
 
+	// Allocate ResultNode's for each nodes.
+	nodeResults := make([]ResultNode, numChildNodes)
+
 	// Setup result value.
 	result.Kind = ResultKindObject
 	result.Value = &ObjectResultValue{
 		ExecutionNodes: childNodes,
-		FieldValues:    make([]ResultNode, numChildNodes),
+		FieldValues:    nodeResults,
 	}
-
-	// Allocate ResultNode's for each nodes.
-	nodeResults := result.Value.(*ObjectResultValue).FieldValues
 
 	// Create tasks to resolve object fields.
 	for i := 0; i < numChildNodes; i++ {
@@ -383,6 +410,7 @@ func dispatchTasksForObject(
 
 		// Create a task and dispatch it with given dispatcher.
 		task := newExecuteNodeTask(executor, ctx, childNode, nodeResult, value)
+
 		executor.Dispatch(task)
 	}
 }

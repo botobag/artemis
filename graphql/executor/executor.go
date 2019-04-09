@@ -150,26 +150,6 @@ func (e *executor) Dispatch(task Task) {
 	mutex.Unlock()
 }
 
-// Run starts the runner and returns the channel that passing execution result.
-func (e *executor) Run(ctx *ExecutionContext) <-chan ExecutionResult {
-	resultChan := make(chan ExecutionResult, 1)
-
-	// Start execution by dispatch root tasks.
-	result, err := collectAndDispatchRootTasks(ctx, e)
-	if err != nil {
-		resultChan <- ExecutionResult{
-			Errors: graphql.ErrorsOf(err.(*graphql.Error)),
-		}
-	} else {
-		resultChan <- ExecutionResult{
-			Data:   result,
-			Errors: e.errs,
-		}
-	}
-
-	return resultChan
-}
-
 // Yield pauses the execution of the given task. It is used by tasks (e.g., AsyncValueTask) to
 // notify that it is waiting for some resources to complete (i.e., wait for DataLoader to load data)
 // and executor can continue processing other tasks. Resume will be called once the Task has made

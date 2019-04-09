@@ -316,8 +316,8 @@ func (operation *PreparedOperation) Execute(c context.Context, opts ...ExecuteOp
 		return result
 	}
 
-	// Create executor and start the execution.
-	return newExecutor().Run(ctx)
+	// Start the execution.
+	return execute(ctx)
 }
 
 // RootType returns operation.rootType.
