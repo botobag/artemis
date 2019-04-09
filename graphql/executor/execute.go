@@ -360,15 +360,15 @@ func dispatchTasksForObject(
 
 	numChildNodes := len(childNodes)
 
-	// Allocate ResultNode's for each nodes.
-	nodeResults := make([]ResultNode, numChildNodes)
-
 	// Setup result value.
 	result.Kind = ResultKindObject
 	result.Value = &ObjectResultValue{
 		ExecutionNodes: childNodes,
-		FieldValues:    nodeResults,
+		FieldValues:    make([]ResultNode, numChildNodes),
 	}
+
+	// Allocate ResultNode's for each nodes.
+	nodeResults := result.Value.(*ObjectResultValue).FieldValues
 
 	// Create tasks to resolve object fields.
 	for i := 0; i < numChildNodes; i++ {
@@ -1041,7 +1041,7 @@ func (task *AsyncValueTask) run() {
 		// wake when the value is ready.
 		task.nodeTask.executor.Yield(task)
 
-		// Dispatch data loaders if there's any pending .
+		// Dispatch data loaders if there's any pending data loading.
 		tryDispatchDataLoaders(task.nodeTask.ctx, task.nodeTask.executor, task.dataLoaderCycle)
 	}
 }

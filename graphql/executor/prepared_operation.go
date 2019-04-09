@@ -327,17 +327,7 @@ func (operation *PreparedOperation) Execute(c context.Context, opts ...ExecuteOp
 	}
 
 	// Create executor.
-	var (
-		e      executor
-		runner = options.Runner
-	)
-	if runner == nil {
-		e = newBlockingExecutor()
-	} else if operation.Type() == ast.OperationTypeMutation {
-		e = newSerialExecutor(runner)
-	} else {
-		e = newParallelExecutor(runner)
-	}
+	e := newBlockingExecutor()
 
 	// Run the execution.
 	return e.Run(ctx)
