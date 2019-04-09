@@ -18,10 +18,8 @@ package executor_test
 
 import (
 	"context"
-	"runtime"
 	"sync"
 
-	"github.com/botobag/artemis/concurrent"
 	"github.com/botobag/artemis/concurrent/future"
 	"github.com/botobag/artemis/dataloader"
 	"github.com/botobag/artemis/graphql"
@@ -193,14 +191,11 @@ func (manager *StarWarsDataLoaderManager) CharacterLoadCalls() [][]dataloader.Ke
 var _ = Describe("Execute: fetch data with DataLoader", func() {
 	var (
 		schema            graphql.Schema
-		runner            concurrent.Executor
-		dataloaderManager *StarWarsDataLoaderManager
+		dataLoaderManager *StarWarsDataLoaderManager
 		execute           ExecuteFunc
 	)
 
 	BeforeEach(func() {
-		var err error
-
 		// Build a simplified Star Wars schema.
 		//
 		// Reference: https://github.com/graphql/graphql.github.io/blob/e7b61aa/site/_core/swapiSchema.js
@@ -273,23 +268,9 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
 			}),
 		})
 
-		runner, err = concurrent.NewWorkerPoolExecutor(concurrent.WorkerPoolExecutorConfig{
-			MaxPoolSize: uint32(runtime.GOMAXPROCS(-1)),
-		})
-		Expect(err).ShouldNot(HaveOccurred())
+		dataLoaderManager = NewStarWarsDataLoaderManager()
 
-		dataloaderManager = NewStarWarsDataLoaderManager()
-
-		execute = wrapExecute(
-			executor.Runner(runner),
-			executor.DataLoaderManager(dataloaderManager),
-		)
-	})
-
-	AfterEach(func() {
-		terminated, err := runner.Shutdown()
-		Expect(err).ShouldNot(HaveOccurred())
-		Eventually(terminated).Should(Receive(BeTrue()))
+		execute = wrapExecute(executor.DataLoaderManager(dataLoaderManager))
 	})
 
 	It("executes a simple query with single load", func() {
@@ -309,7 +290,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
       }
     }`))
 
-		Expect(dataloaderManager.CharacterLoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(dataLoaderManager.CharacterLoadCalls()).Should(Equal([][]dataloader.Key{
 			{CharacterID("1000")},
 		}))
 	})
@@ -353,7 +334,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
       }
     }`))
 
-		Expect(dataloaderManager.CharacterLoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(dataLoaderManager.CharacterLoadCalls()).Should(Equal([][]dataloader.Key{
 			{CharacterID("1000")},
 			{
 				CharacterID("1002"),
@@ -471,7 +452,7 @@ var _ = Describe("Execute: fetch data with DataLoader", func() {
       }
     }`))
 
-		Expect(dataloaderManager.CharacterLoadCalls()).Should(Equal([][]dataloader.Key{
+		Expect(dataLoaderManager.CharacterLoadCalls()).Should(Equal([][]dataloader.Key{
 			{CharacterID("1000")},
 			{
 				CharacterID("1002"),

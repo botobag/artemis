@@ -20,10 +20,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"runtime"
 	"testing"
 
-	"github.com/botobag/artemis/concurrent"
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 	"github.com/botobag/artemis/graphql/executor"
@@ -84,42 +82,22 @@ func execute(schema graphql.Schema, document ast.Document, opts ...interface{}) 
 }
 
 // wrapExecute wraps an "execute" function to run with additional options. A good example of usage
-// is to redefine "execute" function which appends executor.Runner to the option list passed to
-// execute automatically within DescribeExecute:
+// is to redefine "execute" function which appends executor.DataLoaderManager
+// to the option list passed to execute automatically within test:
 //
-//	var _ = DescribeExecute("...", func(runner concurrent.Executor) {
-//		execute := wrapExecute(executor.Runner(runner))
+//	var _ = Describe("...", func() {
+//		var (
+//			dataLoaderManager *FooDataLoaderManager
+//			execute           ExecuteFunc
+//		)
+//
+//		BeforeEach(func () {
+//			dataLoaderManager = ...
+//			execute = wrapExecute(executor.DataLoaderManager(dataLoaderManager))
+//		})
 //	})
 func wrapExecute(moreOpts ...interface{}) ExecuteFunc {
 	return func(schema graphql.Schema, document ast.Document, opts ...interface{}) <-chan executor.ExecutionResult {
 		return execute(schema, document, append(opts, moreOpts...)...)
 	}
-}
-
-func DescribeExecute(message string, body func(runner concurrent.Executor)) bool {
-	return Describe(message, func() {
-		Context("without concurrent runner", func() {
-			body(nil)
-		})
-
-		Context("with concurrent runner", func() {
-			var runner concurrent.Executor
-
-			BeforeEach(func() {
-				var err error
-				runner, err = concurrent.NewWorkerPoolExecutor(concurrent.WorkerPoolExecutorConfig{
-					MaxPoolSize: uint32(runtime.GOMAXPROCS(-1)),
-				})
-				Expect(err).ShouldNot(HaveOccurred())
-			})
-
-			AfterEach(func() {
-				terminated, err := runner.Shutdown()
-				Expect(err).ShouldNot(HaveOccurred())
-				Eventually(terminated).Should(Receive(BeTrue()))
-			})
-
-			body(runner)
-		})
-	})
 }

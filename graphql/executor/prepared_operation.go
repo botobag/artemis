@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/botobag/artemis/concurrent"
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
 	"github.com/botobag/artemis/graphql/validator"
@@ -256,7 +255,6 @@ func (operation *PreparedOperation) VariableDefinitions() []*ast.VariableDefinit
 
 // executeOptions contains parameter to execute a prepared operation.
 type executeOptions struct {
-	Runner            concurrent.Executor
 	DataLoaderManager graphql.DataLoaderManager
 	RootValue         interface{}
 	AppContext        interface{}
@@ -265,14 +263,6 @@ type executeOptions struct {
 
 // ExecuteOption configures execution of a PreparedOperation.
 type ExecuteOption func(*executeOptions)
-
-// Runner specifies executor to run the execution. If it is not provided, Execute blocks the calling
-// goroutine to complete the execution.
-func Runner(runner concurrent.Executor) ExecuteOption {
-	return func(options *executeOptions) {
-		options.Runner = runner
-	}
-}
 
 // DataLoaderManager that manages dispatches for data loaders being used during execution; User can
 // also tracks DataLoader instances being used during the execution.

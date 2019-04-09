@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"sort"
 
-	"github.com/botobag/artemis/concurrent"
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/executor"
 	"github.com/botobag/artemis/graphql/parser"
@@ -141,7 +140,7 @@ func MatchIntrospectionInJSON(json interface{}) types.GomegaMatcher {
 }
 
 // graphql-js/src/execution/__tests__/union-interface-test.js@35cb32b
-var _ = DescribeExecute("Execute: Union and intersection types", func(runner concurrent.Executor) {
+var _ = Describe("Execute: Union and intersection types", func() {
 	type Dog struct {
 		Name  string
 		Barks bool
@@ -162,7 +161,6 @@ var _ = DescribeExecute("Execute: Union and intersection types", func(runner con
 		return execute(
 			schema,
 			parser.MustParse(token.NewSource(query)),
-			executor.Runner(runner),
 			executor.RootValue(rootValue),
 			executor.AppContext(appContext))
 	}

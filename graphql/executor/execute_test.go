@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/botobag/artemis/concurrent"
 	"github.com/botobag/artemis/concurrent/future"
 	"github.com/botobag/artemis/graphql"
 	"github.com/botobag/artemis/graphql/ast"
@@ -86,9 +85,7 @@ func (iter *SizedTestIterable) Size() int {
 }
 
 // graphql-js/src/execution/__tests__/executor-test.js
-var _ = DescribeExecute("Execute: Handles basic execution tasks", func(runner concurrent.Executor) {
-	execute := wrapExecute(executor.Runner(runner))
-
+var _ = Describe("Execute: Handles basic execution tasks", func() {
 	// ast.Document is not a pointer and can never be nil.
 	// It("throws if no document is provided", func() {
 	// })

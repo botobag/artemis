@@ -19,9 +19,7 @@ package executor_test
 import (
 	"context"
 
-	"github.com/botobag/artemis/concurrent"
 	"github.com/botobag/artemis/graphql"
-	"github.com/botobag/artemis/graphql/executor"
 	"github.com/botobag/artemis/graphql/parser"
 	"github.com/botobag/artemis/graphql/token"
 
@@ -30,7 +28,7 @@ import (
 )
 
 // graphql-js/src/execution/__tests__/abstract-test.js
-var _ = DescribeExecute("Execute: Handles execution of abstract types", func(runner concurrent.Executor) {
+var _ = Describe("Execute: Handles execution of abstract types", func() {
 	type Dog struct {
 		Name  string
 		Woofs bool
@@ -44,8 +42,6 @@ var _ = DescribeExecute("Execute: Handles execution of abstract types", func(run
 	type Human struct {
 		Name string
 	}
-
-	execute := wrapExecute(executor.Runner(runner))
 
 	It("resolveType on Interface yields useful error", func() {
 		petType := graphql.InterfaceConfig{
